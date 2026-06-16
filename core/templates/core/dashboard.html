@@ -1,0 +1,306 @@
+{% extends 'core/base_admin.html' %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block admin_content %}
+<style>
+    .welcome-text {
+        font-size: 14px;
+        color: var(--icon-color);
+        margin-bottom: 24px;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 24px;
+        margin-bottom: 30px;
+    }
+    .stat-card {
+        background-color: var(--white);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .stat-left h3 {
+        font-size: 24px;
+        color: var(--text-color);
+        margin: 0 0 4px 0;
+    }
+    .stat-left p {
+        font-size: 14px;
+        color: var(--icon-color);
+        margin: 0;
+    }
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+    .stat-icon.purple {
+        background-color: var(--accent-light-purple);
+        color: var(--primary);
+        border: 1px solid var(--primary);
+    }
+    .stat-icon.orange {
+        background-color: var(--accent-light-orange);
+        color: var(--secondary);
+        border: 1px solid var(--secondary);
+    }
+    .stat-icon.green {
+        background-color: var(--accent-light-green);
+        color: var(--accent-green);
+        border: 1px solid var(--accent-green);
+    }
+    .stat-icon.red {
+        background-color: var(--accent-light-red);
+        color: var(--accent-red);
+        border: 1px solid var(--accent-red);
+    }
+    .dashboard-sections {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+    .dashboard-left, .dashboard-right {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+    .section-card {
+        background-color: var(--white);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    }
+    .section-card h3 {
+        font-size: 16px;
+        margin-bottom: 20px;
+        color: var(--text-color);
+    }
+    .batch-item, .report-item, .activity-item, .notification-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .batch-item:last-child, .report-item:last-child, .activity-item:last-child, .notification-item:last-child {
+        border-bottom: none;
+    }
+    .batch-info, .activity-info, .notification-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .batch-name, .activity-title, .notification-title {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-color);
+    }
+    .batch-trainer, .activity-time, .notification-time {
+        font-size: 12px;
+        color: var(--icon-color);
+    }
+    .batch-status.completed {
+        color: var(--accent-green);
+        font-size: 12px;
+        font-weight: 500;
+    }
+    .report-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .report-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+    }
+    .report-text {
+        font-size: 13px;
+        color: var(--text-color);
+    }
+    .btn-view-report {
+        background-color: var(--secondary);
+        color: white;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    .activity-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--primary);
+        margin-right: 12px;
+    }
+    .activity-item-inner {
+        display: flex;
+        align-items: center;
+    }
+</style>
+
+<p class="welcome-text">Welcome back! Here's what's happening today</p>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-left">
+            <h3>{{ total_trainers }}</h3>
+            <p>Total Trainers</p>
+        </div>
+        <div class="stat-icon purple"><i class="fas fa-chalkboard-teacher"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-left">
+            <h3>{{ total_trainees }}</h3>
+            <p>Total Trainees</p>
+        </div>
+        <div class="stat-icon orange"><i class="fas fa-user-graduate"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-left">
+            <h3>{{ active_batches_count }}</h3>
+            <p>Active Batches</p>
+        </div>
+        <div class="stat-icon green"><i class="fas fa-layer-group"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-left">
+            <h3>{{ pending_reports }}</h3>
+            <p>Pending Reports</p>
+        </div>
+        <div class="stat-icon red"><i class="fas fa-file-alt"></i></div>
+    </div>
+</div>
+
+<div class="dashboard-sections">
+    <div class="dashboard-left">
+        <div class="section-card">
+            <h3>Active Batches</h3>
+            {% for batch in active_batches %}
+            <div class="batch-item">
+                <div class="batch-info">
+                    <span class="batch-name">{{ batch.batch_name }}</span>
+                    {% if batch.trainer %}
+                    <span class="batch-trainer">Trainer: {{ batch.trainer.full_name }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p style="color: var(--icon-color);">No active batches</p>
+            {% endfor %}
+        </div>
+        <div class="section-card">
+            <h3>Recent Activities</h3>
+            <div class="activity-item">
+                <div class="activity-item-inner">
+                    <div class="activity-dot"></div>
+                    <div class="activity-info">
+                        <span class="activity-title">New trainee enrolled</span>
+                        <span class="activity-time">2 hours ago</span>
+                        <span class="batch-trainer">Rahul Kumar</span>
+                    </div>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-item-inner">
+                    <div class="activity-dot"></div>
+                    <div class="activity-info">
+                        <span class="activity-title">Batch completed</span>
+                        <span class="activity-time">8 hours ago</span>
+                        <span class="batch-trainer">Batch 5</span>
+                    </div>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-item-inner">
+                    <div class="activity-dot"></div>
+                    <div class="activity-info">
+                        <span class="activity-title">Payment received</span>
+                        <span class="activity-time">1 day ago</span>
+                        <span class="batch-trainer">₹50,000 from Priya Sharma</span>
+                    </div>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-item-inner">
+                    <div class="activity-dot"></div>
+                    <div class="activity-info">
+                        <span class="activity-title">New trainer added</span>
+                        <span class="activity-time">2 days ago</span>
+                        <span class="batch-trainer">Anita Singh</span>
+                    </div>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-item-inner">
+                    <div class="activity-dot"></div>
+                    <div class="activity-info">
+                        <span class="activity-title">Report submitted</span>
+                        <span class="activity-time">3 days ago</span>
+                        <span class="batch-trainer">Priya submitted Weekly Report - Week 12</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dashboard-right">
+        <div class="section-card">
+            <div class="report-row">
+                <h3>Report Review</h3>
+                <a href="{% url 'reports_approvals' %}" class="btn-view-report">View Report</a>
+            </div>
+            <div class="report-item">
+                <div class="report-row">
+                    <span class="report-text">Daily Reports Pending: 5</span>
+                </div>
+                <div class="report-row">
+                    <span class="report-text">Weekly Reports Pending: 2</span>
+                </div>
+                <div class="report-row">
+                    <span class="report-text">Monthly Reports Pending: 1</span>
+                </div>
+            </div>
+        </div>
+        <div class="section-card">
+            <div class="report-row">
+                <h3>Notifications</h3>
+                <a href="#" class="btn-view-report">View Report</a>
+            </div>
+            <div class="notification-item">
+                <div class="notification-info">
+                    <span class="notification-title">3 pending trainer reports need approval</span>
+                    <span class="notification-time">1 hour ago</span>
+                </div>
+            </div>
+            <div class="notification-item">
+                <div class="notification-info">
+                    <span class="notification-title">New batch starting on March 28, 2026</span>
+                    <span class="notification-time">2 hours ago</span>
+                </div>
+            </div>
+            <div class="notification-item">
+                <div class="notification-info">
+                    <span class="notification-title">Payment reminder: 5 installments due this week</span>
+                    <span class="notification-time">5 hours ago</span>
+                </div>
+            </div>
+            <div class="notification-item">
+                <div class="notification-info">
+                    <span class="notification-title">System backup completed successfully</span>
+                    <span class="notification-time">1 day ago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

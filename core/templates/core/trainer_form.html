@@ -1,0 +1,180 @@
+{% extends 'core/base_admin.html' %}
+
+{% block page_title %}{{ 'Edit Trainer' if trainer else 'Add New Trainer' }}{% endblock %}
+
+{% block admin_content %}
+<style>
+    .page-header {
+        margin-bottom: 32px;
+    }
+    .back-btn {
+        color: var(--primary);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 16px;
+    }
+    .card {
+        padding: 32px;
+    }
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 20px;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .form-group label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-color);
+    }
+    .form-group input, .form-group select {
+        width: 100%;
+        padding: 10px 14px;
+        background-color: var(--input-bg);
+        border: 1px solid transparent;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: 'Inter', sans-serif;
+    }
+    .form-group input:focus, .form-group select:focus {
+        outline: none;
+        border-color: var(--primary);
+        background-color: white;
+    }
+    .file-upload-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .upload-btn {
+        background-color: var(--secondary);
+        color: white;
+        padding: 8px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .file-hint {
+        font-size: 12px;
+        color: var(--icon-color);
+    }
+    .btn-group {
+        margin-top: 32px;
+        display: flex;
+        gap: 12px;
+    }
+    .btn-cancel {
+        padding: 10px 24px;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        background-color: white;
+        color: var(--text-color);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .btn-submit {
+        padding: 10px 24px;
+        border-radius: 6px;
+        border: none;
+        background-color: var(--secondary);
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+</style>
+
+<div class="page-header">
+    <a href="{% url 'trainer_list' %}" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+        Back
+    </a>
+    <h2>{{ 'Edit Trainer' if trainer else 'Add New Trainer' }}</h2>
+</div>
+
+<div class="card">
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>Full Name*</label>
+                <input type="text" name="full_name" value="{{ trainer.full_name if trainer else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label>Office Mail*</label>
+                <input type="email" name="office_mail" value="{{ trainer.office_mail if trainer else '' }}" required placeholder="Enter office email">
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>Personal Mail*</label>
+                <input type="email" name="personal_mail" value="{{ trainer.personal_mail if trainer else '' }}" required placeholder="Enter personal email">
+            </div>
+            <div class="form-group">
+                <label>Phone No*</label>
+                <input type="text" name="phone_no" value="{{ trainer.phone_no if trainer else '' }}" required placeholder="Enter phone number">
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>Gender*</label>
+                <select name="gender" required>
+                    <option value="">Select</option>
+                    <option value="Male" {% if trainer and trainer.gender == 'Male' %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if trainer and trainer.gender == 'Female' %}selected{% endif %}>Female</option>
+                    <option value="Other" {% if trainer and trainer.gender == 'Other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Status*</label>
+                <select name="status" required>
+                    <option value="Active" {% if not trainer or trainer.status == 'Active' %}selected{% endif %}>Active</option>
+                    <option value="Inactive" {% if trainer and trainer.status == 'Inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>Course*</label>
+                <select name="course" required>
+                    <option value="">Select Course</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}" {% if trainer and trainer.course and trainer.course.id == course.id %}selected{% endif %}>{{ course.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group file-upload-wrapper">
+                <label>Add Profile Image</label>
+                <input type="file" name="profile_image" id="profile_image" accept="image/*" style="display: none;">
+                <button type="button" class="upload-btn" onclick="document.getElementById('profile_image').click()">
+                    <i class="fas fa-upload"></i> Upload
+                </button>
+                <p class="file-hint">File size max 50mb</p>
+            </div>
+        </div>
+        
+        <div class="btn-group">
+            <a href="{% url 'trainer_list' %}" class="btn-cancel">Cancel</a>
+            <button type="submit" class="btn-submit">{{ 'Save Changes' if trainer else 'Create Trainer' }}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

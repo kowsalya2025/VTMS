@@ -1,0 +1,160 @@
+{% extends 'core/base_trainer.html' %}
+
+{% block page_title %}Reports{% endblock %}
+
+{% block trainer_content %}
+<style>
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--icon-color);
+        margin-bottom: 24px;
+    }
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    .btn-group {
+        display: flex;
+        gap: 12px;
+    }
+    .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        background: white;
+        color: var(--text-color);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+    .btn.active {
+        background-color: var(--secondary);
+        color: white;
+        border-color: var(--secondary);
+    }
+    .btn-primary {
+        background-color: var(--secondary);
+        color: white;
+        border: none;
+    }
+    .table-wrapper {
+        overflow-x: auto;
+        width: 100%;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    th {
+        background-color: #fafafa;
+        font-weight: 600;
+        color: var(--text-color);
+        font-family: 'Poppins', sans-serif;
+        font-size: 13px;
+    }
+    td {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+    }
+    .status-submitted {
+        color: var(--accent-green);
+        background-color: var(--accent-light-green);
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .status-draft {
+        color: var(--secondary);
+        background-color: var(--accent-light-orange);
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .pagination {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 8px;
+        margin-top: 20px;
+    }
+    .pagination button {
+        background: white;
+        border: 1px solid #ddd;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+</style>
+
+<h2>Reports</h2>
+<p class="page-subtitle">Daily, Weekly, and Monthly Reports</p>
+
+<div class="card">
+    <div class="card-header">
+        <div class="btn-group">
+            <a href="{% url 'trainer_daily_reports' %}" class="btn {% if request.resolver_match.url_name == 'trainer_daily_reports' %}active{% endif %}">Daily Reports</a>
+            <a href="{% url 'trainer_weekly_reports' %}" class="btn {% if request.resolver_match.url_name == 'trainer_weekly_reports' %}active{% endif %}">Weekly Reports</a>
+            <a href="{% url 'trainer_monthly_reports' %}" class="btn {% if request.resolver_match.url_name == 'trainer_monthly_reports' %}active{% endif %}">Monthly Reports</a>
+        </div>
+        <a href="#" class="btn btn-primary">Submit Reports</a>
+    </div>
+    
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Batch</th>
+                    <th>Topics Covered</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>2025-06-15</td>
+                    <td>Python Batch</td>
+                    <td>Django Views & Templates</td>
+                    <td><span class="status-submitted">Submitted</span></td>
+                </tr>
+                <tr>
+                    <td>2025-06-14</td>
+                    <td>UI/UX Batch</td>
+                    <td>Figma Basics</td>
+                    <td><span class="status-draft">Draft</span></td>
+                </tr>
+                <tr>
+                    <td>2025-06-13</td>
+                    <td>Python Batch</td>
+                    <td>Django Models</td>
+                    <td><span class="status-submitted">Submitted</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="pagination">
+        <button>Previous</button>
+        <button>1</button>
+        <button>Next</button>
+    </div>
+</div>
+{% endblock %}

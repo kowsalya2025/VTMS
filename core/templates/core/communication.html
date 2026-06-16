@@ -1,0 +1,279 @@
+{% extends 'core/base_business.html' %}
+
+{% block page_title %}Communication{% endblock %}
+
+{% block business_content %}
+<style>
+    .communication-layout {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 20px;
+        height: calc(100vh - 200px);
+        min-height: 600px;
+    }
+    
+    .sidebar-tabs {
+        background: white;
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .tab-btn {
+        width: 100%;
+        padding: 12px 16px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--text-color);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.2s;
+        font-family: var(--font-inter);
+    }
+    
+    .tab-btn:hover {
+        background: #f8f9fc;
+    }
+    
+    .tab-btn.active {
+        background: var(--secondary);
+        color: white;
+    }
+    
+    .main-communication {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .search-mail {
+        width: 100%;
+        padding: 12px 16px 12px 44px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: var(--font-inter);
+        margin-bottom: 20px;
+        position: relative;
+    }
+    
+    .search-container {
+        position: relative;
+    }
+    
+    .search-container i {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--icon-color);
+    }
+    
+    .mail-list {
+        flex: 1;
+        overflow-y: auto;
+    }
+    
+    .mail-item {
+        display: flex;
+        gap: 16px;
+        padding: 16px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    
+    .mail-item:hover {
+        background: #f8f9fc;
+    }
+    
+    .mail-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .avatar-1 { background: #8b5cf6; }
+    .avatar-2 { background: #22c55e; }
+    .avatar-3 { background: #f59e0b; }
+    .avatar-4 { background: #10b981; }
+    .avatar-5 { background: #8b5cf6; }
+    
+    .mail-content {
+        flex: 1;
+    }
+    
+    .mail-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+    }
+    
+    .mail-sender {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--text-color);
+    }
+    
+    .mail-time {
+        font-size: 12px;
+        color: var(--icon-color);
+    }
+    
+    .mail-subject {
+        font-size: 13px;
+        color: var(--text-color);
+        margin-bottom: 2px;
+    }
+    
+    .mail-preview {
+        font-size: 12px;
+        color: var(--icon-color);
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #eee;
+    }
+    
+    .page-btn {
+        width: 32px;
+        height: 32px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    
+    .page-btn:hover {
+        background: #f5f5f5;
+    }
+    
+    .page-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+    
+    .storage-info {
+        text-align: center;
+        font-size: 11px;
+        color: var(--icon-color);
+        margin-top: 8px;
+    }
+</style>
+
+<div class="communication-layout">
+    <div class="sidebar-tabs">
+        <button class="tab-btn active"><i class="fas fa-plus"></i> New Mail</button>
+        <button class="tab-btn"><i class="fas fa-inbox"></i> All Mail</button>
+        <button class="tab-btn"><i class="fas fa-paper-plane"></i> Send</button>
+        <button class="tab-btn"><i class="fas fa-file-alt"></i> Drafts</button>
+        <button class="tab-btn"><i class="fas fa-envelope"></i> Unread</button>
+    </div>
+    
+    <div class="main-communication">
+        <div class="search-container">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search Mails" class="search-mail">
+        </div>
+        
+        <div class="mail-list">
+            <div class="mail-item">
+                <div class="mail-avatar avatar-1">T</div>
+                <div class="mail-content">
+                    <div class="mail-header">
+                        <span class="mail-sender">Task Doubt</span>
+                        <span class="mail-time">Today 02:00 PM</span>
+                    </div>
+                    <div class="mail-subject">Hi team, I have some doubt on today task...</div>
+                    <div class="mail-preview"><i class="fas fa-star"></i></div>
+                </div>
+            </div>
+            
+            <div class="mail-item">
+                <div class="mail-avatar avatar-2">B</div>
+                <div class="mail-content">
+                    <div class="mail-header">
+                        <span class="mail-sender">Weekly Report Approved by business team</span>
+                        <span class="mail-time">Yesterday 5:00 PM</span>
+                    </div>
+                    <div class="mail-subject">Hi team, please find the report of today & students weekly report</div>
+                    <div class="mail-preview"></div>
+                </div>
+            </div>
+            
+            <div class="mail-item">
+                <div class="mail-avatar avatar-3">T</div>
+                <div class="mail-content">
+                    <div class="mail-header">
+                        <span class="mail-sender">Task Doubt</span>
+                        <span class="mail-time">24/09/2026, 3:00 PM</span>
+                    </div>
+                    <div class="mail-subject">Hi team, I have some doubt on today task...</div>
+                    <div class="mail-preview"><i class="fas fa-star"></i></div>
+                </div>
+            </div>
+            
+            <div class="mail-item">
+                <div class="mail-avatar avatar-4">A</div>
+                <div class="mail-content">
+                    <div class="mail-header">
+                        <span class="mail-sender">Daily Task (22/03/2026)</span>
+                        <span class="mail-time">23/03/2025, 10:00 AM</span>
+                    </div>
+                    <div class="mail-subject">Todays home task...</div>
+                    <div class="mail-preview"><i class="fas fa-star"></i></div>
+                </div>
+            </div>
+            
+            <div class="mail-item">
+                <div class="mail-avatar avatar-5">T</div>
+                <div class="mail-content">
+                    <div class="mail-header">
+                        <span class="mail-sender">Daily Task (21/03/2025)</span>
+                        <span class="mail-time">22/02/2025, 08:00 PM</span>
+                    </div>
+                    <div class="mail-subject">Todays home task...</div>
+                    <div class="mail-preview"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="storage-info">Storage used: 208 Out of 30 GB</div>
+        
+        <div class="pagination">
+            <button class="page-btn"><i class="fas fa-chevron-left"></i></button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+</div>
+{% endblock %}

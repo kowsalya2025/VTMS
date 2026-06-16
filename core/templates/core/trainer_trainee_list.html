@@ -1,0 +1,190 @@
+{% extends 'core/base_trainer.html' %}
+
+{% block page_title %}Trainee Management{% endblock %}
+
+{% block trainer_content %}
+<style>
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--icon-color);
+        margin-bottom: 24px;
+    }
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    .search-bar {
+        display: flex;
+        align-items: center;
+        background-color: #f0f0f0;
+        padding: 8px 16px;
+        border-radius: 6px;
+        gap: 8px;
+    }
+    .search-bar input {
+        border: none;
+        background: transparent;
+        outline: none;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        padding: 0;
+        margin: 0;
+    }
+    .table-wrapper {
+        overflow-x: auto;
+        width: 100%;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    th {
+        background-color: #fafafa;
+        font-weight: 600;
+        color: var(--text-color);
+        font-family: 'Poppins', sans-serif;
+        font-size: 13px;
+    }
+    td {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+    }
+    .status-active {
+        color: var(--accent-green);
+        background-color: var(--accent-light-green);
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .status-inactive {
+        color: var(--accent-red);
+        background-color: var(--accent-light-red);
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .progress-cell {
+        width: 120px;
+    }
+    .progress-bar {
+        width: 100%;
+        height: 10px;
+        background-color: #e0e0e0;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+    .progress-fill {
+        height: 100%;
+        background-color: var(--primary);
+        border-radius: 5px;
+    }
+    .actions-cell {
+        display: flex;
+        gap: 8px;
+    }
+    .action-btn {
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        text-decoration: none;
+    }
+    .action-btn.view {
+        background-color: var(--accent-light-orange);
+        color: var(--secondary);
+    }
+    .action-btn.edit {
+        background-color: var(--accent-light-purple);
+        color: var(--primary);
+    }
+    .action-btn.delete {
+        background-color: var(--accent-light-red);
+        color: var(--accent-red);
+    }
+</style>
+
+<h2>Trainee Management</h2>
+<p class="page-subtitle">Manage and monitor all trainees</p>
+
+<div class="card">
+    <div class="card-header">
+        <div class="btn-group">
+            <button class="btn active">All Trainees</button>
+            <button class="btn">Active</button>
+            <button class="btn">In-Active</button>
+        </div>
+        <div class="search-bar">
+            <i class="fas fa-search" style="color: var(--icon-color);"></i>
+            <input type="text" placeholder="Search trainee">
+        </div>
+    </div>
+    
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Batch</th>
+                    <th>Progress</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trainee in trainees %}
+                <tr>
+                    <td>{{ trainee.full_name }}</td>
+                    <td>{{ trainee.email }}</td>
+                    <td>{% if trainee.batch %}{{ trainee.batch.batch_name }}{% else %}-{% endif %}</td>
+                    <td class="progress-cell">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 70%;"></div>
+                        </div>
+                        <small style="color: var(--icon-color);">70%</small>
+                    </td>
+                    <td>
+                        {% if trainee.status == 'Active' %}
+                            <span class="status-active">{{ trainee.status }}</span>
+                        {% else %}
+                            <span class="status-inactive">{{ trainee.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="actions-cell">
+                        <a href="#" class="action-btn view"><i class="fas fa-eye"></i></a>
+                        <a href="#" class="action-btn edit"><i class="fas fa-edit"></i></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--icon-color);">No trainees found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

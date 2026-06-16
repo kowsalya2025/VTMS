@@ -1,0 +1,36 @@
+{% extends 'core/base_admin.html' %}
+
+{% block page_title %}Invoice{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+        <h2>Invoice</h2>
+        <button class="btn btn-primary" style="background-color: var(--primary); color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;">Generate Invoice</button>
+    </div>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f8f9fa;">
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Invoice #</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Trainee/Intern</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Amount</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Status</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Date</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">INV-001</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">Rahul Sharma</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">₹50,000</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;"><span style="color: var(--accent-green); font-weight: 600;">Paid</span></td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">2025-01-10</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">
+                    <button style="background: var(--accent-light-purple); color: var(--primary); padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;">View</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

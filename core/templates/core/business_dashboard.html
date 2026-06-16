@@ -1,0 +1,216 @@
+{% extends 'core/base_business.html' %}
+
+{% block page_title %}Business Team Dashboard{% endblock %}
+
+{% block business_content %}
+<style>
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--icon-color);
+        margin-bottom: 24px;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+    .stat-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 24px;
+        background-color: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border: 1px solid #eee;
+    }
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+    .stat-icon.purple {
+        background-color: var(--accent-light-purple);
+        color: var(--primary);
+    }
+    .stat-icon.orange {
+        background-color: var(--accent-light-orange);
+        color: var(--secondary);
+    }
+    .stat-icon.green {
+        background-color: var(--accent-light-green);
+        color: var(--accent-green);
+    }
+    .stat-icon.red {
+        background-color: var(--accent-light-red);
+        color: var(--accent-red);
+    }
+    .stat-details h3 {
+        font-size: 28px;
+        font-family: 'Poppins', sans-serif;
+        color: var(--text-color);
+        margin: 0;
+    }
+    .stat-details p {
+        font-size: 14px;
+        color: var(--icon-color);
+        margin: 4px 0 0 0;
+        font-family: 'Inter', sans-serif;
+    }
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+    }
+    .chart-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .chart-card h4 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 16px;
+        margin-bottom: 24px;
+        color: var(--text-color);
+    }
+    .chart-placeholder {
+        width: 100%;
+        height: 250px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--icon-color);
+        font-family: 'Inter', sans-serif;
+    }
+    .side-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        margin-bottom: 24px;
+    }
+    .side-card h4 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 14px;
+        margin-bottom: 16px;
+        color: var(--text-color);
+    }
+    .list-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+    }
+    .list-item:last-child {
+        border-bottom: none;
+    }
+    .list-text {
+        font-size: 14px;
+        color: var(--text-color);
+        font-family: 'Inter', sans-serif;
+    }
+    .list-date {
+        font-size: 12px;
+        color: var(--icon-color);
+    }
+</style>
+
+<h2>Dashboard</h2>
+<p class="page-subtitle">Track enquiries, conversions, and revenue</p>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-details">
+            <h3>{{ total_enquiries }}</h3>
+            <p>Total Enquiries</p>
+        </div>
+        <div class="stat-icon purple"><i class="fas fa-envelope-open-text"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-details">
+            <h3>{{ total_candidates }}</h3>
+            <p>Total Candidates</p>
+        </div>
+        <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-details">
+            <h3>{{ eligible_candidates }}</h3>
+            <p>Eligible Candidates</p>
+        </div>
+        <div class="stat-icon orange"><i class="fas fa-file-invoice-dollar"></i></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-details">
+            <h3>{{ pending_interviews }}</h3>
+            <p>Pending Interviews</p>
+        </div>
+        <div class="stat-icon red"><i class="fas fa-users"></i></div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <div class="chart-card">
+        <h4>Enquiries vs Conversions</h4>
+        <div class="chart-placeholder">
+            <div style="text-align: center;">
+                <i class="fas fa-chart-bar" style="font-size: 48px; color: var(--primary); margin-bottom: 12px;"></i>
+                <p>Chart will be displayed here</p>
+            </div>
+        </div>
+    </div>
+    
+    <div>
+        <div class="side-card">
+            <h4>Recent Enquiries</h4>
+            <div class="list-item">
+                <div>
+                    <p class="list-text">Rahul</p>
+                    <p class="list-date">2026-06-15</p>
+                </div>
+            </div>
+            <div class="list-item">
+                <div>
+                    <p class="list-text">Neha</p>
+                    <p class="list-date">2026-06-14</p>
+                </div>
+            </div>
+            <div class="list-item">
+                <div>
+                    <p class="list-text">Amit</p>
+                    <p class="list-date">2026-06-13</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="side-card">
+            <h4>Pending Actions</h4>
+            <div class="list-item">
+                <div>
+                    <p class="list-text">Eligibility Check: Rakesh</p>
+                </div>
+            </div>
+            <div class="list-item">
+                <div>
+                    <p class="list-text">Document Verification: Priya</p>
+                </div>
+            </div>
+            <div class="list-item">
+                <div>
+                    <p class="list-text">Payment Pending: S</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

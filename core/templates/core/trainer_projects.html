@@ -1,0 +1,30 @@
+{% extends 'core/base_trainer.html' %}
+
+{% block page_title %}Projects{% endblock %}
+
+{% block trainer_content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+        <h2>Projects</h2>
+        <button style="background-color: var(--primary); color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;">Assign Project</button>
+    </div>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f8f9fa;">
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Project Name</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Intern</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Deadline</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">E-Commerce Website</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">Priya Patel</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">2025-02-15</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;"><span style="color: var(--secondary); font-weight: 600;">In Progress</span></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,219 @@
+{% extends 'core/base_admin.html' %}
+
+{% block page_title %}Payment & Revenue{% endblock %}
+
+{% block admin_content %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+    .stat-card {
+        background-color: var(--white);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .stat-card h3 {
+        font-size: 28px;
+        color: var(--primary);
+        margin: 0 0 8px 0;
+    }
+    .stat-card p {
+        color: var(--icon-color);
+        margin: 0;
+        font-size: 14px;
+    }
+    .card {
+        padding: 24px;
+        margin-bottom: 24px;
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        overflow-x: hidden;
+    }
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .card-header h2 {
+        margin: 0;
+        font-family: 'Poppins', sans-serif;
+        font-size: 20px;
+    }
+    .table-wrapper {
+        overflow-x: auto;
+        width: 100%;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        min-width: 900px;
+    }
+    th, td {
+        padding: 15px 20px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: var(--primary);
+        font-family: 'Poppins', sans-serif;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+    td {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+    .status-paid {
+        color: var(--accent-green);
+        background-color: var(--accent-light-green);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .status-pending {
+        color: var(--secondary);
+        background-color: var(--accent-light-orange);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .btn-primary {
+        background-color: var(--primary);
+        color: white;
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+        display: inline-block;
+        white-space: nowrap;
+    }
+    .btn-success {
+        background-color: var(--accent-green);
+        color: white;
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+        display: inline-block;
+        white-space: nowrap;
+    }
+    .email-input {
+        padding: 6px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        margin-right: 8px;
+        width: 180px;
+    }
+</style>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>₹4,50,000</h3>
+        <p>Total Revenue</p>
+    </div>
+    <div class="stat-card">
+        <h3>₹3,20,000</h3>
+        <p>Collected</p>
+    </div>
+    <div class="stat-card">
+        <h3>₹1,30,000</h3>
+        <p>Pending</p>
+    </div>
+    <div class="stat-card">
+        <h3>45</h3>
+        <p>Pending Payments</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Trainee Payments</h2>
+    </div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Trainee</th>
+                    <th>Personal Email</th>
+                    <th>First Installment Paid</th>
+                    <th>Office Email</th>
+                    <th>Course Amount</th>
+                    <th>Paid</th>
+                    <th>Pending</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trainee in trainees %}
+                    <tr>
+                        <td>{{ trainee.full_name }}</td>
+                        <td>{{ trainee.personal_mail }}</td>
+                        <td>
+                            {% if trainee.first_installment_paid %}
+                                <span class="status-paid">Yes</span>
+                            {% else %}
+                                <span class="status-pending">No</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ trainee.office_mail|default:"-" }}</td>
+                        <td>₹50,000</td>
+                        <td>₹25,000</td>
+                        <td>₹25,000</td>
+                        <td><span class="status-pending">Pending</span></td>
+                        <td>
+                            {% if not trainee.first_installment_paid %}
+                                <form method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="mark_installment">
+                                    <input type="hidden" name="trainee_id" value="{{ trainee.id }}">
+                                    <button type="submit" class="btn-primary">Mark First Installment Paid</button>
+                                </form>
+                            {% elif not trainee.office_mail %}
+                                <form method="post" style="display: flex; align-items: center;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="create_office_email">
+                                    <input type="hidden" name="trainee_id" value="{{ trainee.id }}">
+                                    <input type="email" name="office_email" placeholder="e.g., rahul@company.com" required class="email-input">
+                                    <button type="submit" class="btn-success">Create Office Email</button>
+                                </form>
+                            {% else %}
+                                <span class="status-paid">Done</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="9" style="text-align: center; color: var(--icon-color); padding: 40px;">No trainees found</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

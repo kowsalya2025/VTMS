@@ -1,0 +1,195 @@
+{% extends 'core/base_admin.html' %}
+
+{% block page_title %}Batch Management{% endblock %}
+
+{% block admin_content %}
+<style>
+    .page-subtitle {
+        font-size: 14px;
+        color: var(--icon-color);
+        margin-bottom: 24px;
+    }
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    .search-bar {
+        display: flex;
+        align-items: center;
+        background-color: #f0f0f0;
+        padding: 8px 16px;
+        border-radius: 6px;
+        gap: 8px;
+    }
+    .search-bar input {
+        border: none;
+        background: transparent;
+        outline: none;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        padding: 0;
+        margin: 0;
+    }
+    .btn-add {
+        background-color: var(--secondary);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 14px;
+        font-family: 'Inter', sans-serif;
+    }
+    .table-wrapper {
+        overflow-x: auto;
+        width: 100%;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    th {
+        background-color: #fafafa;
+        font-weight: 600;
+        color: var(--text-color);
+        font-family: 'Poppins', sans-serif;
+        font-size: 13px;
+    }
+    td {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+    }
+    .status-upcoming {
+        color: var(--secondary);
+        background-color: var(--accent-light-orange);
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .status-active {
+        color: var(--accent-green);
+        background-color: var(--accent-light-green);
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .status-completed {
+        color: #666;
+        background-color: #e0e7ff;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .actions-cell {
+        display: flex;
+        gap: 8px;
+    }
+    .action-btn {
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+    .action-btn.view {
+        background-color: var(--accent-light-orange);
+        color: var(--secondary);
+    }
+    .action-btn.edit {
+        background-color: var(--accent-light-purple);
+        color: var(--primary);
+    }
+    .action-btn.delete {
+        background-color: var(--accent-light-red);
+        color: var(--accent-red);
+    }
+</style>
+
+<h2>Batch Management</h2>
+<p class="page-subtitle">Manage training batches and assignments</p>
+
+<div class="card">
+    <div class="card-header">
+        <h3 style="font-family: 'Poppins', sans-serif; font-size: 16px; margin: 0;">All Batches</h3>
+        <div class="search-bar">
+            <i class="fas fa-search" style="color: var(--icon-color);"></i>
+            <input type="text" placeholder="Search batches">
+        </div>
+        <a href="{% url 'batch_add' %}" class="btn-add">+ Create New Batch</a>
+    </div>
+    
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Batch Name</th>
+                    <th>Course</th>
+                    <th>Trainer</th>
+                    <th>Duration</th>
+                    <th>Start On</th>
+                    <th>End</th>
+                    <th>Students</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for batch in batches %}
+                <tr>
+                    <td>{{ batch.batch_name }}</td>
+                    <td>{{ batch.course.title|default:'-' }}</td>
+                    <td>{{ batch.trainer.full_name|default:'-' }}</td>
+                    <td>{{ batch.duration }}</td>
+                    <td>{{ batch.start_date|date:"d/m/Y" }}</td>
+                    <td>{{ batch.end_date|date:"d/m/Y" }}</td>
+                    <td>{{ batch.trainees.count }}</td>
+                    <td>
+                        {% if batch.status == 'Active' %}
+                            <span class="status-active">Active</span>
+                        {% elif batch.status == 'Completed' %}
+                            <span class="status-completed">Completed</span>
+                        {% else %}
+                            <span class="status-upcoming">Upcoming</span>
+                        {% endif %}
+                    </td>
+                    <td class="actions-cell">
+                        <a href="{% url 'batch_detail' batch.id %}" class="action-btn view"><i class="fas fa-eye"></i></a>
+                        <a href="{% url 'batch_edit' batch.id %}" class="action-btn edit"><i class="fas fa-edit"></i></a>
+                        <a href="{% url 'batch_delete' batch.id %}" class="action-btn delete" onclick="return confirm('Are you sure you want to delete this batch?')"><i class="fas fa-trash"></i></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 40px; color: var(--icon-color);">No batches found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

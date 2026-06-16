@@ -1,0 +1,230 @@
+{% extends 'core/base_business.html' %}
+
+{% block page_title %}Document Verification{% endblock %}
+
+{% block business_content %}
+<style>
+    .filter-section {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+    
+    .search-box {
+        flex: 1;
+        min-width: 250px;
+        position: relative;
+    }
+    
+    .search-box input {
+        width: 100%;
+        padding: 12px 16px 12px 44px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-family: var(--font-inter);
+        font-size: 14px;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--icon-color);
+    }
+    
+    .filter-select {
+        padding: 12px 16px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-family: var(--font-inter);
+        font-size: 14px;
+        min-width: 180px;
+    }
+    
+    .table-wrapper {
+        overflow-x: auto;
+        width: 100%;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    thead {
+        background: #f8f9fc;
+    }
+    
+    th {
+        padding: 16px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--text-color);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    td {
+        padding: 16px;
+        border-bottom: 1px solid #eee;
+        font-size: 14px;
+        color: var(--text-color);
+    }
+    
+    tr:hover {
+        background: #f8f9fc;
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    .status-verified {
+        background: var(--accent-green-light);
+        color: var(--accent-green);
+    }
+    
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .status-rejected {
+        background: var(--accent-red-light);
+        color: var(--accent-red);
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .action-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: var(--font-inter);
+    }
+    
+    .btn-view {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .btn-verify {
+        background: var(--accent-green);
+        color: white;
+    }
+    
+    .btn-edit {
+        background: var(--secondary);
+        color: white;
+    }
+</style>
+
+<div class="filter-section">
+    <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search by candidate name...">
+    </div>
+    <select class="filter-select">
+        <option>All Status</option>
+        <option>Verified</option>
+        <option>Pending</option>
+        <option>Rejected</option>
+    </select>
+</div>
+
+<div class="card" style="padding: 0; overflow: hidden;">
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Candidate Name</th>
+                    <th>Document Type</th>
+                    <th>Submitted Date</th>
+                    <th>Verification Date</th>
+                    <th>Verified By</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Arun Kumar</td>
+                    <td>Aadhaar Card</td>
+                    <td>10-06-2026</td>
+                    <td>10-06-2026</td>
+                    <td>Business Team</td>
+                    <td><span class="status-badge status-verified">Verified</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn btn-view">View</button>
+                            <button class="action-btn btn-edit">Edit</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Priya Sharma</td>
+                    <td>10th Marksheet</td>
+                    <td>11-06-2026</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td><span class="status-badge status-pending">Pending</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn btn-view">View</button>
+                            <button class="action-btn btn-verify">Verify</button>
+                            <button class="action-btn btn-edit">Edit</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Rahul Verma</td>
+                    <td>12th Marksheet</td>
+                    <td>09-06-2026</td>
+                    <td>09-06-2026</td>
+                    <td>Business Team</td>
+                    <td><span class="status-badge status-verified">Verified</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn btn-view">View</button>
+                            <button class="action-btn btn-edit">Edit</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Ananya Patel</td>
+                    <td>Graduation Certificate</td>
+                    <td>08-06-2026</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td><span class="status-badge status-rejected">Rejected</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn btn-view">View</button>
+                            <button class="action-btn btn-edit">Edit</button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

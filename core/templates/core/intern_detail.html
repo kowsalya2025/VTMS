@@ -1,0 +1,156 @@
+{% extends 'core/base_admin.html' %}
+
+{% block page_title %}{{ intern.full_name }} - Details{% endblock %}
+
+{% block admin_content %}
+<style>
+    .page-header {
+        margin-bottom: 32px;
+    }
+    .back-btn {
+        color: var(--primary);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 16px;
+    }
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    .btn-edit {
+        background-color: var(--secondary);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 14px;
+    }
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+    .detail-section {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .detail-section h4 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 15px;
+        margin-bottom: 20px;
+        color: var(--text-color);
+    }
+    .detail-row {
+        margin-bottom: 16px;
+    }
+    .detail-row label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--icon-color);
+        display: block;
+        margin-bottom: 4px;
+    }
+    .detail-row p {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-color);
+    }
+    .status-active {
+        color: var(--accent-green);
+        background-color: var(--accent-light-green);
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .status-completed {
+        color: #666;
+        background-color: #e0e7ff;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+</style>
+
+<div class="page-header">
+    <a href="{% url 'intern_list' %}" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+        Back
+    </a>
+    <h2>{{ intern.full_name }}</h2>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 style="font-family: 'Poppins', sans-serif; font-size: 16px; margin: 0;">Intern Details</h3>
+        <a href="{% url 'intern_edit' intern.id %}" class="btn-edit">Edit Intern</a>
+    </div>
+    
+    <div class="detail-grid">
+        <div class="detail-section">
+            <h4><i class="fas fa-user-circle"></i> Personal Info</h4>
+            <div class="detail-row">
+                <label>Full Name</label>
+                <p>{{ intern.full_name }}</p>
+            </div>
+            <div class="detail-row">
+                <label>Personal Mail</label>
+                <p>{{ intern.personal_mail }}</p>
+            </div>
+            <div class="detail-row">
+                <label>Office Mail</label>
+                <p>{{ intern.office_mail or '-' }}</p>
+            </div>
+            <div class="detail-row">
+                <label>Phone No</label>
+                <p>{{ intern.phone_no }}</p>
+            </div>
+            <div class="detail-row">
+                <label>Gender</label>
+                <p>{{ intern.gender }}</p>
+            </div>
+        </div>
+        
+        <div class="detail-section">
+            <h4><i class="fas fa-briefcase"></i> Internship Details</h4>
+            <div class="detail-row">
+                <label>Role</label>
+                <p>{{ intern.role }}</p>
+            </div>
+            <div class="detail-row">
+                <label>Internship Period</label>
+                <p>{{ intern.internship_period }}</p>
+            </div>
+            <div class="detail-row">
+                <label>Trainer</label>
+                <p>{{ intern.trainer.full_name if intern.trainer else '-' }}</p>
+            </div>
+            <div class="detail-row">
+                <label>Status</label>
+                {% if intern.status == 'Active' %}
+                    <span class="status-active">{{ intern.status }}</span>
+                {% else %}
+                    <span class="status-completed">{{ intern.status }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

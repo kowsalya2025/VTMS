@@ -1,0 +1,397 @@
+{% extends 'core/base_admin.html' %}
+
+{% block page_title %}Batch Management{% endblock %}
+
+{% block admin_content %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+    .btn-group-header {
+        display: flex;
+        gap: 12px;
+    }
+    .btn-outline {
+        padding: 10px 24px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: white;
+        color: var(--text-color);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .btn-primary {
+        padding: 10px 24px;
+        border: none;
+        border-radius: 8px;
+        background: var(--secondary);
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+    .grid-2-equal {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-top: 24px;
+    }
+    .card {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .card-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 15px;
+        color: var(--text-color);
+        margin-bottom: 20px;
+    }
+    .card-title i {
+        background: #f0f0f0;
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+    }
+    .detail-item {
+        margin-bottom: 12px;
+        font-size: 14px;
+        color: var(--text-color);
+    }
+    .detail-item strong {
+        display: inline-block;
+        width: 120px;
+        color: #666;
+    }
+    .trainer-profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .trainer-profile img {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        object-fit: cover;
+    }
+    .trainer-info h4 {
+        margin: 0 0 4px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 16px;
+    }
+    .trainer-info p {
+        margin: 0;
+        font-size: 13px;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .trainer-meta {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 12px;
+        font-size: 13px;
+        color: #666;
+    }
+    .trainer-meta .assigned {
+        color: var(--secondary);
+        font-weight: 500;
+    }
+    .comm-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .comm-btn {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .comm-btn.email {
+        background: var(--secondary);
+        color: white;
+    }
+    .comm-btn.whatsapp {
+        background: #25D366;
+        color: white;
+    }
+    .table-wrapper {
+        overflow-x: auto;
+        width: 100%;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    th {
+        font-weight: 600;
+        color: var(--text-color);
+        font-family: 'Poppins', sans-serif;
+        font-size: 13px;
+        background: #fafafa;
+    }
+    td {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+    }
+    .status-paid {
+        color: var(--accent-green);
+        font-weight: 500;
+    }
+    .status-pending {
+        color: var(--accent-red);
+        font-weight: 500;
+    }
+    .status-active {
+        background: var(--accent-light-green);
+        color: var(--accent-green);
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .status-dropout {
+        background: var(--accent-light-red);
+        color: var(--accent-red);
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .action-btn {
+        padding: 4px 8px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        color: var(--icon-color);
+    }
+    .progress-section {
+        margin-bottom: 16px;
+    }
+    .progress-section label {
+        font-size: 14px;
+        display: block;
+        margin-bottom: 6px;
+        color: var(--text-color);
+    }
+    .progress-bar {
+        height: 12px;
+        background: #ddd;
+        border-radius: 6px;
+        overflow: hidden;
+        display: flex;
+    }
+    .progress-fill {
+        height: 100%;
+        border-radius: 6px;
+    }
+    .progress-fill.green {
+        background: var(--accent-green);
+    }
+    .progress-fill.blue {
+        background: var(--primary);
+    }
+    .progress-fill.red {
+        background: var(--accent-red);
+    }
+    .progress-value {
+        font-size: 14px;
+        font-weight: 600;
+        margin-left: 8px;
+        flex-shrink: 0;
+        min-width: 35px;
+    }
+    .report-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 14px;
+        color: var(--text-color);
+    }
+    .report-status {
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .report-status.submitted {
+        background: var(--accent-light-green);
+        color: var(--accent-green);
+    }
+    .report-status.pending {
+        background: var(--accent-light-orange);
+        color: var(--secondary);
+    }
+</style>
+
+<div class="page-header">
+    <a href="{% url 'batch_list' %}" class="btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+    <div class="btn-group-header">
+        <button class="btn-outline"><i class="fas fa-calendar-alt"></i> View Calender</button>
+        <button class="btn-primary"><i class="fas fa-exchange-alt"></i> Change Trainer</button>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h3 class="card-title"><i class="fas fa-id-card"></i> Batch Information</h3>
+        <div class="detail-item"><strong>Batch Name:</strong> {{ batch.batch_name }}</div>
+        <div class="detail-item"><strong>Course:</strong> {{ batch.course.title|default:"-" }}</div>
+        <div class="detail-item"><strong>Trainer:</strong> {{ batch.trainer.full_name|default:"-" }}</div>
+        <div class="detail-item"><strong>Start Date:</strong> {{ batch.start_date|date:"d/m/Y" }}</div>
+        <div class="detail-item"><strong>End Date:</strong> {{ batch.end_date|date:"d/m/Y" }}</div>
+        <div class="detail-item"><strong>Duration:</strong> {{ batch.duration|default:"-" }}</div>
+        <div class="detail-item"><strong>Timing:</strong> {{ batch.timing_start|time:"g:i A" }} - {{ batch.timing_end|time:"g:i A" }}</div>
+        <div class="detail-item"><strong>Days:</strong> {{ batch.days|default:"-" }}</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        <div class="card">
+            <h3 class="card-title"><i class="fas fa-id-card"></i> Trainer Details</h3>
+            {% if batch.trainer %}
+            <div class="trainer-profile">
+                <img src="https://ui-avatars.com/api/?name={{ batch.trainer.full_name|urlencode }}&background=3B2E7E&color=fff&size=240" alt="{{ batch.trainer.full_name }}">
+                <div class="trainer-info">
+                    <h4>{{ batch.trainer.full_name }}</h4>
+                    <p><i class="fas fa-envelope"></i> {{ batch.trainer.office_mail }}</p>
+                </div>
+            </div>
+            <div class="trainer-meta">
+                <span>Experience: 2 years</span>
+                <span class="assigned">Assigned Batches: {{ batch.trainer.batches.count }}</span>
+            </div>
+            {% else %}
+            <p>No trainer assigned</p>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <h3 class="card-title"><i class="fas fa-id-card"></i> Communication</h3>
+            <div class="comm-buttons">
+                <button class="comm-btn email"><i class="fas fa-envelope"></i> Email</button>
+                <button class="comm-btn whatsapp"><i class="fab fa-whatsapp"></i> Whatsapp</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3 class="card-title"><i class="fas fa-id-card"></i> Trainees</h3>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Personal Mail</th>
+                    <th>Office Mail</th>
+                    <th>Phone No</th>
+                    <th>Fees</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trainee in batch.trainees.all %}
+                <tr>
+                    <td>{{ trainee.full_name }}</td>
+                    <td>{{ trainee.personal_mail }}</td>
+                    <td>{{ trainee.office_mail|default:"-" }}</td>
+                    <td>{{ trainee.phone_no }}</td>
+                    <td class="status-paid">Paid</td>
+                    <td>
+                        {% if trainee.status == 'Active' %}
+                        <span class="status-active">Active</span>
+                        {% else %}
+                        <span class="status-dropout">Dropout</span>
+                        {% endif %}
+                    </td>
+                    <td><button class="action-btn"><i class="fas fa-eye"></i></button></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--icon-color);">No trainees in this batch</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="grid-2-equal">
+    <div class="card">
+        <h3 class="card-title"><i class="fas fa-id-card"></i> Attendance Overview</h3>
+        <div class="progress-section">
+            <label>Average Attendance</label>
+            <div class="progress-bar">
+                <div class="progress-fill blue" style="width: 80%;"></div>
+                <span class="progress-value">80%</span>
+            </div>
+        </div>
+        <div class="progress-section">
+            <label>Present Today</label>
+            <div class="progress-bar">
+                <div class="progress-fill green" style="width: 90%;"></div>
+                <span class="progress-value">18</span>
+            </div>
+        </div>
+        <div class="progress-section">
+            <label>Absent Today</label>
+            <div class="progress-bar">
+                <div class="progress-fill red" style="width: 10%;"></div>
+                <span class="progress-value">2</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 class="card-title"><i class="fas fa-id-card"></i> Report Summary</h3>
+        <div class="report-item">
+            <span>Daily Report</span>
+            <span class="report-status submitted">Submitted</span>
+        </div>
+        <div class="report-item">
+            <span>Weekly Reports</span>
+            <span class="report-status submitted">Submitted</span>
+        </div>
+        <div class="report-item">
+            <span>Monthly Report</span>
+            <span class="report-status pending">Pending</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

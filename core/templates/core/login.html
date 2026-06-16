@@ -1,0 +1,226 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    body {
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+    .login-container {
+        width: 90%;
+        max-width: 1200px;
+        position: relative;
+        display: flex;
+        gap: 40px;
+        align-items: center;
+        padding-top: 80px;
+    }
+    .logo-section {
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .logo-section img {
+        height: auto;
+        max-height: 80px;
+        width: auto;
+    }
+    .login-left {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .login-image {
+        width: 100%;
+        border-radius: 12px;
+        max-width: 600px;
+    }
+    .login-right {
+        flex: 1;
+        background: white;
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .login-right h2 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 20px;
+        color: #2b2b2b;
+        margin: 0 0 8px 0;
+    }
+    .login-right .subtext {
+        color: #6b6b6b;
+        font-size: 13px;
+        margin-bottom: 32px;
+        font-family: 'Inter', sans-serif;
+    }
+    .role-selector {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 28px;
+    }
+    .role-btn {
+        flex: 1;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 14px 12px;
+        font-size: 14px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
+        color: #2b2b2b;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .role-btn.active {
+        border-color: #3b2e7e;
+        color: #3b2e7e;
+        background: #f8f7fb;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #2b2b2b;
+        margin-bottom: 8px;
+        font-family: 'Inter', sans-serif;
+    }
+    .form-group input {
+        width: 100%;
+        padding: 14px 16px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: 'Inter', sans-serif;
+        background: #f0f0f0;
+        box-sizing: border-box;
+    }
+    .password-input {
+        position: relative;
+    }
+    .password-input input {
+        padding-right: 44px;
+    }
+    .password-input .toggle-icon {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #6b6b6b;
+    }
+    .forgot-password {
+        text-align: right;
+        margin-bottom: 28px;
+    }
+    .forgot-password a {
+        color: #5239d2;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        font-family: 'Inter', sans-serif;
+    }
+    .login-btn {
+        width: 100%;
+        background: #ffa726;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 14px;
+        font-size: 15px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+        transition: all 0.2s;
+    }
+    .login-btn:hover {
+        background: #e6951f;
+    }
+</style>
+
+<div class="login-container">
+    <div class="login-left">
+        <div class="logo-section">
+            <img src="{% static 'core/images/vtmslogo.png' %}" alt="VTMS Logo">
+        </div>
+        <img src="{% static 'core/images/vtmslogin.png' %}" alt="Login Illustration" class="login-image">
+    </div>
+    <div class="login-right">
+        <h2>Welcome Back!</h2>
+        <p class="subtext">You will be signed out of your account and need to log in again to access the dashboard</p>
+        
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div style="text-align: center; margin-bottom: 24px; font-family: 'Poppins', sans-serif; font-weight: 600; color: #2b2b2b;">
+                Login Us a
+            </div>
+            
+            <div class="role-selector">
+                <div class="role-btn active" onclick="selectRole('ADMIN', this)">Admin</div>
+                <div class="role-btn" onclick="selectRole('TRAINER', this)">Trainer</div>
+                <div class="role-btn" onclick="selectRole('BUSINESS_TEAM', this)">Business Team</div>
+            </div>
+            <input type="hidden" name="role" id="role-input" value="ADMIN">
+            
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="email" name="email" placeholder="Enter Email Id">
+            </div>
+            
+            <div class="form-group">
+                <label>Password</label>
+                <div class="password-input">
+                    <input type="password" id="password" name="password" placeholder="Enter Password">
+                    <i class="fas fa-eye-slash toggle-icon" onclick="togglePassword()"></i>
+                </div>
+            </div>
+            
+            <div class="forgot-password">
+                <a href="#">Forgot Password ?</a>
+            </div>
+            
+            <button type="submit" class="login-btn">Login</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function selectRole(role, element) {
+        document.getElementById('role-input').value = role;
+        
+        let buttons = document.querySelectorAll('.role-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        
+        element.classList.add('active');
+    }
+    
+    function togglePassword() {
+        let passwordInput = document.getElementById('password');
+        let toggleIcon = document.querySelector('.toggle-icon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        }
+    }
+</script>
+{% endblock %}

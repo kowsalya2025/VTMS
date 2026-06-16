@@ -1,0 +1,332 @@
+{% extends 'core/base_trainer.html' %}
+
+{% block page_title %}Trainer Dashboard{% endblock %}
+
+{% block trainer_content %}
+<style>
+    .welcome-text {
+        font-size: 14px;
+        color: var(--icon-color);
+        margin-bottom: 24px;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 24px;
+        margin-bottom: 30px;
+    }
+    .stat-card {
+        background-color: var(--white);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid #eee;
+    }
+    .stat-card.success {
+        border-left: 4px solid var(--accent-green);
+    }
+    .stat-card.warning {
+        border-left: 4px solid var(--secondary);
+    }
+    .stat-card.danger {
+        border-left: 4px solid var(--accent-red);
+    }
+    .stat-card.purple {
+        border-left: 4px solid var(--primary);
+    }
+    .stat-left h3 {
+        font-size: 28px;
+        color: var(--text-color);
+        margin: 0;
+        font-family: 'Poppins', sans-serif;
+    }
+    .stat-left p {
+        font-size: 14px;
+        color: var(--icon-color);
+        margin: 4px 0 0 0;
+        font-family: 'Inter', sans-serif;
+    }
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+    .stat-icon.purple {
+        background-color: var(--accent-light-purple);
+        color: var(--primary);
+    }
+    .stat-icon.green {
+        background-color: var(--accent-light-green);
+        color: var(--accent-green);
+    }
+    .stat-icon.orange {
+        background-color: var(--accent-light-orange);
+        color: var(--secondary);
+    }
+    .stat-icon.red {
+        background-color: var(--accent-light-red);
+        color: var(--accent-red);
+    }
+    .dashboard-sections {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+    .section-card {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .section-card h3 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 16px;
+        margin: 0 0 20px 0;
+        color: var(--text-color);
+    }
+    .btn-group {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        background: white;
+        color: var(--text-color);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .btn.active {
+        background-color: var(--secondary);
+        color: white;
+        border-color: var(--secondary);
+    }
+    .btn-primary {
+        background-color: var(--secondary);
+        color: white;
+        border: none;
+    }
+    .quick-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .progress-card {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+    .progress-item {
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        padding: 16px;
+    }
+    .progress-item h4 {
+        font-size: 14px;
+        margin: 0 0 12px 0;
+        color: var(--text-color);
+        font-family: 'Poppins', sans-serif;
+    }
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background-color: #e0e0e0;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 8px;
+    }
+    .progress-fill {
+        height: 100%;
+        background-color: var(--primary);
+        border-radius: 4px;
+    }
+    .progress-item p {
+        font-size: 13px;
+        margin: 0;
+        color: var(--icon-color);
+    }
+    .report-status {
+        margin-bottom: 16px;
+    }
+    .status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+    }
+    .status-item:last-child {
+        border-bottom: none;
+    }
+    .status-label {
+        font-size: 14px;
+        color: var(--text-color);
+    }
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .status-badge.pending {
+        background-color: var(--accent-light-orange);
+        color: var(--secondary);
+    }
+    .status-badge.approved {
+        background-color: var(--accent-light-green);
+        color: var(--accent-green);
+    }
+    .status-badge.completed {
+        background-color: var(--accent-light-purple);
+        color: var(--primary);
+    }
+    .recent-activities {
+        margin-top: 20px;
+    }
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
+    }
+    .activity-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: var(--primary);
+    }
+    .activity-content {
+        flex: 1;
+    }
+    .activity-content p {
+        margin: 0;
+        font-size: 14px;
+        color: var(--text-color);
+    }
+    .activity-content span {
+        font-size: 12px;
+        color: var(--icon-color);
+    }
+</style>
+
+<p class="welcome-text">Welcome back! Here's what's happening today</p>
+
+<div class="stats-grid">
+    <div class="stat-card purple">
+        <div class="stat-left">
+            <h3>3</h3>
+            <p>My Batches</p>
+        </div>
+        <div class="stat-icon purple"><i class="fas fa-layer-group"></i></div>
+    </div>
+    <div class="stat-card success">
+        <div class="stat-left">
+            <h3>45</h3>
+            <p>Active Trainees</p>
+        </div>
+        <div class="stat-icon green"><i class="fas fa-user-graduate"></i></div>
+    </div>
+    <div class="stat-card warning">
+        <div class="stat-left">
+            <h3>12</h3>
+            <p>Pending Tasks</p>
+        </div>
+        <div class="stat-icon orange"><i class="fas fa-tasks"></i></div>
+    </div>
+    <div class="stat-card danger">
+        <div class="stat-left">
+            <h3>2</h3>
+            <p>Reports Due</p>
+        </div>
+        <div class="stat-icon red"><i class="fas fa-file-alt"></i></div>
+    </div>
+</div>
+
+<div class="dashboard-sections">
+    <div class="section-card">
+        <div class="quick-actions">
+            <div class="btn-group">
+                <button class="btn active">Today's Schedule</button>
+                <button class="btn">Upcoming</button>
+                <button class="btn">Overview</button>
+            </div>
+            <button class="btn btn-primary">Add Task</button>
+        </div>
+        
+        <div class="progress-card">
+            <div class="progress-item">
+                <h4>Progress</h4>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 70%;"></div>
+                </div>
+                <p>70% completed</p>
+            </div>
+            <div class="progress-item">
+                <h4>Total Task</h4>
+                <p>Completed: 4</p>
+                <p>Incomplete: 1</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section-card">
+        <h3>Reports Status</h3>
+        <div class="report-status">
+            <div class="status-item">
+                <span class="status-label">Daily Report</span>
+                <span class="status-badge pending">Pending</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Weekly Report</span>
+                <span class="status-badge approved">Approved</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Monthly Report</span>
+                <span class="status-badge completed">Completed</span>
+            </div>
+        </div>
+        <a href="#" class="btn btn-primary">Submit Reports</a>
+    </div>
+</div>
+
+<div class="section-card" style="margin-top: 24px;">
+    <h3>Recent Activities</h3>
+    <div class="recent-activities">
+        <div class="activity-item">
+            <div class="activity-dot"></div>
+            <div class="activity-content">
+                <p>New trainee enrolled</p>
+                <span>2 hours ago</span>
+            </div>
+        </div>
+        <div class="activity-item">
+            <div class="activity-dot"></div>
+            <div class="activity-content">
+                <p>Batch completed</p>
+                <span>8 hours ago</span>
+            </div>
+        </div>
+        <div class="activity-item">
+            <div class="activity-dot"></div>
+            <div class="activity-content">
+                <p>Payment received</p>
+                <span>1 day ago</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

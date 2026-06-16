@@ -1,0 +1,308 @@
+{% extends 'core/base_admin.html' %}
+
+{% block page_title %}Trainee Management{% endblock %}
+
+{% block admin_content %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+    .btn-outline {
+        padding: 10px 24px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: white;
+        color: var(--text-color);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+    .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+    .card {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    .card-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 15px;
+        color: var(--text-color);
+        margin-bottom: 20px;
+    }
+    .card-title i {
+        background: #f0f0f0;
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+    }
+    .detail-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        font-size: 14px;
+        color: var(--text-color);
+    }
+    .detail-row label {
+        font-weight: 600;
+        color: var(--text-color);
+    }
+    .stat-label {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 10px;
+    }
+    .progress-bar-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .progress-bar {
+        flex: 1;
+        height: 12px;
+        background: #e0e0e0;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    .progress-fill {
+        height: 100%;
+        border-radius: 6px;
+    }
+    .progress-fill.green { background: var(--accent-green); }
+    .progress-fill.purple { background: var(--primary); }
+    .progress-fill.orange { background: var(--secondary); }
+    .progress-value {
+        font-weight: 600;
+        color: var(--text-color);
+    }
+    .table-wrapper {
+        overflow-x: auto;
+        width: 100%;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    th {
+        font-weight: 600;
+        color: var(--text-color);
+        font-family: 'Poppins', sans-serif;
+        font-size: 13px;
+        background: #fafafa;
+    }
+    td {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+    }
+    .status-verified {
+        background: var(--accent-light-green);
+        color: var(--accent-green);
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none;
+        background: #f0f0f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-color);
+    }
+    .action-btn.eye { background: var(--accent-light-orange); color: var(--secondary); }
+    .action-btn.mail { background: var(--accent-light-purple); color: var(--primary); }
+    .action-btn.whatsapp { background: var(--accent-light-green); color: var(--accent-green); }
+    .action-btn.download { background: #e0e0e0; color: var(--text-color); }
+    .circle-chart {
+        width: 120px;
+        height: 120px;
+    }
+    .circle-chart-bg { fill: none; stroke: #e0e0e0; stroke-width: 10; }
+    .circle-chart-fill {
+        fill: none;
+        stroke: var(--accent-green);
+        stroke-width: 10;
+        stroke-linecap: round;
+        transform: rotate(-90deg);
+        transform-origin: center;
+        stroke-dasharray: 314;
+        stroke-dashoffset: 16; /* 95% of 314 */
+    }
+    .chart-text {
+        text-align: center;
+        margin-top: -85px;
+        font-family: 'Poppins', sans-serif;
+    }
+    .chart-percent { font-size: 24px; font-weight: 700; color: var(--accent-green); }
+    .chart-label { font-size: 12px; color: #666; margin-top: 4px; }
+    .chart-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    .chart-details { font-size: 14px; color: #666; }
+</style>
+
+<div class="page-header">
+    <h2>Trainee Management</h2>
+    <a href="{% url 'trainee_list' %}" class="btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h3 class="card-title"><i class="fas fa-user-circle"></i> Personal Info</h3>
+        <div class="detail-row"><label>Name:</label><span>{{ trainee.full_name }}</span></div>
+        <div class="detail-row"><i class="fas fa-envelope"></i><label>Personal mail:</label><span>{{ trainee.personal_mail }}</span></div>
+        <div class="detail-row"><i class="fas fa-envelope"></i><label>Office mail:</label><span>{{ trainee.office_mail|default:'-' }}</span></div>
+        <div class="detail-row"><i class="fas fa-phone"></i><label>Phone no:</label><span>{{ trainee.phone_no }}</span></div>
+        <div class="detail-row"><label>Status:</label><span class="status-verified">Active</span></div>
+        <div class="detail-row"><label>Fess:</label><span class="status-verified">Paid</span></div>
+    </div>
+    <div class="card">
+        <h3 class="card-title"><i class="fas fa-id-card"></i> Batch Information</h3>
+        <div class="detail-row"><label>Batch Name:</label><span>{{ trainee.batch.batch_name|default:'-' }}</span></div>
+        <div class="detail-row"><label>Course:</label><span>{{ trainee.course.title|default:'-' }}</span></div>
+        <div class="detail-row"><label>Trainer:</label><span>{{ trainee.trainer.full_name|default:'-' }}</span></div>
+        <div class="detail-row"><label>Start Date:</label><span>{{ trainee.batch.start_date|date:'d/m/Y'|default:'-' }}</span></div>
+        <div class="detail-row"><label>End Date:</label><span>{{ trainee.batch.end_date|date:'d/m/Y'|default:'-' }}</span></div>
+        <div class="detail-row"><label>Duration:</label><span>{{ trainee.batch.duration|default:'-' }}</span></div>
+        <div class="detail-row"><label>Timing:</label><span>{{ trainee.batch.timing_start|time:'g:i A' }} - {{ trainee.batch.timing_end|time:'g:i A'|default:'-' }}</span></div>
+        <div class="detail-row"><label>Days:</label><span>{{ trainee.batch.days|default:'-' }}</span></div>
+    </div>
+</div>
+
+<div class="grid-3">
+    <div class="card">
+        <h3 class="card-title"><i class="fas fa-calendar-check"></i> Attendance</h3>
+        <div class="chart-wrapper">
+            <svg class="circle-chart" viewBox="0 0 120 120">
+                <circle class="circle-chart-bg" cx="60" cy="60" r="50"></circle>
+                <circle class="circle-chart-fill" cx="60" cy="60" r="50"></circle>
+            </svg>
+            <div class="chart-text">
+                <div class="chart-percent">95%</div>
+                <div class="chart-label">Days Present</div>
+            </div>
+            <div class="chart-details">29/30 Days</div>
+        </div>
+    </div>
+    <div class="card">
+        <h3 class="card-title"><i class="fas fa-chart-bar"></i> Performance</h3>
+        <div class="stat-label">Overall Grade: A</div>
+        <div class="progress-bar-container">
+            <div class="progress-bar">
+                <div class="progress-fill purple" style="width: 88%;"></div>
+            </div>
+            <span class="progress-value">Test Score: 88%</span>
+        </div>
+    </div>
+    <div class="card">
+        <h3 class="card-title"><i class="fas fa-tasks"></i> Task & Project Completion</h3>
+        <div class="progress-bar-container" style="margin-bottom: 10px;">
+            <div class="progress-bar">
+                <div class="progress-fill orange" style="width: 95%;"></div>
+            </div>
+            <span class="progress-value">Daily Task Completion: 95%</span>
+        </div>
+        <div class="progress-bar-container" style="margin-bottom: 10px;">
+            <div class="progress-bar">
+                <div class="progress-fill purple" style="width: 88%;"></div>
+            </div>
+            <span class="progress-value">Mini Project Completion: 88%</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar">
+                <div class="progress-fill purple" style="width: 90%;"></div>
+            </div>
+            <span class="progress-value">Project Completion: 90%</span>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3 class="card-title"><i class="fas fa-id-card"></i> Documents</h3>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>File</th>
+                    <th>Size</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Aadhar Card</td>
+                    <td>10/02/2026</td>
+                    <td>Rajesh_aadhar.pdf</td>
+                    <td>50MB</td>
+                    <td><span class="status-verified">Verified</span></td>
+                    <td class="action-buttons">
+                        <button class="action-btn eye"><i class="fas fa-eye"></i></button>
+                        <button class="action-btn mail"><i class="fas fa-envelope"></i></button>
+                        <button class="action-btn whatsapp"><i class="fab fa-whatsapp"></i></button>
+                        <button class="action-btn download"><i class="fas fa-download"></i></button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Photo 2</td>
+                    <td>10/02/2026</td>
+                    <td>Ra_img1.png Ra_img2.png</td>
+                    <td>25KB</td>
+                    <td><span class="status-verified">Verified</span></td>
+                    <td class="action-buttons">
+                        <button class="action-btn eye"><i class="fas fa-eye"></i></button>
+                        <button class="action-btn mail"><i class="fas fa-envelope"></i></button>
+                        <button class="action-btn whatsapp"><i class="fab fa-whatsapp"></i></button>
+                        <button class="action-btn download"><i class="fas fa-download"></i></button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
