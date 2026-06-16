@@ -6,14 +6,35 @@ from django.utils import timezone
 
 def login_view(request):
     if request.method == 'POST':
-        role = request.POST.get('role')
-        # For testing purposes, directly redirect to selected dashboard without authentication
-        if role == 'ADMIN':
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        role = request.POST.get('role', '').strip()
+
+        if not email or not password or not role:
+            messages.error(request, 'Please fill in email, password, and role.')
+            return render(request, 'core/login.html')
+
+        user = authenticate(request, email=email, password=password)
+
+        if user is None:
+            messages.error(request, 'Invalid email or password.')
+            return render(request, 'core/login.html')
+
+        if user.role != role:
+            messages.error(request, 'Selected role does not match this account.')
+            return render(request, 'core/login.html')
+
+        login(request, user)
+
+        if role == User.Role.ADMIN:
             return redirect('admin_dashboard')
-        elif role == 'TRAINER':
+        if role == User.Role.TRAINER:
             return redirect('trainer_dashboard')
-        else:
+        if role == User.Role.BUSINESS_TEAM:
             return redirect('business_dashboard')
+
+        messages.error(request, 'This role does not have a dashboard.')
+        return render(request, 'core/login.html')
 
     return render(request, 'core/login.html')
 
@@ -62,7 +83,9 @@ def trainer_add(request):
         # Create user first
         user = User.objects.create_user(
             email=request.POST['office_mail'],
-            role=User.Role.TRAINER
+            password=request.POST['phone_no'],
+            role=User.Role.TRAINER,
+            phone_no=request.POST['phone_no'],
         )
         # Create trainer
         trainer = Trainer.objects.create(
@@ -79,7 +102,7 @@ def trainer_add(request):
         if request.FILES.get('profile_image'):
             trainer.profile_image = request.FILES['profile_image']
         trainer.save()
-        messages.success(request, 'New Trainer Added Successfully')
+        messages.success(request, 'New Trainer Added Successfully. Initial password is the phone number.')
         return redirect('trainer_list')
     
     courses = Course.objects.all()
@@ -98,6 +121,9 @@ def trainer_edit(request, pk):
             trainer.course = Course.objects.get(id=request.POST['course'])
         if request.FILES.get('profile_image'):
             trainer.profile_image = request.FILES['profile_image']
+        trainer.user.email = request.POST['office_mail']
+        trainer.user.phone_no = request.POST['phone_no']
+        trainer.user.save()
         trainer.save()
         messages.success(request, 'Trainer Updated Successfully')
         return redirect('trainer_list')
@@ -204,7 +230,9 @@ def trainee_add(request):
         # Create user
         user = User.objects.create_user(
             email=request.POST['personal_mail'],
-            role=User.Role.TRAINEE
+            password=request.POST['phone_no'],
+            role=User.Role.TRAINEE,
+            phone_no=request.POST['phone_no'],
         )
         # Create trainee
         trainee = Trainee.objects.create(
@@ -227,7 +255,7 @@ def trainee_add(request):
         if request.POST.get('trainer'):
             trainee.trainer = Trainer.objects.get(id=request.POST['trainer'])
         trainee.save()
-        messages.success(request, 'Trainee added successfully!')
+        messages.success(request, 'Trainee added successfully! Initial password is the phone number.')
         return redirect('trainee_list')
     courses = Course.objects.all()
     batches = Batch.objects.all()
@@ -261,6 +289,9 @@ def trainee_edit(request, pk):
         if request.POST.get('trainer'):
             trainee.trainer = Trainer.objects.get(id=request.POST['trainer'])
         
+        trainee.user.email = request.POST['personal_mail']
+        trainee.user.phone_no = request.POST['phone_no']
+        trainee.user.save()
         trainee.save()
         messages.success(request, 'Trainee updated successfully!')
         return redirect('trainee_list')
@@ -287,7 +318,9 @@ def intern_add(request):
     if request.method == 'POST':
         user = User.objects.create_user(
             email=request.POST['personal_mail'],
-            role=User.Role.INTERN
+            password=request.POST['phone_no'],
+            role=User.Role.INTERN,
+            phone_no=request.POST['phone_no'],
         )
         intern = Intern.objects.create(
             user=user,
@@ -302,7 +335,7 @@ def intern_add(request):
         if request.POST.get('trainer'):
             intern.trainer = Trainer.objects.get(id=request.POST['trainer'])
         intern.save()
-        messages.success(request, 'Intern added successfully!')
+        messages.success(request, 'Intern added successfully! Initial password is the phone number.')
         return redirect('intern_list')
     trainers = Trainer.objects.filter(status='Active')
     return render(request, 'core/intern_form.html', {'trainers': trainers})
@@ -325,6 +358,9 @@ def intern_edit(request, pk):
         intern.status = request.POST['status']
         if request.POST.get('trainer'):
             intern.trainer = Trainer.objects.get(id=request.POST['trainer'])
+        intern.user.email = request.POST['personal_mail']
+        intern.user.phone_no = request.POST['phone_no']
+        intern.user.save()
         intern.save()
         messages.success(request, 'Intern updated successfully!')
         return redirect('intern_list')
