@@ -1,332 +1,454 @@
 {% extends 'core/base_trainer.html' %}
 
-{% block page_title %}Trainer Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
 
 {% block trainer_content %}
 <style>
     .welcome-text {
-        font-size: 14px;
-        color: var(--icon-color);
-        margin-bottom: 24px;
+        font-size: 16px;
+        color: #333;
+        margin-bottom: 20px;
+        font-weight: 500;
     }
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 24px;
-        margin-bottom: 30px;
+        margin-bottom: 24px;
     }
     .stat-card {
-        background-color: var(--white);
-        border-radius: 12px;
+        background: #fff;
+        border-radius: 8px;
         padding: 24px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        border: 1px solid #eee;
+        border: 1px solid #e5e7eb;
+        border-left: 4px solid;
     }
-    .stat-card.success {
-        border-left: 4px solid var(--accent-green);
-    }
-    .stat-card.warning {
-        border-left: 4px solid var(--secondary);
-    }
-    .stat-card.danger {
-        border-left: 4px solid var(--accent-red);
-    }
-    .stat-card.purple {
-        border-left: 4px solid var(--primary);
-    }
+    .stat-card.assigned { border-left-color: #F59E0B; }
+    .stat-card.trainees { border-left-color: #10B981; }
+    .stat-card.reports { border-left-color: #EF4444; }
     .stat-left h3 {
-        font-size: 28px;
-        color: var(--text-color);
-        margin: 0;
-        font-family: 'Poppins', sans-serif;
+        font-size: 32px;
+        margin: 0 0 4px;
+        font-weight: 700;
+        color: #333;
     }
+    .stat-card.assigned h3 { color: #F59E0B; }
+    .stat-card.trainees h3 { color: #10B981; }
+    .stat-card.reports h3 { color: #EF4444; }
     .stat-left p {
+        margin: 0;
         font-size: 14px;
-        color: var(--icon-color);
-        margin: 4px 0 0 0;
-        font-family: 'Inter', sans-serif;
+        color: #666;
+        font-weight: 500;
+    }
+    .stat-left .stat-subtext {
+        font-size: 12px;
+        color: #EF4444;
+        margin-top: 4px;
     }
     .stat-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
+        width: 56px;
+        height: 56px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 24px;
     }
-    .stat-icon.purple {
-        background-color: var(--accent-light-purple);
-        color: var(--primary);
+    .stat-card.assigned .stat-icon { background-color: #FFF7ED; color: #F59E0B; }
+    .stat-card.trainees .stat-icon { background-color: #ECFDF5; color: #10B981; }
+    .stat-card.reports .stat-icon { background-color: #FEE2E2; color: #EF4444; }
+    .btn-group {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 24px;
     }
-    .stat-icon.green {
-        background-color: var(--accent-light-green);
-        color: var(--accent-green);
-    }
-    .stat-icon.orange {
-        background-color: var(--accent-light-orange);
-        color: var(--secondary);
-    }
-    .stat-icon.red {
-        background-color: var(--accent-light-red);
-        color: var(--accent-red);
+    .btn-primary {
+        padding: 10px 28px;
+        border-radius: 8px;
+        border: none;
+        background: #F59E0B;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
     }
     .dashboard-sections {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 24px;
+        margin-bottom: 24px;
     }
     .section-card {
         background: white;
         padding: 24px;
         border-radius: 12px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border: 1px solid #e5e7eb;
     }
     .section-card h3 {
-        font-family: 'Poppins', sans-serif;
         font-size: 16px;
-        margin: 0 0 20px 0;
-        color: var(--text-color);
-    }
-    .btn-group {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-    }
-    .btn {
-        padding: 8px 16px;
-        border-radius: 6px;
-        border: 1px solid #ddd;
-        background: white;
-        color: var(--text-color);
-        font-size: 14px;
+        margin: 0 0 20px;
+        color: #333;
         font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
     }
-    .btn.active {
-        background-color: var(--secondary);
-        color: white;
-        border-color: var(--secondary);
+    .section-card.border-blue {
+        border: 2px solid #3B82F6;
     }
-    .btn-primary {
-        background-color: var(--secondary);
-        color: white;
-        border: none;
-    }
-    .quick-actions {
+    .schedule-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        padding: 8px 0;
     }
-    .progress-card {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 24px;
+    .schedule-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
-    .progress-item {
-        background-color: #f9f9f9;
-        border-radius: 8px;
-        padding: 16px;
+    .schedule-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
     }
-    .progress-item h4 {
-        font-size: 14px;
-        margin: 0 0 12px 0;
-        color: var(--text-color);
-        font-family: 'Poppins', sans-serif;
-    }
-    .progress-bar {
-        width: 100%;
-        height: 8px;
-        background-color: #e0e0e0;
-        border-radius: 4px;
-        overflow: hidden;
-        margin-bottom: 8px;
-    }
-    .progress-fill {
-        height: 100%;
-        background-color: var(--primary);
-        border-radius: 4px;
-    }
-    .progress-item p {
-        font-size: 13px;
+    .schedule-dot.green { background-color: #10B981; }
+    .schedule-dot.blue { background-color: #4F46E5; }
+    .schedule-label p {
         margin: 0;
-        color: var(--icon-color);
+        font-size: 14px;
+        color: #333;
+        font-weight: 500;
     }
-    .report-status {
-        margin-bottom: 16px;
+    .schedule-label span {
+        font-size: 12px;
+        color: #666;
+        display: block;
     }
-    .status-item {
+    .schedule-time {
+        font-size: 12px;
+        color: #666;
+    }
+    .batch-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+    }
+    .batch-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .batch-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #4F46E5;
+    }
+    .batch-label p {
+        margin: 0;
+        font-size: 14px;
+        color: #333;
+        font-weight: 500;
+    }
+    .batch-label span {
+        font-size: 12px;
+        color: #666;
+        display: block;
+    }
+    .view-btn {
+        padding: 8px 28px;
+        border-radius: 8px;
+        border: none;
+        background: #F59E0B;
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .report-status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+    }
+    .report-status-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .report-status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+    .report-status-dot.orange { background-color: #F59E0B; }
+    .report-status-dot.green { background-color: #10B981; }
+    .report-status-label p {
+        margin: 0;
+        font-size: 14px;
+        color: #333;
+        font-weight: 500;
+    }
+    .report-status-label span {
+        font-size: 12px;
+        color: #666;
+        display: block;
+    }
+    .report-status-badge {
+        font-size: 12px;
+        color: #666;
+    }
+    .intern-overview-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 0;
+    }
+    .intern-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #4F46E5;
+    }
+    .intern-dot.green { background-color: #10B981; }
+    .intern-dot.purple { background-color: #8B5CF6; }
+    .intern-overview-item p {
+        margin: 0;
+        font-size: 14px;
+        color: #333;
+        font-weight: 500;
+    }
+    .activity-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 10px 0;
-        border-bottom: 1px solid #eee;
     }
-    .status-item:last-child {
-        border-bottom: none;
-    }
-    .status-label {
-        font-size: 14px;
-        color: var(--text-color);
-    }
-    .status-badge {
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-    .status-badge.pending {
-        background-color: var(--accent-light-orange);
-        color: var(--secondary);
-    }
-    .status-badge.approved {
-        background-color: var(--accent-light-green);
-        color: var(--accent-green);
-    }
-    .status-badge.completed {
-        background-color: var(--accent-light-purple);
-        color: var(--primary);
-    }
-    .recent-activities {
-        margin-top: 20px;
-    }
-    .activity-item {
+    .activity-label {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 12px 0;
-        border-bottom: 1px solid #eee;
+        gap: 8px;
     }
     .activity-dot {
         width: 12px;
         height: 12px;
         border-radius: 50%;
-        background-color: var(--primary);
+        background-color: #4F46E5;
     }
-    .activity-content {
-        flex: 1;
-    }
-    .activity-content p {
+    .activity-label p {
         margin: 0;
         font-size: 14px;
-        color: var(--text-color);
+        color: #333;
+        font-weight: 500;
     }
-    .activity-content span {
+    .activity-label span {
         font-size: 12px;
-        color: var(--icon-color);
+        color: #666;
+        display: block;
+    }
+    .activity-time {
+        font-size: 12px;
+        color: #666;
+    }
+    .actions-row {
+        margin-top: 20px;
+        text-align: right;
     }
 </style>
 
-<p class="welcome-text">Welcome back! Here's what's happening today</p>
+<p class="welcome-text">Welcome back! {% if trainer %}{{ trainer.name }}{% else %}Priya Sharma{% endif %}.</p>
+
+
 
 <div class="stats-grid">
-    <div class="stat-card purple">
+    <div class="stat-card assigned">
         <div class="stat-left">
-            <h3>3</h3>
-            <p>My Batches</p>
+            <p>Assigned Batches</p>
+            <h3>{{ assigned_batches }}</h3>
         </div>
-        <div class="stat-icon purple"><i class="fas fa-layer-group"></i></div>
+        <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
     </div>
-    <div class="stat-card success">
+    <div class="stat-card trainees">
         <div class="stat-left">
-            <h3>45</h3>
-            <p>Active Trainees</p>
+            <p>Total Trainees</p>
+            <h3>{{ total_trainees }}</h3>
         </div>
-        <div class="stat-icon green"><i class="fas fa-user-graduate"></i></div>
+        <div class="stat-icon"><i class="fas fa-user-graduate"></i></div>
     </div>
-    <div class="stat-card warning">
+    <div class="stat-card reports">
         <div class="stat-left">
-            <h3>12</h3>
-            <p>Pending Tasks</p>
+            <p>Pending Reports</p>
+            <h3>{{ pending_reports }}</h3>
+            <p class="stat-subtext">+5% from last month</p>
         </div>
-        <div class="stat-icon orange"><i class="fas fa-tasks"></i></div>
+        <div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div>
     </div>
-    <div class="stat-card danger">
-        <div class="stat-left">
-            <h3>2</h3>
-            <p>Reports Due</p>
-        </div>
-        <div class="stat-icon red"><i class="fas fa-file-alt"></i></div>
-    </div>
+</div>
+
+
+<div class="btn-group">
+    <a href="{% url 'trainer_tasks' %}" class="btn-primary">Assign Project</a>
+    <a href="{% url 'trainer_weekly_reports' %}" class="btn-primary">Create Report</a>
 </div>
 
 <div class="dashboard-sections">
     <div class="section-card">
-        <div class="quick-actions">
-            <div class="btn-group">
-                <button class="btn active">Today's Schedule</button>
-                <button class="btn">Upcoming</button>
-                <button class="btn">Overview</button>
-            </div>
-            <button class="btn btn-primary">Add Task</button>
-        </div>
-        
-        <div class="progress-card">
-            <div class="progress-item">
-                <h4>Progress</h4>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 70%;"></div>
+        <h3>Today's Schedule</h3>
+        <div class="schedule-item">
+            <div class="schedule-label">
+                <div class="schedule-dot green"></div>
+                <div>
+                    <p>UI/UX Batch</p>
+                    <span>UI/UX Batch</span>
                 </div>
-                <p>70% completed</p>
             </div>
-            <div class="progress-item">
-                <h4>Total Task</h4>
-                <p>Completed: 4</p>
-                <p>Incomplete: 1</p>
+            <span class="schedule-time">Ongoing</span>
+        </div>
+        <div class="schedule-item">
+            <div class="schedule-label">
+                <div class="schedule-dot blue"></div>
+                <div>
+                    <p>Full Stack Batch</p>
+                </div>
             </div>
+            <span class="schedule-time">Upcoming<br>2:00 PM</span>
         </div>
     </div>
     
     <div class="section-card">
-        <h3>Reports Status</h3>
-        <div class="report-status">
-            <div class="status-item">
-                <span class="status-label">Daily Report</span>
-                <span class="status-badge pending">Pending</span>
+        <h3>Active Batches</h3>
+        {% if active_batches %}
+            {% for batch in active_batches %}
+            <div class="batch-item">
+                <div class="batch-label">
+                    <div class="batch-dot"></div>
+                    <div>
+                        <p>{{ batch.name }}</p>
+                        <span>{{ batch.trainee_set.count }} Trainees</span>
+                    </div>
+                </div>
             </div>
-            <div class="status-item">
-                <span class="status-label">Weekly Report</span>
-                <span class="status-badge approved">Approved</span>
-            </div>
-            <div class="status-item">
-                <span class="status-label">Monthly Report</span>
-                <span class="status-badge completed">Completed</span>
+            {% endfor %}
+        {% else %}
+        <div class="batch-item">
+            <div class="batch-label">
+                <div class="batch-dot"></div>
+                <div>
+                    <p>UI/UX Batch</p>
+                    <span>15 Trainees</span>
+                </div>
             </div>
         </div>
-        <a href="#" class="btn btn-primary">Submit Reports</a>
+        <div class="batch-item">
+            <div class="batch-label">
+                <div class="batch-dot"></div>
+                <div>
+                    <p>Full Stack Batch</p>
+                    <span>10 Trainees</span>
+                </div>
+            </div>
+        </div>
+        <div class="batch-item">
+            <div class="batch-label">
+                <div class="batch-dot"></div>
+                <div>
+                    <p>Python Batch</p>
+                    <span>12 Trainees</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <div class="actions-row">
+            <a href="{% url 'trainer_batch_list' %}" class="view-btn">View Batches</a>
+        </div>
     </div>
 </div>
 
-<div class="section-card" style="margin-top: 24px;">
+<div class="dashboard-sections">
+    <div class="section-card border-blue">
+        <h3>Reports Status</h3>
+        <div class="report-status-item">
+            <div class="report-status-label">
+                <div class="report-status-dot orange"></div>
+                <div>
+                    <p>Daily Report:</p>
+                    <span>UI/UX Batch</span>
+                </div>
+            </div>
+            <span class="report-status-badge">Pending</span>
+        </div>
+        <div class="report-status-item">
+            <div class="report-status-label">
+                <div class="report-status-dot green"></div>
+                <div>
+                    <p>Weekly Report:</p>
+                </div>
+            </div>
+            <span class="report-status-badge">Submitted<br>2:00 PM</span>
+        </div>
+        <div class="actions-row">
+            <a href="{% url 'trainer_weekly_reports' %}" class="view-btn">Submit Report</a>
+        </div>
+    </div>
+    
+    <div class="section-card">
+        <h3>Intern Overview</h3>
+        <div class="intern-overview-item">
+            <div class="intern-dot"></div>
+            <p>Total Interns: {{ total_interns|default:"6" }}</p>
+        </div>
+        <div class="intern-overview-item">
+            <div class="intern-dot green"></div>
+            <p>Active: {{ active_interns|default:"5" }}</p>
+        </div>
+        <div class="intern-overview-item">
+            <div class="intern-dot purple"></div>
+            <p>Completed: {{ completed_interns|default:"1" }}</p>
+        </div>
+        <div class="actions-row">
+            <a href="#" class="view-btn">View Interns</a>
+        </div>
+    </div>
+</div>
+
+<div class="section-card">
     <h3>Recent Activities</h3>
-    <div class="recent-activities">
-        <div class="activity-item">
+    <div class="activity-item">
+        <div class="activity-label">
             <div class="activity-dot"></div>
-            <div class="activity-content">
-                <p>New trainee enrolled</p>
-                <span>2 hours ago</span>
+            <div>
+                <p>Report submitted</p>
+                <span>Daily Report - March 23</span>
             </div>
         </div>
-        <div class="activity-item">
+        <span class="activity-time">2 hours ago</span>
+    </div>
+    <div class="activity-item">
+        <div class="activity-label">
             <div class="activity-dot"></div>
-            <div class="activity-content">
-                <p>Batch completed</p>
-                <span>8 hours ago</span>
+            <div>
+                <p>Mini-Project assigned</p>
+                <span>Python Batch 6</span>
             </div>
         </div>
-        <div class="activity-item">
+        <span class="activity-time">5 hours ago</span>
+    </div>
+    <div class="activity-item">
+        <div class="activity-label">
             <div class="activity-dot"></div>
-            <div class="activity-content">
-                <p>Payment received</p>
-                <span>1 day ago</span>
+            <div>
+                <p>Progress updated</p>
+                <span>Kavya Nair - 60%</span>
             </div>
         </div>
+        <span class="activity-time">1 day ago</span>
     </div>
 </div>
 {% endblock %}

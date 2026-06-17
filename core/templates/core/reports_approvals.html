@@ -1,290 +1,394 @@
-{% extends 'core/base_business.html' %}
+{% extends 'core/base_admin.html' %}
 
-{% block page_title %}Reports{% endblock %}
+{% block page_title %}Reports & Approvals{% endblock %}
 
-{% block business_content %}
+{% block admin_content %}
 <style>
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
+    .page-header {
+        margin-bottom: 32px;
+    }
+    .section-title {
+        font-size: 16px;
+        color: var(--text-color);
+        margin-bottom: 16px;
+        font-weight: 500;
+    }
+    .tabs-container {
+        background-color: #e9ecef;
+        border-radius: 8px;
+        padding: 4px;
+        display: inline-flex;
+        gap: 4px;
         margin-bottom: 24px;
     }
-    
-    .stat-card {
-        background: linear-gradient(135deg, var(--primary), #5a4aa3);
+    .tab-btn {
+        padding: 8px 24px;
+        border: none;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text-color);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .tab-btn.active {
+        background-color: var(--secondary);
         color: white;
+    }
+    .card {
+        background-color: var(--white);
         border-radius: 12px;
         padding: 24px;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .stat-card.orange {
-        background: linear-gradient(135deg, var(--secondary), #ffb74d);
-    }
-    
-    .stat-card.green {
-        background: linear-gradient(135deg, var(--accent-green), #4ade80);
-    }
-    
-    .stat-card.red {
-        background: linear-gradient(135deg, var(--accent-red), #f87171);
-    }
-    
-    .stat-number {
-        font-size: 36px;
-        font-weight: 700;
-        margin: 8px 0;
-    }
-    
-    .stat-label {
-        font-size: 14px;
-        opacity: 0.9;
-    }
-    
-    .filter-section {
-        display: flex;
-        gap: 16px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
         margin-bottom: 24px;
-        flex-wrap: wrap;
     }
-    
-    .search-box {
-        flex: 1;
-        min-width: 250px;
-        position: relative;
-    }
-    
-    .search-box input {
-        width: 100%;
-        padding: 12px 16px 12px 44px;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        font-family: var(--font-inter);
-        font-size: 14px;
-    }
-    
-    .search-box i {
-        position: absolute;
-        left: 16px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--icon-color);
-    }
-    
-    .filter-select {
-        padding: 12px 16px;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        font-family: var(--font-inter);
-        font-size: 14px;
-        min-width: 180px;
-    }
-    
     .table-wrapper {
         overflow-x: auto;
-        width: 100%;
     }
-    
     table {
         width: 100%;
         border-collapse: collapse;
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
     }
-    
-    thead {
-        background: #f8f9fc;
-    }
-    
     th {
-        padding: 16px;
         text-align: left;
-        font-weight: 600;
+        padding: 12px 16px;
         font-size: 13px;
-        color: var(--text-color);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    td {
-        padding: 16px;
+        font-weight: 500;
+        color: #666;
         border-bottom: 1px solid #eee;
+    }
+    td {
+        padding: 12px 16px;
         font-size: 14px;
         color: var(--text-color);
+        border-bottom: 1px solid #eee;
     }
-    
-    tr:hover {
-        background: #f8f9fc;
-    }
-    
     .status-badge {
         display: inline-flex;
         align-items: center;
         gap: 6px;
         padding: 6px 12px;
-        border-radius: 20px;
+        border-radius: 6px;
         font-size: 12px;
         font-weight: 500;
     }
-    
-    .status-approved {
-        background: var(--accent-green-light);
-        color: var(--accent-green);
-    }
-    
     .status-pending {
-        background: #fef3c7;
-        color: #92400e;
+        background: #ffeedd;
+        color: #d97706;
     }
-    
+    .status-approved {
+        background: #dcfce7;
+        color: #16a34a;
+    }
     .status-rejected {
-        background: var(--accent-red-light);
-        color: var(--accent-red);
+        background: #fee2e2;
+        color: #dc2626;
     }
-    
     .action-buttons {
         display: flex;
         gap: 8px;
     }
-    
     .action-btn {
-        padding: 8px 16px;
+        padding: 4px 8px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-size: 14px;
+        color: var(--text-color);
+    }
+    .action-btn.approve {
+        color: #16a34a;
+    }
+    .action-btn.reject {
+        color: #dc2626;
+    }
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+    .detail-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    .detail-item {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    .detail-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+    .detail-icon.gray {
+        background-color: #e9ecef;
+        color: #666;
+    }
+    .detail-icon.orange {
+        background-color: #ffeedd;
+        color: #d97706;
+    }
+    .detail-icon.green {
+        background-color: #dcfce7;
+        color: #16a34a;
+    }
+    .detail-label {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 4px;
+    }
+    .detail-value {
+        font-size: 14px;
+        font-weight: 500;
+    }
+    .back-btn {
+        color: var(--text-color);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 24px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: white;
+    }
+    .action-section .btn-approve {
+        width: 100%;
+        padding: 12px 24px;
         border: none;
         border-radius: 6px;
-        font-size: 13px;
-        font-weight: 500;
+        background-color: var(--secondary);
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s;
-        font-family: var(--font-inter);
+        margin-bottom: 12px;
     }
-    
-    .btn-view {
-        background: var(--primary);
+    .action-section .btn-reject {
+        width: 100%;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        background-color: #dc2626;
         color: white;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
     }
-    
-    .btn-approve {
-        background: var(--accent-green);
-        color: white;
+    .attachment-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-bottom: 8px;
     }
-    
-    .btn-reject {
-        background: var(--accent-red);
-        color: white;
+    .attachment-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
-    
-    .btn-download {
-        background: var(--secondary);
-        color: white;
+    .attachment-icon {
+        color: #666;
+    }
+    .attachment-name {
+        font-size: 14px;
+    }
+    .attachment-download {
+        color: var(--secondary);
+        text-decoration: none;
     }
 </style>
 
-<div class="stats-grid">
-    <div class="stat-card">
-        <i class="fas fa-file-alt"></i>
-        <div class="stat-number">156</div>
-        <div class="stat-label">Total Reports</div>
+{% if view_mode == 'detail' and report %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h3>Weekly Report</h3>
+        <a href="{% url 'reports_approvals' %}" class="back-btn">Back</a>
     </div>
-    <div class="stat-card.orange">
-        <i class="fas fa-clock"></i>
-        <div class="stat-number">42</div>
-        <div class="stat-label">Pending Approval</div>
-    </div>
-    <div class="stat-card.green">
-        <i class="fas fa-check-circle"></i>
-        <div class="stat-number">98</div>
-        <div class="stat-label">Approved</div>
-    </div>
-    <div class="stat-card.red">
-        <i class="fas fa-times-circle"></i>
-        <div class="stat-number">16</div>
-        <div class="stat-label">Rejected</div>
-    </div>
-</div>
 
-<div class="filter-section">
-    <div class="search-box">
-        <i class="fas fa-search"></i>
-        <input type="text" placeholder="Search by report name...">
-    </div>
-    <select class="filter-select">
-        <option>All Report Types</option>
-        <option>Daily Report</option>
-        <option>Weekly Report</option>
-        <option>Monthly Report</option>
-    </select>
-    <select class="filter-select">
-        <option>All Status</option>
-        <option>Approved</option>
-        <option>Pending</option>
-        <option>Rejected</option>
-    </select>
-</div>
+    <div class="detail-grid">
+        <div class="card">
+            <h4 style="margin-bottom: 16px;">Report Information</h4>
+            <div class="detail-section">
+                <div class="detail-item">
+                    <div class="detail-icon gray">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <div class="detail-label">Trainer</div>
+                        <div class="detail-value">{{ report.trainer.full_name }}</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon orange">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <div class="detail-label">Batch</div>
+                        <div class="detail-value">{{ report.batch.batch_name }}</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon gray">
+                        <i class="fas fa-calendar"></i>
+                    </div>
+                    <div>
+                        <div class="detail-label">Report Date</div>
+                        <div class="detail-value">{{ report.date|date:"F d, Y" }}</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon green">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div>
+                        <div class="detail-label">Submitted At</div>
+                        <div class="detail-value">{{ report.submitted_at|date:"F d, Y" }} {{ report.submitted_at|time:"g:i A" }}</div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <span style="font-size: 14px;">Status: </span>
+                <span class="status-badge {% if report.status == 'Approved' or report.status == 'Business Team Approved' %}status-approved{% elif report.status == 'Rejected' %}status-rejected{% else %}status-pending{% endif %}">
+                    {{ report.status }}
+                </span>
+            </div>
+        </div>
 
-<div class="card" style="padding: 0; overflow: hidden;">
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>Report Name</th>
-                    <th>Report Type</th>
-                    <th>Batch</th>
-                    <th>Submitted By</th>
-                    <th>Submitted Date</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Daily Report June 15</td>
-                    <td>Daily Report</td>
-                    <td>Batch 1</td>
-                    <td>Suresh (Trainer)</td>
-                    <td>15-06-2026</td>
-                    <td><span class="status-badge status-pending">Pending</span></td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="action-btn btn-view">View</button>
-                            <button class="action-btn btn-approve">Approve</button>
-                            <button class="action-btn btn-reject">Reject</button>
-                            <button class="action-btn btn-download">Download</button>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Weekly Report Week 24</td>
-                    <td>Weekly Report</td>
-                    <td>Batch 2</td>
-                    <td>Priya (Trainer)</td>
-                    <td>14-06-2026</td>
-                    <td><span class="status-badge status-approved">Approved</span></td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="action-btn btn-view">View</button>
-                            <button class="action-btn btn-download">Download</button>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Monthly Report May 2026</td>
-                    <td>Monthly Report</td>
-                    <td>Batch 3</td>
-                    <td>Ramesh (Trainer)</td>
-                    <td>31-05-2026</td>
-                    <td><span class="status-badge status-rejected">Rejected</span></td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="action-btn btn-view">View</button>
-                            <button class="action-btn btn-download">Download</button>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="card action-section">
+            <h4 style="margin-bottom: 16px;">Action</h4>
+            {% if report.status == 'Pending' %}
+                <form method="POST" action="{% url 'reports_approvals' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="report_id" value="{{ report.id }}">
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="btn-approve"><i class="fas fa-check"></i> Approve</button>
+                </form>
+                <form method="POST" action="{% url 'reports_approvals' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="report_id" value="{{ report.id }}">
+                    <input type="hidden" name="action" value="reject">
+                    <button type="submit" class="btn-reject"><i class="fas fa-times"></i> Reject</button>
+                </form>
+            {% endif %}
+        </div>
     </div>
-</div>
+
+    <div class="detail-grid">
+        <div class="card">
+            <h4 style="margin-bottom: 16px;">Mail Preview</h4>
+            <div style="font-size: 14px; line-height: 1.6;">
+                <p><strong>To:</strong> Business Team, Admin</p>
+                <p><strong>Subject:</strong> Week {{ report.date|date:"W" }} ({{ report.date|date:"M d" }})</p>
+                <p><strong>Preview:</strong> {{ report.content|default:"No content available." }}</p>
+            </div>
+        </div>
+        <div class="card">
+            <h4 style="margin-bottom: 16px;">Attachment</h4>
+            <div class="attachment-item">
+                <div class="attachment-info">
+                    <i class="fas fa-file-alt attachment-icon"></i>
+                    <span class="attachment-name">attendance_sheet.xlsx</span>
+                </div>
+                <a href="#" class="attachment-download"><i class="fas fa-download"></i></a>
+            </div>
+            <div class="attachment-item">
+                <div class="attachment-info">
+                    <i class="fas fa-file-alt attachment-icon"></i>
+                    <span class="attachment-name">task_completion_sheet.xlsx</span>
+                </div>
+                <a href="#" class="attachment-download"><i class="fas fa-download"></i></a>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <p class="section-title">Review and approve trainer reports</p>
+
+    <div class="tabs-container">
+        <button class="tab-btn {% if active_tab == 'daily' %}active{% endif %}" onclick="switchTab('daily')">Daily Reports</button>
+        <button class="tab-btn {% if active_tab == 'weekly' or not active_tab %}active{% endif %}" onclick="switchTab('weekly')">Weekly Reports</button>
+        <button class="tab-btn {% if active_tab == 'monthly' %}active{% endif %}" onclick="switchTab('monthly')">Monthly Reports</button>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-bottom: 16px; font-size: 16px;">
+            {% if active_tab == 'daily' %}Daily Reports{% elif active_tab == 'monthly' %}Monthly Reports{% else %}Weekly Reports{% endif %}
+        </h3>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Batch</th>
+                        <th>Week</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                        <tr>
+                            <td>{{ report.trainer.full_name }}</td>
+                            <td>{{ report.batch.batch_name }}</td>
+                            <td>Week {{ report.date|date:"W" }} ({{ report.date|date:"M d" }})</td>
+                            <td>
+                                <span class="status-badge {% if report.status == 'Approved' or report.status == 'Business Team Approved' %}status-approved{% elif report.status == 'Rejected' %}status-rejected{% else %}status-pending{% endif %}">
+                                    {{ report.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{% url 'reports_approvals' %}?view=detail&id={{ report.id }}" class="action-btn view">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if report.status == 'Pending' %}
+                                        <form method="POST" action="{% url 'reports_approvals' %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="report_id" value="{{ report.id }}">
+                                            <input type="hidden" name="action" value="approve">
+                                            <button type="submit" class="action-btn approve">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{% url 'reports_approvals' %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="report_id" value="{{ report.id }}">
+                                            <input type="hidden" name="action" value="reject">
+                                            <button type="submit" class="action-btn reject">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 32px;">No reports available.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+
+<script>
+function switchTab(tab) {
+    window.location.href = '?tab=' + tab;
+}
+</script>
 {% endblock %}

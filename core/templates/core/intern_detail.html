@@ -116,7 +116,7 @@
             </div>
             <div class="detail-row">
                 <label>Office Mail</label>
-                <p>{{ intern.office_mail or '-' }}</p>
+                <p>{{ intern.office_mail|default:'-' }}</p>
             </div>
             <div class="detail-row">
                 <label>Phone No</label>
@@ -140,7 +140,11 @@
             </div>
             <div class="detail-row">
                 <label>Trainer</label>
-                <p>{{ intern.trainer.full_name if intern.trainer else '-' }}</p>
+                {% if intern.trainer %}
+                    <p>{{ intern.trainer.full_name }}</p>
+                {% else %}
+                    <p>-</p>
+                {% endif %}
             </div>
             <div class="detail-row">
                 <label>Status</label>

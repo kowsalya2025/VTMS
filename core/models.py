@@ -84,6 +84,7 @@ class Batch(models.Model):
     days = models.CharField(max_length=100) # Storing comma separated e.g. "Mon,Tue,Wed"
     
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.UPCOMING)
+    batch_file = models.FileField(upload_to='batch_files/', null=True, blank=True)
 
     def __str__(self):
         return self.batch_name
@@ -124,6 +125,19 @@ class Intern(models.Model):
     def __str__(self):
         return self.full_name
 
+
+class Message(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_messages")
+    subject = models.CharField(max_length=200)
+    preview = models.TextField(blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    avatar_color = models.CharField(max_length=20, default="#9E69FF") # hex color
+    avatar_initial = models.CharField(max_length=1)
+
+    def __str__(self):
+        return self.subject
+
 class Attendance(models.Model):
     trainee = models.ForeignKey(Trainee, on_delete=models.CASCADE, null=True, blank=True)
     intern = models.ForeignKey(Intern, on_delete=models.CASCADE, null=True, blank=True)
@@ -141,7 +155,8 @@ class Report(models.Model):
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE)
     trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE)
     date = models.DateField()
-    status = models.CharField(max_length=20, choices=[('Pending', 'Pending'), ('Done', 'Done'), ('Approved', 'Approved')], default='Pending')
+    submitted_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    status = models.CharField(max_length=30, choices=[('Pending', 'Pending'), ('Approved', 'Approved'), ('Rejected', 'Rejected'), ('Business Team Approved', 'Business Team Approved')], default='Pending')
     content = models.TextField(blank=True, null=True)
 
 class Payment(models.Model):
@@ -169,23 +184,60 @@ class SystemSetting(models.Model):
     enable_whatsapp_alerts = models.BooleanField(default=False)
     # Backup
     backup_frequency = models.CharField(max_length=50, default='Daily')
+    last_backup_date = models.DateTimeField(blank=True, null=True)
+    last_backup_status = models.CharField(max_length=50, default='Pending')
+    # Admin Permissions
+    admin_edit_batch = models.BooleanField(default=True)
+    admin_batch_course_control = models.BooleanField(default=True)
+    admin_reports_approval = models.BooleanField(default=True)
+    admin_payment_verification = models.BooleanField(default=True)
+    # Trainer Permissions
+    trainer_attendance_update = models.BooleanField(default=True)
+    trainer_task_project_update = models.BooleanField(default=True)
+    trainer_report_submission = models.BooleanField(default=True)
+    # Business Team Permissions
+    business_enquiry_check = models.BooleanField(default=True)
+    business_document_verification = models.BooleanField(default=True)
+    business_payment_handling = models.BooleanField(default=True)
+    business_batch_allocation = models.BooleanField(default=True)
+    business_reports_approval = models.BooleanField(default=True)
 
 class Task(models.Model):
-    trainee = models.ForeignKey(Trainee, on_delete=models.CASCADE, null=True, blank=True)
-    intern = models.ForeignKey(Intern, on_delete=models.CASCADE, null=True, blank=True)
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, null=True, blank=True)
     task_name = models.CharField(max_length=200)
-    total_task = models.IntegerField(default=1)
+    day = models.CharField(max_length=20, blank=True, null=True) # e.g., Day 20
+    total_task = models.IntegerField(default=30)
+    assigned_date = models.DateField(null=True, blank=True)
+    due_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=[('Pending', 'Pending'), ('Completed', 'Completed')], default='Pending')
+    assigned_to_all = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.task_name} - {self.batch.batch_name}"
+
+class TraineeTask(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='trainee_tasks')
+    trainee = models.ForeignKey(Trainee, on_delete=models.CASCADE)
     completed_task = models.IntegerField(default=0)
-    assigned_date = models.DateField()
-    submission_date = models.DateField()
-    status = models.CharField(max_length=20, choices=[('Incomplete', 'Incomplete'), ('Complete', 'Complete')], default='Incomplete')
+    submission_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=[('Incomplete', 'Incomplete'), ('Complete', 'Complete'), ('Dropout', 'Dropout')], default='Incomplete')
+    is_checked = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.trainee.full_name} - {self.task.task_name}"
 
 class Project(models.Model):
-    intern = models.ForeignKey(Intern, on_delete=models.CASCADE)
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, null=True, blank=True)
+    intern = models.ForeignKey(Intern, on_delete=models.CASCADE, null=True, blank=True)
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, null=True, blank=True)
     project_name = models.CharField(max_length=200)
-    assigned_date = models.DateField()
-    deadline = models.DateField()
+    assigned_date = models.DateField(null=True, blank=True)
+    deadline = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=[('Assigned', 'Assigned'), ('In Progress', 'In Progress'), ('Completed', 'Completed')], default='Assigned')
+
+    def __str__(self):
+        return self.project_name
 
 class Leave(models.Model):
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE)

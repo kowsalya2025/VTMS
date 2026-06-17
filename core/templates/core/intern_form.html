@@ -1,6 +1,6 @@
 {% extends 'core/base_admin.html' %}
 
-{% block page_title %}{{ 'Edit Intern' if intern else 'Add Intern' }}{% endblock %}
+{% block page_title %}{% if intern %}Edit Intern{% else %}Add Intern{% endif %}{% endblock %}
 
 {% block admin_content %}
 <style>
@@ -102,7 +102,7 @@
         <i class="fas fa-arrow-left"></i>
         Back
     </a>
-    <h2>{{ 'Edit Intern' if intern else 'Add Intern' }}</h2>
+    <h2>{% if intern %}Edit Intern{% else %}Add Intern{% endif %}</h2>
 </div>
 
 <form method="POST">
@@ -113,15 +113,15 @@
         <div class="form-row">
             <div class="form-group">
                 <label>Full Name*</label>
-                <input type="text" name="full_name" value="{{ intern.full_name if intern else '' }}" required>
+                <input type="text" name="full_name" value="{{ intern.full_name|default:'' }}" required>
             </div>
             <div class="form-group">
                 <label>Personal Mail*</label>
-                <input type="email" name="personal_mail" value="{{ intern.personal_mail if intern else '' }}" required>
+                <input type="email" name="personal_mail" value="{{ intern.personal_mail|default:'' }}" required>
             </div>
             <div class="form-group">
                 <label>Phone No*</label>
-                <input type="text" name="phone_no" value="{{ intern.phone_no if intern else '' }}" required>
+                <input type="text" name="phone_no" value="{{ intern.phone_no|default:'' }}" required>
             </div>
         </div>
         <div class="form-row">
@@ -149,27 +149,123 @@
         <div class="form-row">
             <div class="form-group">
                 <label>Role*</label>
-                <input type="text" name="role" value="{{ intern.role if intern else '' }}" required placeholder="e.g. Junior Developer">
+                <input type="text" name="role" value="{{ intern.role|default:'' }}" required placeholder="e.g. Junior Developer">
             </div>
             <div class="form-group">
                 <label>Internship Period*</label>
-                <input type="text" name="internship_period" value="{{ intern.internship_period if intern else '' }}" required placeholder="e.g. 1 Month">
+                <input type="text" name="internship_period" value="{{ intern.internship_period|default:'' }}" required placeholder="e.g. 1 Month">
             </div>
             <div class="form-group">
                 <label>Trainer</label>
                 <select name="trainer">
                     <option value="">Select Trainer</option>
                     {% for trainer in trainers %}
-                    <option value="{{ trainer.id }}" {% if intern and intern.trainer and intern.trainer.id == trainer.id %}selected{% endif %}>{{ trainer.full_name }}</option>
+                    <option value="{{ trainer.id }}" data-email="{{ trainer.office_mail }}" {% if intern and intern.trainer and intern.trainer.id == trainer.id %}selected{% endif %}>{{ trainer.full_name }}</option>
                     {% endfor %}
                 </select>
             </div>
         </div>
     </div>
     
+    <div class="section-card">
+        <h4><i class="fas fa-envelope-check"></i> Send Email</h4>
+        <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Trainer will receive a email notification</p>
+        <div class="form-group">
+            <label>From</label>
+            <input type="email" name="email_from" value="admin@vetritsystems.com" readonly style="background-color: #e9ecef;">
+        </div>
+        <div class="form-group">
+            <label>To</label>
+            <input type="text" name="email_to" placeholder="Enter Recipient name or email" id="emailTo">
+        </div>
+        <div class="form-group">
+            <label>Subject</label>
+            <input type="text" name="email_subject" id="emailSubject">
+        </div>
+        <div class="form-group">
+            <label>Preview</label>
+            <textarea name="email_preview" rows="6" id="emailPreview" style="width: 100%; padding: 10px 14px; background-color: var(--input-bg); border: 1px solid transparent; border-radius: 6px; font-size: 14px; font-family: 'Inter', sans-serif;"></textarea>
+        </div>
+    </div>
+    
     <div class="btn-group">
         <a href="{% url 'intern_list' %}" class="btn-cancel">Cancel</a>
-        <button type="submit" class="btn-submit">{{ 'Update Intern' if intern else 'Add Intern' }}</button>
+        <button type="submit" class="btn-submit">{% if intern %}Send Email & Update{% else %}Send Email & Add{% endif %}</button>
     </div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    updateEmailPreview();
+    
+    const trainerSelect = document.querySelector('select[name="trainer"]');
+    if (trainerSelect) {
+        trainerSelect.addEventListener('change', updateEmailTo);
+        updateEmailTo();
+    }
+    
+    const fullNameInput = document.querySelector('input[name="full_name"]');
+    const roleInput = document.querySelector('input[name="role"]');
+    const internshipPeriodInput = document.querySelector('input[name="internship_period"]');
+    
+    if (fullNameInput) fullNameInput.addEventListener('input', updateEmailPreview);
+    if (roleInput) roleInput.addEventListener('input', updateEmailPreview);
+    if (internshipPeriodInput) internshipPeriodInput.addEventListener('input', updateEmailPreview);
+});
+
+function updateEmailTo() {
+    const trainerSelect = document.querySelector('select[name="trainer"]');
+    const emailToInput = document.getElementById('emailTo');
+    if (trainerSelect && emailToInput) {
+        const selectedOption = trainerSelect.options[trainerSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            const trainerEmail = selectedOption.getAttribute('data-email');
+            emailToInput.value = trainerEmail || selectedOption.text;
+        } else {
+            emailToInput.value = '';
+        }
+    }
+}
+
+function updateEmailPreview() {
+    const fullName = document.querySelector('input[name="full_name"]').value;
+    const role = document.querySelector('input[name="role"]').value;
+    const internshipPeriod = document.querySelector('input[name="internship_period"]').value;
+    const subjectInput = document.getElementById('emailSubject');
+    const previewInput = document.getElementById('emailPreview');
+    
+    if (subjectInput) {
+        subjectInput.value = fullName ? `New Intern Assignment: ${fullName}` : 'New Intern Assignment';
+    }
+    
+    if (previewInput) {
+        let preview = `Dear Trainer,
+
+A new intern has been assigned under your supervision in Vetri IT System.`;
+        if (fullName) {
+            preview += `
+Intern Name: ${fullName}`;
+        }
+        if (role) {
+            preview += `
+Role: ${role}`;
+        }
+        if (internshipPeriod) {
+            preview += `
+Internship Period: ${internshipPeriod}`;
+        }
+        preview += `
+
+Please review the intern details, guide them through the onboarding process, and assign the required tasks and training activities accordingly.
+
+Kindly monitor the intern's progress regularly and provide the necessary support throughout the training period.
+
+Thank you.
+
+Regards,
+Vetri IT System`;
+        previewInput.value = preview;
+    }
+}
+</script>
 {% endblock %}

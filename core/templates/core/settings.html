@@ -4,90 +4,77 @@
 
 {% block admin_content %}
 <style>
-    .section-card {
+    .page-header {
+        margin-bottom: 24px;
+    }
+    .page-header h2 {
+        margin: 0 0 8px;
+        font-size: 20px;
+        color: #333;
+    }
+    .page-header p {
+        margin: 0;
+        color: #666;
+        font-size: 14px;
+    }
+    
+    .tabs-container {
+        background-color: #f3f4f6;
+        border-radius: 10px;
+        padding: 6px;
+        display: inline-flex;
+        gap: 6px;
+        margin-bottom: 24px;
+    }
+    .tab-btn {
+        padding: 8px 24px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: #666;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .tab-btn.active {
+        background: #F59E0B;
+        color: white;
+    }
+    
+    .card {
         background: white;
         padding: 24px;
         border-radius: 12px;
         margin-bottom: 24px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 15px rgba(0,0,0,0.08);
     }
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    .section-header h3 {
-        font-family: 'Poppins', sans-serif;
+    .card-title {
         font-size: 16px;
-        color: var(--text-color);
-        margin: 0;
-    }
-    .btn-save {
-        padding: 10px 24px;
-        border: none;
-        border-radius: 8px;
-        background: var(--secondary);
-        color: white;
-        font-size: 14px;
         font-weight: 600;
-        cursor: pointer;
-    }
-    .profile-container {
-        display: grid;
-        grid-template-columns: 200px 1fr;
-        gap: 32px;
-    }
-    .profile-avatar-wrapper {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-    .profile-avatar {
-        width: 180px;
-        height: 180px;
-        border-radius: 12px;
-        border: 3px solid var(--primary);
-        padding: 4px;
+        color: #333;
+        margin: 0 0 20px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        background: #f8f7ff;
+        gap: 10px;
     }
-    .profile-avatar img {
-        width: 100%;
-        height: 100%;
+    .card-title i {
+        width: 32px;
+        height: 32px;
         border-radius: 8px;
-        object-fit: cover;
-    }
-    .upload-btn {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: var(--secondary);
-        border: none;
-        color: white;
+        background: #f3f4f6;
+        color: #F59E0B;
         display: flex;
         align-items: center;
         justify-content: center;
-        cursor: pointer;
-        position: absolute;
-        bottom: 0;
-        right: 0;
+        font-size: 14px;
     }
-    .avatar-wrapper {
-        position: relative;
-        display: inline-block;
-    }
-    .join-date {
-        font-size: 13px;
-        color: #666;
-        margin-top: 8px;
-    }
-    .profile-details-grid {
+    
+    .form-row {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr 1fr;
         gap: 24px;
+        margin-bottom: 20px;
     }
     .form-group {
         display: flex;
@@ -97,184 +84,416 @@
     .form-group label {
         font-size: 13px;
         font-weight: 500;
-        color: var(--text-color);
+        color: #444;
     }
-    .form-group input, .form-group select {
-        padding: 10px 14px;
-        background: #f0f0f0;
+    .form-group input {
+        padding: 12px 16px;
         border: none;
-        border-radius: 6px;
+        background: #f3f4f6;
+        border-radius: 8px;
         font-size: 14px;
-        font-family: 'Inter', sans-serif;
+        color: #333;
     }
-    .section-title {
-        font-family: 'Poppins', sans-serif;
-        font-size: 15px;
-        color: var(--text-color);
+    .form-group select {
+        padding: 12px 16px;
+        border: none;
+        background: #f3f4f6;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #333;
+    }
+    
+    .toggle-row {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-bottom: 16px;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
     }
-    .section-title i {
-        background: #f0f0f0;
-        width: 30px;
-        height: 30px;
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--primary);
-    }
-    .detail-row {
-        display: flex;
-        gap: 8px;
+    .toggle-label {
         font-size: 14px;
-        color: var(--text-color);
-        margin-bottom: 8px;
+        color: #333;
+        font-weight: 500;
     }
-    .detail-row label {
-        width: 130px;
-        color: #666;
-        flex-shrink: 0;
+    .toggle-switch {
+        width: 44px;
+        height: 24px;
+        background: #ddd;
+        border-radius: 12px;
+        position: relative;
+        cursor: pointer;
+        transition: background 0.3s;
     }
-    .people-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 24px;
+    .toggle-switch.active {
+        background: #22c55e;
     }
-    .person-card {
-        display: flex;
-        gap: 16px;
+    .toggle-switch::before {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        transition: transform 0.3s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .toggle-switch.active::before {
+        transform: translateX(20px);
+    }
+    
+    .backup-info {
+        background: #e0e7ff;
+        border-left: 4px solid #4f46e5;
         padding: 16px;
-        border: 1px solid #eee;
+        border-radius: 0 8px 8px 0;
+        margin-bottom: 24px;
+    }
+    .backup-info h5 {
+        margin: 0 0 4px;
+        font-size: 14px;
+        color: #4f46e5;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .backup-info p {
+        margin: 0;
+        font-size: 12px;
+        color: #666;
+    }
+    
+    .backup-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .backup-btn {
+        padding: 16px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s;
+    }
+    .backup-btn:hover {
+        border-color: #F59E0B;
+        background: #fffbeb;
+    }
+    .backup-btn i {
+        font-size: 20px;
+        margin-bottom: 8px;
+        color: #666;
+    }
+    .backup-btn h5 {
+        margin: 0 0 4px;
+        font-size: 14px;
+        color: #333;
+    }
+    .backup-btn p {
+        margin: 0;
+        font-size: 12px;
+        color: #666;
+    }
+    
+    .warning-box {
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        padding: 16px;
         border-radius: 8px;
     }
-    .person-avatar {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: var(--primary);
-        color: white;
+    .warning-box h5 {
+        margin: 0 0 8px;
+        font-size: 13px;
+        color: #d97706;
         display: flex;
         align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        font-weight: 600;
-        flex-shrink: 0;
+        gap: 8px;
     }
-    .person-avatar.teal {
-        background: #4DB6AC;
-    }
-    .person-info {
-        flex: 1;
-    }
-    .person-info h4 {
-        margin: 0 0 4px;
-        font-family: 'Poppins', sans-serif;
-        font-size: 14px;
-    }
-    .person-info p {
-        margin: 2px 0;
-        font-size: 13px;
+    .warning-box ul {
+        margin: 0;
+        padding-left: 20px;
+        font-size: 12px;
         color: #666;
     }
-    .view-profile-btn {
-        margin-top: 8px;
-        padding: 6px 16px;
-        background: var(--secondary);
+    .warning-box li {
+        margin-bottom: 4px;
+    }
+    
+    .save-btn {
+        background: #F59E0B;
         color: white;
         border: none;
-        border-radius: 6px;
-        font-size: 13px;
+        padding: 10px 32px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 24px;
+    }
+    
+    .hidden {
+        display: none;
+    }
+    
+    .password-wrapper {
+        position: relative;
+    }
+    .password-toggle {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #666;
         cursor: pointer;
     }
 </style>
 
-<div class="section-card">
-    <div class="section-header">
-        <h3>Edit Profile</h3>
-        <button class="btn-save">Save Changes</button>
-    </div>
+<div class="page-header">
+    <h2>Settings</h2>
+    <p>Manage system configuration and preferences</p>
+</div>
 
-    <div class="profile-container">
-        <div class="profile-avatar-wrapper">
-            <div class="avatar-wrapper">
-                <div class="profile-avatar">
-                    <img src="https://coresg-normal.trae.ai/api/ide/v1/text-to-image?prompt=a%20friendly%20cartoon%20female%20avatar%20with%20brown%20hair%20in%20professional%20setting&image_size=square_hd" alt="Profile">
-                </div>
-                <button class="upload-btn"><i class="fas fa-plus"></i></button>
+<div class="tabs-container">
+    <button class="tab-btn active" onclick="showTab('system')">🔧 System</button>
+    <button class="tab-btn" onclick="showTab('backup')">💾 Data & Backup</button>
+    <button class="tab-btn" onclick="showTab('permission')">🔐 Permission</button>
+</div>
+
+<form method="POST" id="settings-form">
+    {% csrf_token %}
+    <!-- System Tab -->
+    <div id="tab-system" class="tab-content">
+        <div class="card">
+            <h3 class="card-title"><i class="fas fa-cog"></i> General Configuration</h3>
+            <div class="form-group">
+                <label>Organization Name</label>
+                <input type="text" name="organizer_name" value="{{ setting.organizer_name }}">
             </div>
-            <p class="join-date">Join on: 12/12/2024</p>
         </div>
-        <div class="profile-details-grid">
-            <div class="form-group">
-                <label>Name</label>
-                <input type="text" value="Admin">
+        
+        <div class="card">
+            <h3 class="card-title"><i class="fas fa-envelope"></i> Email (SMTP Settings)</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="smtp_email" value="{{ setting.smtp_email|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label>SMTP Host</label>
+                    <input type="text" name="smtp_host" value="{{ setting.smtp_host|default:'' }}">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>SMTP Port</label>
+                    <input type="text" name="smtp_port" value="{{ setting.smtp_port|default:'' }}">
+                </div>
+                <div class="form-group">
+                    <label>SMTP User Name</label>
+                    <input type="text" name="smtp_user" value="{{ setting.smtp_user|default:'' }}">
+                </div>
             </div>
             <div class="form-group">
-                <label>Office Mail</label>
-                <input type="email" value="admin@vetritsystems.com">
+                <label>SMTP Password</label>
+                <div class="password-wrapper">
+                    <input type="password" name="smtp_password" id="smtp_password" value="{{ setting.smtp_password|default:'' }}">
+                    <i class="fas fa-eye-slash password-toggle" id="password-toggle" onclick="togglePassword()"></i>
+                </div>
             </div>
+        </div>
+        
+        <div class="card">
+            <h3 class="card-title"><i class="fab fa-whatsapp"></i> WhatsApp Number</h3>
             <div class="form-group">
-                <label>Personal Mail</label>
-                <input type="email" value="adminname@gmail.com">
+                <label>WhatsApp Number</label>
+                <input type="text" name="whatsapp_number" value="{{ setting.whatsapp_number|default:'' }}">
             </div>
-            <div class="form-group">
-                <label>Phone No</label>
-                <input type="text" value="1234567890">
+            <p style="font-size: 12px; color: #666; margin-top: 8px;">This number will be used for WhatsApp notifications and communication</p>
+        </div>
+        
+        <div class="card">
+            <h3 class="card-title"><i class="fas fa-bell"></i> Notification Settings</h3>
+            <div class="toggle-row">
+                <span class="toggle-label">Enable Email Notification</span>
+                <div class="toggle-switch {% if setting.enable_email_notification %}active{% endif %}" onclick="toggleInput(this, 'id_enable_email')"></div>
+                <input type="checkbox" id="id_enable_email" name="enable_email_notification" {% if setting.enable_email_notification %}checked{% endif %} class="hidden">
             </div>
+            <div class="toggle-row">
+                <span class="toggle-label">Enable WhatsApp Alerts</span>
+                <div class="toggle-switch {% if setting.enable_whatsapp_alerts %}active{% endif %}" onclick="toggleInput(this, 'id_enable_whatsapp')"></div>
+                <input type="checkbox" id="id_enable_whatsapp" name="enable_whatsapp_alerts" {% if setting.enable_whatsapp_alerts %}checked{% endif %} class="hidden">
+            </div>
+        </div>
+        
+        <button type="submit" class="save-btn">Save Changes</button>
+    </div>
+    
+    <!-- Backup Tab -->
+    <div id="tab-backup" class="tab-content hidden">
+        <div class="backup-info">
+            <h5><i class="fas fa-check-circle"></i> Last Backup Information</h5>
+            {% if setting.last_backup_date %}
+            <p>Last backup successful: {{ setting.last_backup_date|date:"M d, Y" }} at {{ setting.last_backup_date|time:"h:i A" }}</p>
+            {% else %}
+            <p>No backup taken yet. Take a backup now.</p>
+            {% endif %}
+        </div>
+        
+        <div class="card">
+            <h3 class="card-title">Backup Option</h3>
+            <div class="backup-buttons">
+                <div class="backup-btn">
+                    <i class="fas fa-download"></i>
+                    <h5>Backup Data</h5>
+                    <p>Create New Backup</p>
+                </div>
+                <div class="backup-btn">
+                    <i class="fas fa-upload"></i>
+                    <h5>Restore Data</h5>
+                    <p>Restore Your Backup</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3 class="card-title">Automatic Backup Schedule</h3>
             <div class="form-group">
-                <label>Gender</label>
-                <select>
-                    <option selected>Female</option>
-                    <option>Male</option>
-                    <option>Other</option>
+                <label>Backup Frequency</label>
+                <select name="backup_frequency">
+                    <option value="Daily" {% if setting.backup_frequency == 'Daily' %}selected{% endif %}>Daily</option>
+                    <option value="Weekly" {% if setting.backup_frequency == 'Weekly' %}selected{% endif %}>Weekly</option>
+                    <option value="Monthly" {% if setting.backup_frequency == 'Monthly' %}selected{% endif %}>Monthly</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label>Date of Birth</label>
-                <input type="text" value="26/03/1977">
+            <div class="toggle-row">
+                <span class="toggle-label">Enable Automatic Backup</span>
+                <div class="toggle-switch active"></div>
             </div>
         </div>
+        
+        <div class="warning-box">
+            <h5><i class="fas fa-exclamation-triangle"></i> Important Notes</h5>
+            <ul>
+                <li>Backups are taken manually and stored locally</li>
+                <li>Large databases may take a while to complete</li>
+                <li>Ensure adequate internet connection during backup operations</li>
+                <li>Contact support if you face any issues while taking backups</li>
+            </ul>
+        </div>
+        
+        <button type="submit" class="save-btn">Save Changes</button>
     </div>
-</div>
+    
+    <!-- Permission Tab -->
+    <div id="tab-permission" class="tab-content hidden">
+        <div class="card">
+            <h3 class="card-title"><i class="fas fa-shield-alt"></i> Manage Access Permissions</h3>
+            
+            <h4 style="font-size:14px; color:#333; margin:20px 0 12px;">Admin Permissions</h4>
+            <div class="toggle-row">
+                <span class="toggle-label">Enable Edit Batch</span>
+                <div class="toggle-switch {% if setting.admin_edit_batch %}active{% endif %}" onclick="toggleInput(this, 'id_admin_edit')"></div>
+                <input type="checkbox" id="id_admin_edit" name="admin_edit_batch" {% if setting.admin_edit_batch %}checked{% endif %} class="hidden">
+            </div>
+            <div class="toggle-row">
+                <span class="toggle-label">Enable Batch & Course Control</span>
+                <div class="toggle-switch {% if setting.admin_batch_course_control %}active{% endif %}" onclick="toggleInput(this, 'id_admin_batch')"></div>
+                <input type="checkbox" id="id_admin_batch" name="admin_batch_course_control" {% if setting.admin_batch_course_control %}checked{% endif %} class="hidden">
+            </div>
+            <div class="toggle-row">
+                <span class="toggle-label">Enable Reports Approval</span>
+                <div class="toggle-switch {% if setting.admin_reports_approval %}active{% endif %}" onclick="toggleInput(this, 'id_admin_reports')"></div>
+                <input type="checkbox" id="id_admin_reports" name="admin_reports_approval" {% if setting.admin_reports_approval %}checked{% endif %} class="hidden">
+            </div>
+            <div class="toggle-row">
+                <span class="toggle-label">Enable Payment Verification</span>
+                <div class="toggle-switch {% if setting.admin_payment_verification %}active{% endif %}" onclick="toggleInput(this, 'id_admin_payment')"></div>
+                <input type="checkbox" id="id_admin_payment" name="admin_payment_verification" {% if setting.admin_payment_verification %}checked{% endif %} class="hidden">
+            </div>
+            
+            <h4 style="font-size:14px; color:#333; margin:20px 0 12px;">Trainer Permissions</h4>
+            <div class="toggle-row">
+                <span class="toggle-label">Enable Attendance Update</span>
+                <div class="toggle-switch {% if setting.trainer_attendance_update %}active{% endif %}" onclick="toggleInput(this, 'id_trainer_attendance')"></div>
+                <input type="checkbox" id="id_trainer_attendance" name="trainer_attendance_update" {% if setting.trainer_attendance_update %}checked{% endif %} class="hidden">
+            </div>
+            <div class="toggle-row">
+                <span class="toggle-label">Enable Task & Project Update</span>
+                <div class="toggle-switch {% if setting.trainer_task_project_update %}active{% endif %}" onclick="toggleInput(this, 'id_trainer_task')"></div>
+                <input type="checkbox" id="id_trainer_task" name="trainer_task_project_update" {% if setting.trainer_task_project_update %}checked{% endif %} class="hidden">
+            </div>
+            <div class="toggle-row">
+                <span class="toggle-label">Enable Report Submission</span>
+                <div class="toggle-switch {% if setting.trainer_report_submission %}active{% endif %}" onclick="toggleInput(this, 'id_trainer_report')"></div>
+                <input type="checkbox" id="id_trainer_report" name="trainer_report_submission" {% if setting.trainer_report_submission %}checked{% endif %} class="hidden">
+            </div>
+            
+            <h4 style="font-size:14px; color:#333; margin:20px 0 12px;">Business Team Permissions</h4>
+            <div class="toggle-row">
+                <span class="toggle-label">Enable Enquiry Check</span>
+                <div class="toggle-switch {% if setting.business_enquiry_check %}active{% endif %}" onclick="toggleInput(this, 'id_business_enquiry')"></div>
+                <input type="checkbox" id="id_business_enquiry" name="business_enquiry_check" {% if setting.business_enquiry_check %}checked{% endif %} class="hidden">
+            </div>
+            <div class="toggle-row">
+                <span class="toggle-label">Enable Document Verification</span>
+                <div class="toggle-switch {% if setting.business_document_verification %}active{% endif %}" onclick="toggleInput(this, 'id_business_document')"></div>
+                <input type="checkbox" id="id_business_document" name="business_document_verification" {% if setting.business_document_verification %}checked{% endif %} class="hidden">
+            </div>
+            <div class="toggle-row">
+                <span class="toggle-label">Enable Payment Handling</span>
+                <div class="toggle-switch {% if setting.business_payment_handling %}active{% endif %}" onclick="toggleInput(this, 'id_business_payment')"></div>
+                <input type="checkbox" id="id_business_payment" name="business_payment_handling" {% if setting.business_payment_handling %}checked{% endif %} class="hidden">
+            </div>
+            <div class="toggle-row">
+                <span class="toggle-label">Enable Batch Allocation</span>
+                <div class="toggle-switch {% if setting.business_batch_allocation %}active{% endif %}" onclick="toggleInput(this, 'id_business_batch')"></div>
+                <input type="checkbox" id="id_business_batch" name="business_batch_allocation" {% if setting.business_batch_allocation %}checked{% endif %} class="hidden">
+            </div>
+            <div class="toggle-row">
+                <span class="toggle-label">Enable Reports Approval</span>
+                <div class="toggle-switch {% if setting.business_reports_approval %}active{% endif %}" onclick="toggleInput(this, 'id_business_reports')"></div>
+                <input type="checkbox" id="id_business_reports" name="business_reports_approval" {% if setting.business_reports_approval %}checked{% endif %} class="hidden">
+            </div>
+        </div>
+        
+        <button type="submit" class="save-btn">Save Changes</button>
+    </div>
+</form>
 
-<div class="section-card">
-    <h3 class="section-title"><i class="fas fa-id-card"></i> Professional Details</h3>
-    <div class="detail-row">
-        <label>Role & Position</label>
-        <span>: Founder</span>
-    </div>
-    <div class="detail-row">
-        <label>Branch</label>
-        <span>: Surandai, Tirunelveli</span>
-    </div>
-</div>
+<script>
+function showTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+    // Remove active from all buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    // Show selected tab
+    document.getElementById('tab-' + tabName).classList.remove('hidden');
+    // Add active to button
+    event.target.classList.add('active');
+}
 
-<div class="section-card">
-    <h3 class="section-title"><i class="fas fa-id-card"></i> People reporting to You</h3>
-    <div class="people-grid">
-        <div class="person-card">
-            <div class="person-avatar">RK</div>
-            <div class="person-info">
-                <h4>Rajesh K</h4>
-                <p>Product Developer</p>
-                <p>Development</p>
-                <p>Shanthi Complex, Surandai</p>
-                <button class="view-profile-btn">View Profile</button>
-            </div>
-        </div>
-        <div class="person-card">
-            <div class="person-avatar teal">A</div>
-            <div class="person-info">
-                <h4>Amir</h4>
-                <p>UI/UX Designer</p>
-                <p>Designing</p>
-                <p>Remote</p>
-                <button class="view-profile-btn">View Profile</button>
-            </div>
-        </div>
-    </div>
-</div>
+function toggleInput(toggleDiv, inputId) {
+    const input = document.getElementById(inputId);
+    toggleDiv.classList.toggle('active');
+    input.checked = toggleDiv.classList.contains('active');
+}
+
+function togglePassword() {
+    const input = document.getElementById('smtp_password');
+    const icon = document.getElementById('password-toggle');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    }
+}
+</script>
 {% endblock %}

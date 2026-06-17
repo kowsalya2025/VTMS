@@ -1,6 +1,6 @@
 {% extends 'core/base_admin.html' %}
 
-{% block page_title %}{{ 'Edit Batch' if batch else 'Add New Batch' }}{% endblock %}
+{% block page_title %}{% if batch %}Edit Batch{% else %}Add New Batch{% endif %}{% endblock %}
 
 {% block admin_content %}
 <style>
@@ -113,6 +113,54 @@
         font-weight: 600;
         cursor: pointer;
     }
+
+    .trainee-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .trainee-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background-color: #e9ecef;
+        border-radius: 20px;
+        font-size: 13px;
+    }
+
+    .remove-chip {
+        cursor: pointer;
+        font-weight: bold;
+        color: #666;
+        line-height: 1;
+    }
+
+    .remove-chip:hover {
+        color: #dc3545;
+    }
+
+    .file-upload-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 24px;
+        border-radius: 6px;
+        border: 1px solid var(--secondary);
+        background-color: white;
+        color: var(--secondary);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .file-upload-btn:hover {
+        background-color: var(--secondary);
+        color: white;
+    }
 </style>
 
 <div class="page-header">
@@ -120,10 +168,10 @@
         <i class="fas fa-arrow-left"></i>
         Back
     </a>
-    <h2>{{ 'Edit Batch' if batch else 'Create New Batch' }}</h2>
+    <h2>{% if batch %}Edit Batch{% else %}Create New Batch{% endif %}</h2>
 </div>
 
-<form method="POST">
+<form method="POST" enctype="multipart/form-data">
     {% csrf_token %}
     
     <div class="section-card">
@@ -131,7 +179,7 @@
         <div class="form-row">
             <div class="form-group">
                 <label>Batch Name*</label>
-                <input type="text" name="batch_name" value="{{ batch.batch_name if batch else '' }}" required>
+                <input type="text" name="batch_name" value="{% if batch %}{{ batch.batch_name }}{% endif %}" required>
             </div>
             <div class="form-group">
                 <label>Course*</label>
@@ -144,7 +192,7 @@
             </div>
             <div class="form-group">
                 <label>Description</label>
-                <input type="text" name="description" value="{{ batch.description if batch else '' }}">
+                <input type="text" name="description" value="{% if batch %}{{ batch.description }}{% endif %}">
             </div>
         </div>
     </div>
@@ -154,15 +202,15 @@
         <div class="form-row">
             <div class="form-group">
                 <label>Start Date*</label>
-                <input type="date" name="start_date" value="{{ batch.start_date|date:'Y-m-d' if batch else '' }}" required>
+                <input type="date" name="start_date" value="{% if batch %}{{ batch.start_date|date:'Y-m-d' }}{% endif %}" required>
             </div>
             <div class="form-group">
                 <label>End Date*</label>
-                <input type="date" name="end_date" value="{{ batch.end_date|date:'Y-m-d' if batch else '' }}" required>
+                <input type="date" name="end_date" value="{% if batch %}{{ batch.end_date|date:'Y-m-d' }}{% endif %}" required>
             </div>
             <div class="form-group">
                 <label>Duration</label>
-                <input type="text" name="duration" value="{{ batch.duration if batch else '' }}" placeholder="e.g. 30 Days">
+                <input type="text" name="duration" value="{% if batch %}{{ batch.duration }}{% endif %}" placeholder="e.g. 30 Days">
             </div>
         </div>
         
@@ -171,15 +219,15 @@
             <div class="form-group">
                 <label>Batch Timing*</label>
                 <div style="display: flex; gap: 10px;">
-                    <input type="time" name="timing_start" value="{{ batch.timing_start|time:'H:i' if batch else '' }}" required>
+                    <input type="time" name="timing_start" value="{% if batch %}{{ batch.timing_start|time:'H:i' }}{% endif %}" required>
                     <span style="align-self: center;">-</span>
-                    <input type="time" name="timing_end" value="{{ batch.timing_end|time:'H:i' if batch else '' }}" required>
+                    <input type="time" name="timing_end" value="{% if batch %}{{ batch.timing_end|time:'H:i' }}{% endif %}" required>
                 </div>
             </div>
             <div class="form-group" style="grid-column: span 2;">
                 <label>Days</label>
                 <div class="days-checkboxes">
-                    {% for day in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}
+                    {% for day in days_list %}
                         <div class="day-checkbox">
                             <input type="checkbox" id="day-{{ day }}" name="days" value="{{ day }}" {% if batch and day in selected_days %}checked{% endif %}>
                             <label for="day-{{ day }}">{{ day }}</label>
@@ -198,10 +246,58 @@
                 <select name="trainer" required>
                     <option value="">Select Trainer</option>
                     {% for trainer in trainers %}
-                        <option value="{{ trainer.id }}" {% if batch and batch.trainer and batch.trainer.id == trainer.id %}selected{% endif %}>{{ trainer.full_name }}</option>
+                    <option value="{{ trainer.id }}" data-email="{{ trainer.office_mail }}" {% if batch and batch.trainer and batch.trainer.id == trainer.id %}selected{% endif %}>{{ trainer.full_name }}</option>
                     {% endfor %}
                 </select>
             </div>
+        </div>
+    </div>
+    
+    <div class="section-card">
+        <h4><i class="fas fa-users"></i> Trainees</h4>
+        <div class="form-group">
+            <div class="trainee-chips" id="traineeChips">
+                {% for trainee in trainees %}
+                <div class="trainee-chip" data-id="{{ trainee.id }}" {% if trainee.id in selected_trainees %}style="display: inline-flex;"{% else %}style="display: none;"{% endif %}>
+                    {{ trainee.full_name }}
+                    <span class="remove-chip" onclick="removeTrainee({{ trainee.id }})">&times;</span>
+                    <input type="checkbox" name="trainees" value="{{ trainee.id }}" {% if trainee.id in selected_trainees %}checked{% endif %}>
+                </div>
+                {% endfor %}
+            </div>
+            <select id="traineeSelect" onchange="addTrainee(this)" style="margin-top: 10px; width: 100%; padding: 10px 14px; background-color: var(--input-bg); border: 1px solid transparent; border-radius: 6px; font-size: 14px;">
+                <option value="">Add Trainee</option>
+                {% for trainee in trainees %}
+                <option value="{{ trainee.id }}" {% if trainee.id in selected_trainees %}disabled{% endif %}>{{ trainee.full_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    
+    <div class="section-card">
+        <h4><i class="fas fa-envelope-check"></i> Send Email</h4>
+        <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Trainer will receive a email notification</p>
+        <div class="form-group">
+            <label>From</label>
+            <input type="email" name="email_from" value="admin@vetritsystems.com" readonly style="background-color: #e9ecef;">
+        </div>
+        <div class="form-group">
+            <label>To</label>
+            <input type="text" name="email_to" placeholder="Enter Recipient name or email" id="emailTo">
+        </div>
+        <div class="form-group">
+            <label>Subject</label>
+            <input type="text" name="email_subject" id="emailSubject">
+        </div>
+        <div class="form-group">
+            <label>Preview</label>
+            <textarea name="email_preview" rows="4" id="emailPreview" style="width: 100%; padding: 10px 14px; background-color: var(--input-bg); border: 1px solid transparent; border-radius: 6px; font-size: 14px; font-family: 'Inter', sans-serif;"></textarea>
+        </div>
+        <div class="form-group" style="margin-top: 15px;">
+            <label class="file-upload-btn">
+                <i class="fas fa-paperclip"></i> Attach File
+                <input type="file" name="batch_file" style="display: none;">
+            </label>
         </div>
     </div>
     
@@ -220,8 +316,97 @@
     </div>
     
     <div class="btn-group">
-        <a href="{% url 'batch_list' %}" class="btn-cancel">Cancel</a>
-        <button type="submit" class="btn-submit">{{ 'Save Changes' if batch else 'Create Batch' }}</button>
+        <a href="{% url 'batch_list' %}" class="btn-cancel">Reset</a>
+        <a href="{% url 'batch_list' %}" class="btn-cancel">Back</a>
+        <button type="submit" class="btn-submit">{% if batch %}Save Changes{% else %}Create Batch{% endif %}</button>
     </div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    updateEmailPreview();
+    
+    const trainerSelect = document.querySelector('select[name="trainer"]');
+    if (trainerSelect) {
+        trainerSelect.addEventListener('change', updateEmailTo);
+        updateEmailTo();
+    }
+    
+    const batchNameInput = document.querySelector('input[name="batch_name"]');
+    const startDateInput = document.querySelector('input[name="start_date"]');
+    const endDateInput = document.querySelector('input[name="end_date"]');
+    
+    if (batchNameInput) batchNameInput.addEventListener('input', updateEmailPreview);
+    if (startDateInput) startDateInput.addEventListener('change', updateEmailPreview);
+    if (endDateInput) endDateInput.addEventListener('change', updateEmailPreview);
+});
+
+function updateEmailTo() {
+    const trainerSelect = document.querySelector('select[name="trainer"]');
+    const emailToInput = document.getElementById('emailTo');
+    if (trainerSelect && emailToInput) {
+        const selectedOption = trainerSelect.options[trainerSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            // Use trainer's email from data-email attribute
+            const trainerEmail = selectedOption.getAttribute('data-email');
+            emailToInput.value = trainerEmail || selectedOption.text;
+        } else {
+            emailToInput.value = '';
+        }
+    }
+}
+
+function updateEmailPreview() {
+    const batchName = document.querySelector('input[name="batch_name"]').value;
+    const startDate = document.querySelector('input[name="start_date"]').value;
+    const endDate = document.querySelector('input[name="end_date"]').value;
+    const subjectInput = document.getElementById('emailSubject');
+    const previewInput = document.getElementById('emailPreview');
+    
+    if (subjectInput) {
+        subjectInput.value = batchName ? `New Batch: ${batchName}` : 'New Batch Notification';
+    }
+    
+    if (previewInput) {
+        let preview = 'Dear Trainer,\n\nA new batch has been created';
+        if (batchName) {
+            preview += `: ${batchName}`;
+        }
+        preview += '.\n\n';
+        if (startDate) {
+            preview += `Start Date: ${startDate}\n`;
+        }
+        if (endDate) {
+            preview += `End Date: ${endDate}\n`;
+        }
+        preview += '\nPlease review the batch details.\n\nBest regards,\nAdmin';
+        previewInput.value = preview;
+    }
+}
+
+function addTrainee(select) {
+    const traineeId = select.value;
+    if (traineeId) {
+        const chip = document.querySelector(`.trainee-chip[data-id="${traineeId}"]`);
+        const checkbox = chip.querySelector('input[type="checkbox"]');
+        const option = select.querySelector(`option[value="${traineeId}"]`);
+        
+        chip.style.display = 'inline-flex';
+        checkbox.checked = true;
+        option.disabled = true;
+        select.value = '';
+    }
+}
+
+function removeTrainee(traineeId) {
+    const chip = document.querySelector(`.trainee-chip[data-id="${traineeId}"]`);
+    const checkbox = chip.querySelector('input[type="checkbox"]');
+    const select = document.getElementById('traineeSelect');
+    const option = select.querySelector(`option[value="${traineeId}"]`);
+    
+    chip.style.display = 'none';
+    checkbox.checked = false;
+    option.disabled = false;
+}
+</script>
 {% endblock %}

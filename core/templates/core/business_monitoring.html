@@ -6,115 +6,185 @@
 <style>
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 24px;
-        margin-bottom: 24px;
+        margin-bottom: 32px;
     }
     .stat-card {
         background-color: var(--white);
         border-radius: 12px;
         padding: 24px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-        display: flex;
-        align-items: center;
-        gap: 16px;
-    }
-    .stat-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-    }
-    .stat-icon.purple {
-        background-color: var(--accent-light-purple);
-        color: var(--primary);
-    }
-    .stat-icon.green {
-        background-color: var(--accent-light-green);
-        color: var(--accent-green);
-    }
-    .stat-icon.orange {
-        background-color: var(--accent-light-orange);
-        color: var(--secondary);
-    }
-    .stat-icon.red {
-        background-color: var(--accent-light-red);
-        color: var(--accent-red);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
     .stat-card h3 {
-        font-size: 28px;
-        color: var(--text-color);
-        margin: 0 0 4px 0;
+        font-size: 32px;
+        margin: 0 0 8px 0;
+    }
+    .stat-card.orange h3 {
+        color: #f59e0b;
+    }
+    .stat-card.green h3 {
+        color: #10b981;
+    }
+    .stat-card.purple h3 {
+        color: #8b5cf6;
     }
     .stat-card p {
-        color: var(--icon-color);
+        color: #666;
         margin: 0;
         font-size: 14px;
     }
+    .stat-card .change {
+        font-size: 12px;
+        margin-top: 4px;
+    }
+    .chart-card {
+        background-color: var(--white);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    .chart-card h3 {
+        font-size: 18px;
+        margin: 0 0 24px 0;
+        color: var(--text-color);
+    }
+    .chart-container {
+        height: 300px;
+        display: flex;
+        align-items: flex-end;
+        gap: 24px;
+        padding: 0 32px;
+    }
+    .chart-bar-group {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    .chart-bars {
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+        height: 220px;
+    }
+    .chart-bar {
+        width: 40px;
+        border-radius: 4px 4px 0 0;
+    }
+    .chart-bar.purple {
+        background-color: #4f46e5;
+    }
+    .chart-bar.orange {
+        background-color: #f59e0b;
+    }
+    .chart-label {
+        font-size: 14px;
+        color: #666;
+    }
+    .chart-legend {
+        display: flex;
+        justify-content: center;
+        gap: 32px;
+        margin-top: 24px;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+    }
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 2px;
+    }
+    .legend-color.purple {
+        background-color: #4f46e5;
+    }
+    .legend-color.orange {
+        background-color: #f59e0b;
+    }
 </style>
 
+<div class="page-header">
+    <h2>Business Monitoring</h2>
+</div>
+
 <div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-icon purple"><i class="fas fa-question-circle"></i></div>
-        <div>
-            <h3>156</h3>
-            <p>Total Enquiries</p>
-        </div>
+    <div class="stat-card orange">
+        <h3>{{ total_enquiries }}</h3>
+        <p>Total Enquiries</p>
+        <div class="change" style="color: #10b981;">+12% from last month</div>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
-        <div>
-            <h3>98</h3>
-            <p>Converted</p>
-        </div>
+    <div class="stat-card green">
+        <h3>{{ eligible_candidates }}</h3>
+        <p>Eligible Candidates</p>
+        <div class="change" style="color: #10b981;">+18% from last month</div>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon orange"><i class="fas fa-percentage"></i></div>
-        <div>
-            <h3>62%</h3>
-            <p>Conversion Rate</p>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon red"><i class="fas fa-clock"></i></div>
-        <div>
-            <h3>12</h3>
-            <p>Pending Follow-ups</p>
-        </div>
+    <div class="stat-card purple">
+        <h3>{{ conversion_rate }}%</h3>
+        <p>Conversion Rate</p>
+        <div class="change" style="color: #10b981;">+5% from last month</div>
     </div>
 </div>
 
-<div class="card">
-    <h2 style="margin-bottom: 20px;">Recent Enquiries</h2>
-    <table style="width: 100%; border-collapse: collapse;">
-        <thead>
-            <tr style="background-color: #f8f9fa;">
-                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Name</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Email</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Course</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Status</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Date</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">Rahul Sharma</td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">rahul@example.com</td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">Python Full Stack</td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;"><span style="color: var(--accent-green); font-weight: 600;">Converted</span></td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">2026-06-15</td>
-            </tr>
-            <tr>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">Priya Patel</td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">priya@example.com</td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">Data Science</td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;"><span style="color: var(--secondary); font-weight: 600;">New</span></td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">2026-06-14</td>
-            </tr>
-        </tbody>
-    </table>
+<div class="chart-card">
+    <h3>Enquiries vs Conversions</h3>
+    <div class="chart-container">
+        <div class="chart-bar-group">
+            <div class="chart-bars">
+                <div class="chart-bar purple" style="height: 180px;"></div>
+                <div class="chart-bar orange" style="height: 120px;"></div>
+            </div>
+            <div class="chart-label">Oct</div>
+        </div>
+        <div class="chart-bar-group">
+            <div class="chart-bars">
+                <div class="chart-bar purple" style="height: 190px;"></div>
+                <div class="chart-bar orange" style="height: 130px;"></div>
+            </div>
+            <div class="chart-label">Nov</div>
+        </div>
+        <div class="chart-bar-group">
+            <div class="chart-bars">
+                <div class="chart-bar purple" style="height: 170px;"></div>
+                <div class="chart-bar orange" style="height: 110px;"></div>
+            </div>
+            <div class="chart-label">Dec</div>
+        </div>
+        <div class="chart-bar-group">
+            <div class="chart-bars">
+                <div class="chart-bar purple" style="height: 210px;"></div>
+                <div class="chart-bar orange" style="height: 140px;"></div>
+            </div>
+            <div class="chart-label">Jan</div>
+        </div>
+        <div class="chart-bar-group">
+            <div class="chart-bars">
+                <div class="chart-bar purple" style="height: 200px;"></div>
+                <div class="chart-bar orange" style="height: 135px;"></div>
+            </div>
+            <div class="chart-label">Feb</div>
+        </div>
+        <div class="chart-bar-group">
+            <div class="chart-bars">
+                <div class="chart-bar purple" style="height: 220px;"></div>
+                <div class="chart-bar orange" style="height: 150px;"></div>
+            </div>
+            <div class="chart-label">Mar</div>
+        </div>
+    </div>
+    <div class="chart-legend">
+        <div class="legend-item">
+            <div class="legend-color purple"></div>
+            <span>Enquiries</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color orange"></div>
+            <span>Conversions</span>
+        </div>
+    </div>
 </div>
 {% endblock %}

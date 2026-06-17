@@ -47,9 +47,10 @@ urlpatterns = [
     path('trainer/reports/daily/', views.trainer_daily_reports, name='trainer_daily_reports'),
     path('trainer/reports/weekly/', views.trainer_weekly_reports, name='trainer_weekly_reports'),
     path('trainer/reports/monthly/', views.trainer_monthly_reports, name='trainer_monthly_reports'),
-    path('trainer/attendance/', views.trainer_attendance, name='trainer_attendance'),
-    path('trainer/calendar/', views.trainer_calendar, name='trainer_calendar'),
-    path('trainer/profile/', views.trainer_profile, name='trainer_profile'),
+    path('trainer/internship/', views.trainer_internship_management, name='trainer_internship_management'),
+    path('trainer/internship/assign-work/', views.trainer_assign_work, name='trainer_assign_work'),
+    path('trainer/internship/performance/<int:intern_id>/', views.trainer_intern_performance, name='trainer_intern_performance'),
+    path('trainer/communication/', views.trainer_communication, name='trainer_communication'),
     
     # Business Team - Pages
     path('business/enquiries/', views.enquiry_management, name='enquiry_management'),

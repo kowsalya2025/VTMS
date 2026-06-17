@@ -1,0 +1,238 @@
+{% extends 'core/base_trainer.html' %}
+
+{% block page_title %}Interns Management{% endblock %}
+
+{% block trainer_content %}
+<style>
+    .section-header {
+        margin-bottom: 24px;
+    }
+    .section-header h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+    }
+    .card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        margin-bottom: 24px;
+    }
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .card-header h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin:0;
+    }
+    .search-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #f5f5f5;
+        padding: 8px 16px;
+        border-radius: 6px;
+        min-width: 250px;
+    }
+    .search-box input {
+        border: none;
+        background: transparent;
+        outline: none;
+        width: 100%;
+        font-size: 14px;
+    }
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .data-table th {
+        text-align: left;
+        padding: 12px;
+        font-size: 14px;
+        color: #666;
+        font-weight: 500;
+        border-bottom: 1px solid #eee;
+    }
+    .data-table td {
+        padding: 14px 12px;
+        border-bottom:1px solid #f5f5f5;
+        font-size:14px;
+        color: #333;
+    }
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 500;
+        display:inline-block;
+    }
+    .status-active {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+    .status-completed {
+        background: #E8EAF6;
+        color: #3949AB;
+    }
+    .progress-bar-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .progress-bar {
+        flex: 1;
+        height: 12px;
+        background: #e5e7eb;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    .progress-bar-fill {
+        height:100%;
+        background: #3949AB;
+        border-radius: 6px;
+    }
+    .progress-percent {
+        font-size: 13px;
+        color: #666;
+        font-weight: 600;
+        min-width:40px;
+    }
+    .action-btn {
+        background: transparent;
+        border: none;
+        font-size:15px;
+        cursor: pointer;
+        color: #3949AB;
+        margin-right:8px;
+    }
+    .btn-assign {
+        background: transparent;
+        border: none;
+        font-size:13px;
+        color: #3949AB;
+        font-weight:600;
+        cursor:pointer;
+    }
+</style>
+
+<div class="section-header">
+    <h2>Manage intern projects and progress</h2>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Active Interns</h3>
+        <div class="search-box">
+            <i class="fas fa-search" style="color:#999;"></i>
+            <input type="text" placeholder="Search Intern">
+        </div>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Period</th>
+                <th>Performance</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if interns %}
+                {% for intern in interns %}
+                <tr>
+                    <td>{{ intern.full_name }}</td>
+                    <td>{{ intern.personal_mail }}</td>
+                    <td>{{ intern.role }}</td>
+                    <td>{{ intern.internship_period }}</td>
+                    <td>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" style="width:75%;"></div>
+                            </div>
+                            <span class="progress-percent">75%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-badge {% if intern.status == 'Active' %}status-active{% else %}status-completed{% endif %}">
+                            {{ intern.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'trainer_assign_work' %}?intern_id={{ intern.id }}" class="btn-assign">Assign Work</a>
+                        <a href="{% url 'trainer_intern_performance' intern.id %}" class="action-btn"><i class="fas fa-eye"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+            <tr>
+                <td>Priya</td>
+                <td>priya.uixdesign@vts.com</td>
+                <td>Junior UI/UX Designer</td>
+                <td>1 month</td>
+                <td>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" style="width:75%;"></div>
+                        </div>
+                        <span class="progress-percent">75%</span>
+                    </div>
+                </td>
+                <td><span class="status-badge status-active">Active</span></td>
+                <td>
+                    <a href="{% url 'trainer_assign_work' %}?intern_id=1" class="btn-assign">Assign Work</a>
+                    <a href="{% url 'trainer_intern_performance' 1 %}" class="action-btn"><i class="fas fa-eye"></i></a>
+                </td>
+            </tr>
+            <tr>
+                <td>Sneha</td>
+                <td>sneha.python@vts.com</td>
+                <td>Junior Developer</td>
+                <td>2 month</td>
+                <td>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" style="width:85%;"></div>
+                        </div>
+                        <span class="progress-percent">85%</span>
+                    </div>
+                </td>
+                <td><span class="status-badge status-active">Active</span></td>
+                <td>
+                    <a href="{% url 'trainer_assign_work' %}?intern_id=2" class="btn-assign">Assign Work</a>
+                    <a href="{% url 'trainer_intern_performance' 2 %}" class="action-btn"><i class="fas fa-eye"></i></a>
+                </td>
+            </tr>
+            <tr>
+                <td>Siva</td>
+                <td>siva.python@vts.com</td>
+                <td>Junior Developer</td>
+                <td>3 month</td>
+                <td>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" style="width:95%;"></div>
+                        </div>
+                        <span class="progress-percent">95%</span>
+                    </div>
+                </td>
+                <td><span class="status-badge status-completed">Completed</span></td>
+                <td>
+                    <a href="{% url 'trainer_assign_work' %}?intern_id=3" class="btn-assign">Assign Work</a>
+                    <a href="{% url 'trainer_intern_performance' 3 %}" class="action-btn"><i class="fas fa-eye"></i></a>
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

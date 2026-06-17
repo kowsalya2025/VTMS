@@ -18,14 +18,18 @@
         display: flex;
         flex-direction: column;
         align-items: flex-start;
+        border-top: 4px solid;
     }
+    .stat-card:nth-child(1) { border-color: #f39c12; }
+    .stat-card:nth-child(2) { border-color: #27ae60; }
+    .stat-card:nth-child(3) { border-color: #e74c3c; }
+    .stat-card:nth-child(4) { border-color: #9b59b6; }
     .stat-card h3 {
         font-size: 28px;
-        color: var(--primary);
         margin: 0 0 8px 0;
     }
     .stat-card p {
-        color: var(--icon-color);
+        color: #666;
         margin: 0;
         font-size: 14px;
     }
@@ -34,7 +38,7 @@
         margin-bottom: 24px;
         background-color: white;
         border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        box-shadow: 0 2px 15px rgba(0,0,0,0.08);
         overflow-x: hidden;
     }
     .card-header {
@@ -45,8 +49,22 @@
     }
     .card-header h2 {
         margin: 0;
-        font-family: 'Poppins', sans-serif;
-        font-size: 20px;
+        font-size: 18px;
+        color: #333;
+    }
+    .search-box {
+        display: flex;
+        align-items: center;
+        background: #f5f5f5;
+        padding: 8px 16px;
+        border-radius: 8px;
+    }
+    .search-box input {
+        border: none;
+        background: transparent;
+        outline: none;
+        margin-left: 8px;
+        font-size: 14px;
     }
     .table-wrapper {
         overflow-x: auto;
@@ -56,164 +74,255 @@
         width: 100%;
         border-collapse: collapse;
         background: white;
-        border-radius: 12px;
-        overflow: hidden;
-        min-width: 900px;
+        min-width: 1000px;
     }
     th, td {
         padding: 15px 20px;
         text-align: left;
         border-bottom: 1px solid #eee;
+        font-size: 14px;
     }
     th {
         background-color: #f8f9fa;
         font-weight: 600;
-        color: var(--primary);
-        font-family: 'Poppins', sans-serif;
-        font-size: 13px;
-        white-space: nowrap;
-    }
-    td {
-        font-family: 'Inter', sans-serif;
-        font-size: 14px;
-        white-space: nowrap;
+        color: #444;
     }
     .status-paid {
-        color: var(--accent-green);
-        background-color: var(--accent-light-green);
-        padding: 4px 12px;
-        border-radius: 20px;
+        color: #16a34a;
+        background-color: #dcfce7;
+        padding: 6px 12px;
+        border-radius: 6px;
         font-size: 12px;
         font-weight: 600;
         display: inline-block;
     }
-    .status-pending {
-        color: var(--secondary);
-        background-color: var(--accent-light-orange);
-        padding: 4px 12px;
-        border-radius: 20px;
+    .status-partial {
+        color: #d97706;
+        background-color: #ffeedd;
+        padding: 6px 12px;
+        border-radius: 6px;
         font-size: 12px;
         font-weight: 600;
         display: inline-block;
     }
-    .btn-primary {
-        background-color: var(--primary);
-        color: white;
-        padding: 6px 12px;
-        border: none;
-        border-radius: 6px;
-        font-size: 12px;
-        font-weight: 500;
-        cursor: pointer;
-        font-family: 'Inter', sans-serif;
-        display: inline-block;
-        white-space: nowrap;
+    .action-buttons {
+        display: flex;
+        gap: 8px;
     }
-    .btn-success {
-        background-color: var(--accent-green);
-        color: white;
-        padding: 6px 12px;
-        border: none;
+    .action-btn {
+        width: 32px;
+        height: 32px;
         border-radius: 6px;
-        font-size: 12px;
-        font-weight: 500;
+        border: none;
+        background: #f5f5f5;
+        color: #666;
         cursor: pointer;
-        font-family: 'Inter', sans-serif;
-        display: inline-block;
-        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        text-decoration: none;
     }
-    .email-input {
-        padding: 6px 12px;
+    .back-btn {
+        color: #333;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 24px;
         border: 1px solid #ddd;
+        border-radius: 8px;
+        background: white;
+        margin-bottom: 24px;
+    }
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+    .detail-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+    .detail-item {
+        display: flex;
+        gap: 8px;
+    }
+    .detail-label {
+        font-weight: 600;
+        color: #333;
+    }
+    .invoice-preview {
+        border: 2px solid #ddd;
+        border-radius: 12px;
+        padding: 24px;
+        background: #f5f5f5;
+        text-align: center;
+    }
+    .download-btn {
+        margin-top: 16px;
+        padding: 8px 24px;
+        background: var(--secondary);
+        color: white;
+        border: none;
         border-radius: 6px;
-        font-family: 'Inter', sans-serif;
-        font-size: 13px;
-        margin-right: 8px;
-        width: 180px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .hidden {
+        display: none;
     }
 </style>
 
-<div class="stats-grid">
-    <div class="stat-card">
-        <h3>₹4,50,000</h3>
-        <p>Total Revenue</p>
+<!-- List View -->
+<div id="list-view">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>₹{{ total_revenue }}</h3>
+            <p>Total Revenue</p>
+        </div>
+        <div class="stat-card">
+            <h3>₹{{ total_collected }}</h3>
+            <p>Collected</p>
+        </div>
+        <div class="stat-card">
+            <h3>₹{{ total_pending }}</h3>
+            <p>Pending</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ pending_payments_count }}</h3>
+            <p>Pending Payments</p>
+        </div>
     </div>
-    <div class="stat-card">
-        <h3>₹3,20,000</h3>
-        <p>Collected</p>
-    </div>
-    <div class="stat-card">
-        <h3>₹1,30,000</h3>
-        <p>Pending</p>
-    </div>
-    <div class="stat-card">
-        <h3>45</h3>
-        <p>Pending Payments</p>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>All Trainees</h2>
+            <div class="search-box">
+                <i class="fas fa-search" style="color: #888;"></i>
+                <input type="text" placeholder="Search Candidate name">
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Candidate Name</th>
+                        <th>Course</th>
+                        <th>Total Amount</th>
+                        <th>Paid</th>
+                        <th>Pending</th>
+                        <th>Paid</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                        <tr>
+                            <td>{{ payment.trainee.full_name }}</td>
+                            <td>{{ payment.trainee.course.title }}</td>
+                            <td>₹{{ payment.course_amount }}</td>
+                            <td style="color: #16a34a;">₹{{ payment.paid }}</td>
+                            <td style="color: #dc2626;">₹{{ payment.pending }}</td>
+                            <td>{{ payment.date|date:"M d, Y" }}</td>
+                            <td>
+                                <span class="status-{% if payment.status == 'Paid' %}paid{% else %}partial{% endif %}">
+                                    {% if payment.status == 'Paid' %}Paid{% else %}Partial{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn" onclick="showInvoice({{ payment.id }}, '{{ payment.trainee.full_name|escapejs }}', '{{ payment.trainee.course.title|escapejs }}', {{ payment.course_amount }}, {{ payment.paid }}, '{{ payment.trainee.personal_mail|escapejs }}', '{{ payment.trainee.phone_no|escapejs }}', '{{ payment.trainee.gender|escapejs }}', '{{ payment.date|date:"d/m/Y" }}')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="action-btn"><i class="fas fa-envelope"></i></button>
+                                    <button class="action-btn"><i class="fas fa-download"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="8" style="text-align: center; padding: 40px;">No payments found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header">
-        <h2>Trainee Payments</h2>
+<!-- Invoice View (Hidden by default) -->
+<div id="invoice-view" class="hidden">
+    <a href="#" class="back-btn" onclick="showList()"><i class="fas fa-arrow-left"></i> Back</a>
+
+    <div class="card">
+        <h2 style="margin-bottom: 20px;">Invoice</h2>
     </div>
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>Trainee</th>
-                    <th>Personal Email</th>
-                    <th>First Installment Paid</th>
-                    <th>Office Email</th>
-                    <th>Course Amount</th>
-                    <th>Paid</th>
-                    <th>Pending</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for trainee in trainees %}
-                    <tr>
-                        <td>{{ trainee.full_name }}</td>
-                        <td>{{ trainee.personal_mail }}</td>
-                        <td>
-                            {% if trainee.first_installment_paid %}
-                                <span class="status-paid">Yes</span>
-                            {% else %}
-                                <span class="status-pending">No</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ trainee.office_mail|default:"-" }}</td>
-                        <td>₹50,000</td>
-                        <td>₹25,000</td>
-                        <td>₹25,000</td>
-                        <td><span class="status-pending">Pending</span></td>
-                        <td>
-                            {% if not trainee.first_installment_paid %}
-                                <form method="post" style="display: inline;">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="mark_installment">
-                                    <input type="hidden" name="trainee_id" value="{{ trainee.id }}">
-                                    <button type="submit" class="btn-primary">Mark First Installment Paid</button>
-                                </form>
-                            {% elif not trainee.office_mail %}
-                                <form method="post" style="display: flex; align-items: center;">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="create_office_email">
-                                    <input type="hidden" name="trainee_id" value="{{ trainee.id }}">
-                                    <input type="email" name="office_email" placeholder="e.g., rahul@company.com" required class="email-input">
-                                    <button type="submit" class="btn-success">Create Office Email</button>
-                                </form>
-                            {% else %}
-                                <span class="status-paid">Done</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="9" style="text-align: center; color: var(--icon-color); padding: 40px;">No trainees found</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+    <div class="detail-grid">
+        <div class="card">
+            <h4 style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-id-card"></i> Candidate Details</h4>
+            <div class="detail-row">
+                <div class="detail-item"><span class="detail-label">Name</span><span>:</span><span id="inv-name"></span></div>
+                <div class="detail-item"><span class="detail-label">Age</span><span>:</span><span>25</span></div>
+                <div class="detail-item"><span class="detail-label">Course Amount</span><span>:</span><span id="inv-course-amount"></span></div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-item"><span class="detail-label">Email ID</span><span>:</span><span id="inv-email"></span></div>
+                <div class="detail-item"><span class="detail-label">Qualification</span><span>:</span><span>Bsc</span></div>
+                <div class="detail-item"><span class="detail-label">Amount Paid</span><span>:</span><span id="inv-amount-paid"></span></div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-item"><span class="detail-label">Phone Number</span><span>:</span><span id="inv-phone"></span></div>
+                <div class="detail-item"><span class="detail-label">Address</span><span>:</span><span>23/8, New Bustand, Tenkasi</span></div>
+                <div class="detail-item"><span class="detail-label">Date</span><span>:</span><span id="inv-date"></span></div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-item"><span class="detail-label">Course Enrolled</span><span>:</span><span id="inv-course"></span></div>
+                <div class="detail-item"><span class="detail-label">Plan</span><span>:</span><span>One-Time Payment</span></div>
+                <div class="detail-item"></div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-item"><span class="detail-label">Gender</span><span>:</span><span id="inv-gender"></span></div>
+                <div class="detail-item"><span class="detail-label">Payment mode</span><span>:</span><span>Cash</span></div>
+                <div class="detail-item"></div>
+            </div>
+        </div>
+        <div class="card">
+            <h4 style="margin-bottom: 20px;">Invoice</h4>
+            <div class="invoice-preview">
+                <img src="https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=professional%20invoice%20document%20preview&image_size=square" alt="Invoice Preview" style="max-width: 100%; border-radius: 8px;">
+                <div style="margin-top: 12px; font-size: 14px; color: #666;" id="inv-file-name"></div>
+                <button class="download-btn"><i class="fas fa-download"></i> Download</button>
+            </div>
+        </div>
     </div>
 </div>
+
+<script>
+function showInvoice(id, name, course, courseAmount, paid, email, phone, gender, date) {
+    document.getElementById('list-view').classList.add('hidden');
+    document.getElementById('invoice-view').classList.remove('hidden');
+    
+    document.getElementById('inv-name').textContent = name;
+    document.getElementById('inv-course').textContent = course + ' | 30 Days';
+    document.getElementById('inv-course-amount').textContent = '₹' + courseAmount;
+    document.getElementById('inv-amount-paid').textContent = '₹' + paid;
+    document.getElementById('inv-email').textContent = email;
+    document.getElementById('inv-phone').textContent = phone;
+    document.getElementById('inv-gender').textContent = gender;
+    document.getElementById('inv-date').textContent = date;
+    document.getElementById('inv-file-name').textContent = name.toLowerCase().replace(' ', '-') + '-invoice.pdf';
+}
+
+function showList() {
+    document.getElementById('invoice-view').classList.add('hidden');
+    document.getElementById('list-view').classList.remove('hidden');
+}
+</script>
 {% endblock %}

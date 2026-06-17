@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (User, Course, Trainer, Batch, Trainee, Intern, Attendance, Report, Payment, 
-                     SystemSetting, Task, Project, Leave, Enquiry, Candidate, Eligibility, 
+                     SystemSetting, Task, TraineeTask, Project, Leave, Enquiry, Candidate, Eligibility, 
                      DocumentVerification, InterviewSchedule)
 
 @admin.register(User)
@@ -58,13 +58,18 @@ class SystemSettingAdmin(admin.ModelAdmin):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ['task_name', 'trainee', 'intern', 'total_task', 'completed_task', 'assigned_date', 'submission_date', 'status']
-    list_filter = ['status', 'assigned_date', 'submission_date']
+    list_display = ['task_name', 'batch', 'trainer', 'day', 'total_task', 'assigned_date', 'due_date', 'status']
+    list_filter = ['status', 'batch', 'trainer', 'assigned_date']
+
+@admin.register(TraineeTask)
+class TraineeTaskAdmin(admin.ModelAdmin):
+    list_display = ['task', 'trainee', 'completed_task', 'submission_date', 'status', 'is_checked']
+    list_filter = ['status', 'task', 'trainee']
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ['project_name', 'intern', 'assigned_date', 'deadline', 'status']
-    list_filter = ['status', 'assigned_date', 'deadline']
+    list_display = ['project_name', 'batch', 'intern', 'trainer', 'assigned_date', 'deadline', 'status']
+    list_filter = ['status', 'assigned_date', 'deadline', 'trainer']
 
 @admin.register(Leave)
 class LeaveAdmin(admin.ModelAdmin):

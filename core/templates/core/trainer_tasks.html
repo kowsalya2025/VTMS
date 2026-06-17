@@ -4,167 +4,547 @@
 
 {% block trainer_content %}
 <style>
-    .page-subtitle {
-        font-size: 14px;
-        color: var(--icon-color);
+    .tab-container {
+        display: flex;
+        gap: 12px;
         margin-bottom: 24px;
+        background: #fff;
+        padding: 8px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    .card-header {
+    
+    .tab-btn {
+        padding: 10px 32px;
+        border-radius: 6px;
+        border: none;
+        background: transparent;
+        color: #666;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.2s;
+    }
+    
+    .tab-btn.active {
+        background: #F59E0B;
+        color: #fff;
+    }
+    
+    .tab-btn:hover:not(.active) {
+        background: #f0f0f0;
+    }
+    
+    .section-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
+        margin-bottom: 24px;
+    }
+    
+    .filters {
+        display: flex;
         gap: 16px;
     }
-    .btn-group {
-        display: flex;
-        gap: 12px;
-    }
-    .btn {
+    
+    .select-filter {
         padding: 8px 16px;
         border-radius: 6px;
         border: 1px solid #ddd;
-        background: white;
-        color: var(--text-color);
-        font-size: 14px;
+        background: #f5f5f5;
+    }
+    
+    .btn-add {
+        padding: 10px 24px;
+        border-radius: 6px;
+        border: none;
+        background: #F59E0B;
+        color: white;
         font-weight: 600;
         cursor: pointer;
         text-decoration: none;
-        transition: all 0.3s;
     }
-    .btn.active {
-        background-color: var(--secondary);
-        color: white;
-        border-color: var(--secondary);
-    }
-    .btn-primary {
-        background-color: var(--secondary);
-        color: white;
-        border: none;
-    }
-    .table-wrapper {
-        overflow-x: auto;
-        width: 100%;
-    }
-    table {
+    
+    .data-table {
         width: 100%;
         border-collapse: collapse;
         background: white;
-        border-radius: 12px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         overflow: hidden;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
-    th, td {
-        padding: 12px 16px;
+    
+    .data-table th {
+        background: #f9f9f9;
+        padding: 14px 12px;
         text-align: left;
+        font-weight: 600;
+        color: #333;
         border-bottom: 1px solid #eee;
     }
-    th {
-        background-color: #fafafa;
-        font-weight: 600;
-        color: var(--text-color);
-        font-family: 'Poppins', sans-serif;
-        font-size: 13px;
+    
+    .data-table td {
+        padding: 12px;
+        border-bottom: 1px solid #f0f0f0;
     }
-    td {
-        font-family: 'Inter', sans-serif;
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 500;
+        display: inline-block;
+    }
+    
+    .status-pending {
+        background: #FFF3E0;
+        color: #F57C00;
+    }
+    
+    .status-completed {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+    
+    .status-incomplete {
+        background: #FFF3E0;
+        color: #F57C00;
+    }
+    
+    .status-complete {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+    
+    .status-dropout {
+        background: #FFEBEE;
+        color: #C62828;
+    }
+    
+    .action-btn {
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-size: 16px;
+        color: #666;
+    }
+    
+    .action-btn:hover {
+        color: #F59E0B;
+    }
+    
+    .modal-overlay {
+        position: fixed;
+        top:0;
+        left:0;
+        right:0;
+        bottom:0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    
+    .modal-content {
+        background: white;
+        width: 500px;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    .modal-header {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 16px;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap:16px;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 500;
         font-size: 14px;
     }
-    .status-pending {
-        color: var(--secondary);
-        background-color: var(--accent-light-orange);
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 600;
-        display: inline-block;
+    
+    .form-input, .form-select {
+        width: 100%;
+        padding:10px 12px;
+        border:1px solid #ddd;
+        border-radius: 6px;
+        background: #f5f5f5;
     }
-    .status-completed {
-        color: var(--accent-green);
-        background-color: var(--accent-light-green);
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 600;
-        display: inline-block;
-    }
-    .status-in-progress {
-        color: var(--primary);
-        background-color: var(--accent-light-purple);
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 600;
-        display: inline-block;
-    }
-    .pagination {
+    
+    .modal-footer {
         display: flex;
         justify-content: flex-end;
-        align-items: center;
-        gap: 8px;
-        margin-top: 20px;
+        gap:12px;
+        margin-top:20px;
     }
-    .pagination button {
-        background: white;
-        border: 1px solid #ddd;
-        padding: 6px 12px;
+    
+    .btn-cancel {
+        padding: 10px 24px;
         border-radius: 6px;
+        border:1px solid #ddd;
+        background: white;
         cursor: pointer;
+    }
+    
+    .btn-save {
+        padding: 10px 24px;
+        border-radius:6px;
+        border:none;
+        background: #F59E0B;
+        color: white;
+        cursor: pointer;
+        font-weight:600;
     }
 </style>
 
-<p class="page-subtitle">Create and assign tasks and projects</p>
+<div class="page-title" style="margin-bottom:20px;">
+    <h1>Tasks & Projects</h1>
+</div>
 
-<div class="card">
-    <div class="card-header">
-        <div class="btn-group">
-            <button class="btn active">All Tasks</button>
-            <button class="btn">Assignments</button>
-            <button class="btn">Mini Project</button>
-            <button class="btn">Main Project</button>
-        </div>
-        <a href="#" class="btn btn-primary">Create Task</a>
+<div class="section-header">
+    <h2 style="font-size:18px;">Create and manage trainee tasks</h2>
+</div>
+
+<div class="tab-container">
+    <a href="?tab=tasks" class="tab-btn {% if active_tab == 'tasks' %}active{% endif %}">Task Management</a>
+    <a href="?tab=projects" class="tab-btn {% if active_tab == 'projects' %}active{% endif %}">Project Management</a>
+    {% if selected_task %}
+    <a href="?tab=trainees&task_id={{ selected_task.id }}" class="tab-btn {% if active_tab == 'trainees' %}active{% endif %}">Trainee Tasks</a>
+    {% endif %}
+</div>
+
+{% if active_tab == 'tasks' %}
+<div class="section-header">
+    <div class="filters">
+        <select class="select-filter">
+            <option>Course: All Courses</option>
+        </select>
+        <select class="select-filter">
+            <option>Course: All Batches</option>
+        </select>
     </div>
-    
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>Task Name</th>
-                    <th>Assign To</th>
-                    <th>Submission Date</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Assignment 1</td>
-                    <td>Rajesh Kumar</td>
-                    <td>2025-06-20</td>
-                    <td><span class="status-pending">Pending</span></td>
-                </tr>
-                <tr>
-                    <td>Mini Project</td>
-                    <td>Priya Sharma</td>
-                    <td>2025-06-25</td>
-                    <td><span class="status-in-progress">In-Progress</span></td>
-                </tr>
-                <tr>
-                    <td>Assignment 2</td>
-                    <td>Rithik</td>
-                    <td>2025-06-18</td>
-                    <td><span class="status-completed">Completed</span></td>
-                </tr>
-            </tbody>
-            </tbody>
-        </table>
+    <button class="btn-add">Add Task</button>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Task Name</th>
+            <th>Batch</th>
+            <th>Assigned Date</th>
+            <th>Due Date</th>
+            <th>Assigned</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if tasks %}
+            {% for task in tasks %}
+            <tr>
+                <td>{{ task.day }} {{ task.task_name }}</td>
+                <td>{{ task.batch.batch_name }}</td>
+                <td>{{ task.assigned_date|date:"d/m/Y" }}</td>
+                <td>{{ task.due_date|date:"d/m/Y" }}</td>
+                <td>All Trainees</td>
+                <td>
+                    <span class="status-badge {% if task.status == 'Completed' %}status-completed{% else %}status-pending{% endif %}">
+                        {{ task.status }}
+                    </span>
+                </td>
+                <td>
+                    <a href="?tab=trainees&task_id={{ task.id }}" class="action-btn">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <button class="action-btn"><i class="fas fa-edit"></i></button>
+                </td>
+            </tr>
+            {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="7">
+                <div style="text-align:center; padding:40px;">
+                    No tasks yet. Let's add some sample tasks!
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>Day 20</td>
+            <td>UI/UX Design</td>
+            <td>25/03/2026</td>
+            <td>25/03/2026</td>
+            <td>All Trainees</td>
+            <td><span class="status-badge status-pending">Pending</span></td>
+            <td>
+                <!-- Since this is a sample, let's use a placeholder task_id, we can handle this later -->
+                <a href="?tab=trainees" class="action-btn"><i class="fas fa-eye"></i></a>
+                <button class="action-btn"><i class="fas fa-edit"></i></button>
+            </td>
+        </tr>
+        <tr>
+            <td>Day 26</td>
+            <td>Full Stack Batch</td>
+            <td>25/03/2026</td>
+            <td>25/03/2026</td>
+            <td>All Trainees</td>
+            <td><span class="status-badge status-completed">Completed</span></td>
+            <td>
+                <a href="?tab=trainees" class="action-btn"><i class="fas fa-eye"></i></a>
+                <button class="action-btn"><i class="fas fa-edit"></i></button>
+            </td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
+
+{% elif active_tab == 'projects' %}
+<div class="section-header">
+    <div class="filters">
+        <select class="select-filter">
+            <option>Course: All Courses</option>
+        </select>
+        <select class="select-filter">
+            <option>Course: All Batches</option>
+        </select>
     </div>
-    
-    <div class="pagination">
-        <button>Previous</button>
-        <button>1</button>
-        <button>Next</button>
+    <button class="btn-add">Add Project</button>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Project Name</th>
+            <th>Batch</th>
+            <th>Assigned Date</th>
+            <th>Deadline</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if projects %}
+            {% for project in projects %}
+            <tr>
+                <td>{{ project.project_name }}</td>
+                <td>{{ project.batch.batch_name }}</td>
+                <td>{{ project.assigned_date|date:"d/m/Y" }}</td>
+                <td>{{ project.deadline|date:"d/m/Y" }}</td>
+                <td>
+                    <span class="status-badge">{{ project.status }}</span>
+                </td>
+                <td>
+                    <button class="action-btn"><i class="fas fa-eye"></i></button>
+                    <button class="action-btn"><i class="fas fa-edit"></i></button>
+                </td>
+            </tr>
+            {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="6">
+                <div style="text-align:center; padding:40px;">
+                    No projects yet! Add your first project!
+                </div>
+            </td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
+
+{% elif active_tab == 'trainees' and selected_task %}
+<div class="section-header">
+    <div class="filters" style="gap: 8px;">
+        <h3 style="font-size:18px; margin:0;">Task: {{ selected_task.day }} {{ selected_task.task_name }}</h3>
+    </div>
+    <a href="?tab=tasks" class="btn-cancel" style="text-decoration:none; color:#333;">Back</a>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Trainee Name</th>
+            <th>Day</th>
+            <th>Task Name</th>
+            <th>Total Task</th>
+            <th>Completed</th>
+            <th>Assigned Date</th>
+            <th>Sub-Date</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if trainee_tasks %}
+            {% for tt in trainee_tasks %}
+            <tr>
+                <td>{{ tt.trainee.full_name }}</td>
+                <td>{{ selected_task.day }}</td>
+                <td>{{ selected_task.task_name }}</td>
+                <td>{{ selected_task.total_task }}</td>
+                <td>{{ tt.completed_task }}</td>
+                <td>{{ selected_task.assigned_date|date:"d/m/Y" }}</td>
+                <td>{% if tt.submission_date %}{{ tt.submission_date|date:"d/m/Y" }}{% else %}-{% endif %}</td>
+                <td>
+                    <span class="status-badge {% if tt.status == 'Complete' %}status-complete{% elif tt.status == 'Dropout' %}status-dropout{% else %}status-incomplete{% endif %}">
+                        {{ tt.status }}
+                    </span>
+                </td>
+                <td>
+                    <form method="POST" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="toggle_check">
+                        <input type="hidden" name="trainee_task_id" value="{{ tt.id }}">
+                        <button type="submit" style="border:none; background:transparent; cursor:pointer;">
+                            {% if tt.is_checked %}
+                                <i class="fas fa-check-square" style="color:#10B981; font-size:18px;"></i>
+                            {% else %}
+                                <i class="far fa-square" style="color:#999; font-size:18px;"></i>
+                            {% endif %}
+                        </button>
+                    </form>
+                    <button class="action-btn" onclick="openModal({{ tt.id }})"><i class="fas fa-edit"></i></button>
+                </td>
+            </tr>
+            {% endfor %}
+        {% else %}
+        <tr>
+            <td>Rajesh</td>
+            <td>20</td>
+            <td>Buttons</td>
+            <td>30</td>
+            <td>25</td>
+            <td>25/03/2026</td>
+            <td>-</td>
+            <td><span class="status-badge status-incomplete">In-Complete</span></td>
+            <td>
+                <i class="far fa-square" style="color:#999; font-size:18px; margin-right:8px;"></i>
+                <button class="action-btn"><i class="fas fa-edit"></i></button>
+            </td>
+        </tr>
+        <tr>
+            <td>Ramya R</td>
+            <td>20</td>
+            <td>Buttons</td>
+            <td>30</td>
+            <td>30</td>
+            <td>25/03/2026</td>
+            <td>25/03/2026</td>
+            <td><span class="status-badge status-complete">Complete</span></td>
+            <td>
+                <i class="fas fa-check-square" style="color:#10B981; font-size:18px; margin-right:8px;"></i>
+                <button class="action-btn"><i class="fas fa-edit"></i></button>
+            </td>
+        </tr>
+        <tr>
+            <td>Karthik M</td>
+            <td>20</td>
+            <td>Buttons</td>
+            <td>30</td>
+            <td>0</td>
+            <td>25/03/2026</td>
+            <td>-</td>
+            <td><span class="status-badge status-dropout">Dropout</span></td>
+            <td>
+                <i class="fas fa-times" style="color:#EF4444; font-size:18px; margin-right:8px;"></i>
+            </td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
+
+<div id="updateModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header">Task Update</div>
+        <form id="updateForm" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_trainee_task">
+            <input type="hidden" name="trainee_task_id" id="traineeTaskId">
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Trainee Name</label>
+                    <input type="text" id="traineeName" class="form-input" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Task Name</label>
+                    <input type="text" id="taskName" class="form-input" readonly>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Total Task</label>
+                    <input type="text" id="totalTask" class="form-input" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Completed Task</label>
+                    <input type="number" id="completedTask" name="completed_task" class="form-input">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Assigned Date</label>
+                    <input type="text" id="assignedDate" class="form-input" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Submission Date</label>
+                    <input type="date" id="submissionDate" name="submission_date" class="form-input">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Day</label>
+                    <input type="text" id="taskDay" class="form-input" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="taskStatus" name="status" class="form-select">
+                        <option value="Incomplete">Incomplete</option>
+                        <option value="Complete">Complete</option>
+                        <option value="Dropout">Dropout</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn-save">Save</button>
+            </div>
+        </form>
     </div>
 </div>
+{% endif %}
+
+<script>
+function openModal(traineeTaskId) {
+    // For demo purposes, if we don't have real data, use sample data
+    document.getElementById('traineeTaskId').value = traineeTaskId;
+    document.getElementById('traineeName').value = "Rajesh";
+    document.getElementById('taskName').value = "Buttons";
+    document.getElementById('totalTask').value = "30";
+    document.getElementById('completedTask').value = "25";
+    document.getElementById('assignedDate').value = "25/03/2026";
+    document.getElementById('taskDay').value = "20";
+    document.getElementById('taskStatus').value = "Incomplete";
+    document.getElementById('updateModal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('updateModal').style.display = 'none';
+}
+</script>
 {% endblock %}

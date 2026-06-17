@@ -1,7 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
-from .models import User, Trainer, Course, Batch, Trainee, Intern, Payment, Report, Enquiry, Candidate, Eligibility, DocumentVerification, InterviewSchedule
+from django.core.mail import send_mail
+from django.conf import settings
+from .models import User, Trainer, Course, Batch, Trainee, Intern, Payment, Report, Enquiry, Candidate, Eligibility, DocumentVerification, InterviewSchedule, SystemSetting, Task, TraineeTask, Project, Message
 from django.utils import timezone
 
 def login_view(request):
@@ -56,7 +58,33 @@ def admin_dashboard(request):
     return render(request, 'core/dashboard.html', context)
 
 def trainer_dashboard(request):
-    return render(request, 'core/trainer_dashboard.html')
+    # Get current trainer (we'll assume first trainer for demo, you can update later)
+    trainer = Trainer.objects.first()
+    
+    # Dynamic data
+    assigned_batches = Batch.objects.filter(trainer=trainer).count() if trainer else 3
+    total_trainees = Trainee.objects.filter(batch__trainer=trainer).count() if trainer else 40
+    pending_reports = Report.objects.filter(status='Pending', trainer=trainer).count() if trainer else 2
+    
+    # Get active batches (first 3)
+    active_batches = Batch.objects.filter(trainer=trainer)[:3] if trainer else []
+    
+    # Get interns
+    total_interns = Intern.objects.count()
+    active_interns = Intern.objects.filter(status='Active').count() if hasattr(Intern, 'status') else 5
+    completed_interns = total_interns - active_interns if total_interns else 1
+    
+    context = {
+        'trainer': trainer,
+        'assigned_batches': assigned_batches,
+        'total_trainees': total_trainees,
+        'pending_reports': pending_reports,
+        'active_batches': active_batches,
+        'total_interns': total_interns,
+        'active_interns': active_interns,
+        'completed_interns': completed_interns,
+    }
+    return render(request, 'core/trainer_dashboard.html', context)
 
 def business_dashboard(request):
     total_enquiries = Enquiry.objects.count()
@@ -155,6 +183,11 @@ def batch_add(request):
         timing_end = request.POST['timing_end']
         days = ','.join(request.POST.getlist('days'))
         status = request.POST['status']
+        selected_trainee_ids = request.POST.getlist('trainees')
+        email_from = request.POST.get('email_from', 'admin@vetritsystems.com')
+        email_to = request.POST.get('email_to', '')
+        email_subject = request.POST.get('email_subject', '')
+        email_preview = request.POST.get('email_preview', '')
         
         course = Course.objects.get(id=course_id) if course_id else None
         trainer = Trainer.objects.get(id=trainer_id) if trainer_id else None
@@ -172,12 +205,48 @@ def batch_add(request):
             days=days,
             status=status
         )
-        messages.success(request, 'New Batch Added Successfully')
+        
+        if request.FILES.get('batch_file'):
+            batch.batch_file = request.FILES['batch_file']
+            batch.save()
+
+        if selected_trainee_ids:
+            Trainee.objects.filter(id__in=selected_trainee_ids).update(batch=batch)
+        
+        # Send email
+        if email_to and email_subject:
+            try:
+                # Determine recipient email
+                recipient_list = [email_to]
+                if trainer and trainer.office_mail:
+                    recipient_list = [trainer.office_mail]
+                
+                send_mail(
+                    subject=email_subject,
+                    message=email_preview,
+                    from_email=email_from,
+                    recipient_list=recipient_list,
+                    fail_silently=True,
+                )
+                messages.success(request, 'New Batch Added Successfully and Email Sent!')
+            except Exception as e:
+                messages.warning(request, 'New Batch Added Successfully, but Email Failed to Send.')
+        else:
+            messages.success(request, 'New Batch Added Successfully')
+        
         return redirect('batch_list')
     
     courses = Course.objects.all()
     trainers = Trainer.objects.filter(status='Active')
-    return render(request, 'core/batch_form.html', {'courses': courses, 'trainers': trainers})
+    trainees = Trainee.objects.filter(status='Active')
+    return render(request, 'core/batch_form.html', {
+        'courses': courses,
+        'trainers': trainers,
+        'trainees': trainees,
+        'selected_days': [],
+        'selected_trainees': [],
+        'days_list': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    })
 
 def batch_edit(request, pk):
     batch = get_object_or_404(Batch, pk=pk)
@@ -193,6 +262,11 @@ def batch_edit(request, pk):
         batch.timing_end = request.POST['timing_end']
         batch.days = ','.join(request.POST.getlist('days'))
         batch.status = request.POST['status']
+        selected_trainee_ids = request.POST.getlist('trainees')
+        email_from = request.POST.get('email_from', 'admin@vetritsystems.com')
+        email_to = request.POST.get('email_to', '')
+        email_subject = request.POST.get('email_subject', '')
+        email_preview = request.POST.get('email_preview', '')
         
         if course_id:
             batch.course = Course.objects.get(id=course_id)
@@ -204,14 +278,54 @@ def batch_edit(request, pk):
         else:
             batch.trainer = None
             
+        if request.FILES.get('batch_file'):
+            batch.batch_file = request.FILES['batch_file']
+            
         batch.save()
-        messages.success(request, 'Batch Updated Successfully')
+
+        if selected_trainee_ids:
+            Trainee.objects.filter(batch=batch).exclude(id__in=selected_trainee_ids).update(batch=None)
+            Trainee.objects.filter(id__in=selected_trainee_ids).update(batch=batch)
+        else:
+            Trainee.objects.filter(batch=batch).update(batch=None)
+        
+        # Send email
+        if email_to and email_subject:
+            try:
+                # Determine recipient email
+                recipient_list = [email_to]
+                if batch.trainer and batch.trainer.office_mail:
+                    recipient_list = [batch.trainer.office_mail]
+                
+                send_mail(
+                    subject=email_subject,
+                    message=email_preview,
+                    from_email=email_from,
+                    recipient_list=recipient_list,
+                    fail_silently=True,
+                )
+                messages.success(request, 'Batch Updated Successfully and Email Sent!')
+            except Exception as e:
+                messages.warning(request, 'Batch Updated Successfully, but Email Failed to Send.')
+        else:
+            messages.success(request, 'Batch Updated Successfully')
+        
         return redirect('batch_list')
     
     courses = Course.objects.all()
     trainers = Trainer.objects.filter(status='Active')
+    trainees = Trainee.objects.filter(status='Active')
     selected_days = batch.days.split(',') if batch.days else []
-    return render(request, 'core/batch_form.html', {'batch': batch, 'courses': courses, 'trainers': trainers, 'selected_days': selected_days})
+    selected_trainees = list(batch.trainees.values_list('id', flat=True))
+    return render(request, 'core/batch_form.html', {
+        'batch': batch,
+        'courses': courses,
+        'trainers': trainers,
+        'trainees': trainees,
+        'selected_days': selected_days,
+        'selected_trainees': selected_trainees,
+        'days_list': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    })
 
 def batch_delete(request, pk):
     batch = get_object_or_404(Batch, pk=pk)
@@ -335,7 +449,32 @@ def intern_add(request):
         if request.POST.get('trainer'):
             intern.trainer = Trainer.objects.get(id=request.POST['trainer'])
         intern.save()
-        messages.success(request, 'Intern added successfully! Initial password is the phone number.')
+        
+        # Send email
+        email_from = request.POST.get('email_from', 'admin@vetritsystems.com')
+        email_to = request.POST.get('email_to', '')
+        email_subject = request.POST.get('email_subject', '')
+        email_preview = request.POST.get('email_preview', '')
+        
+        if email_to and email_subject:
+            try:
+                recipient_list = [email_to]
+                if intern.trainer and intern.trainer.office_mail:
+                    recipient_list = [intern.trainer.office_mail]
+                
+                send_mail(
+                    subject=email_subject,
+                    message=email_preview,
+                    from_email=email_from,
+                    recipient_list=recipient_list,
+                    fail_silently=True,
+                )
+                messages.success(request, 'Intern added successfully and Email Sent! Initial password is the phone number.')
+            except Exception as e:
+                messages.warning(request, 'Intern added successfully, but Email Failed to Send. Initial password is the phone number.')
+        else:
+            messages.success(request, 'Intern added successfully! Initial password is the phone number.')
+        
         return redirect('intern_list')
     trainers = Trainer.objects.filter(status='Active')
     return render(request, 'core/intern_form.html', {'trainers': trainers})
@@ -362,7 +501,32 @@ def intern_edit(request, pk):
         intern.user.phone_no = request.POST['phone_no']
         intern.user.save()
         intern.save()
-        messages.success(request, 'Intern updated successfully!')
+        
+        # Send email
+        email_from = request.POST.get('email_from', 'admin@vetritsystems.com')
+        email_to = request.POST.get('email_to', '')
+        email_subject = request.POST.get('email_subject', '')
+        email_preview = request.POST.get('email_preview', '')
+        
+        if email_to and email_subject:
+            try:
+                recipient_list = [email_to]
+                if intern.trainer and intern.trainer.office_mail:
+                    recipient_list = [intern.trainer.office_mail]
+                
+                send_mail(
+                    subject=email_subject,
+                    message=email_preview,
+                    from_email=email_from,
+                    recipient_list=recipient_list,
+                    fail_silently=True,
+                )
+                messages.success(request, 'Intern updated successfully and Email Sent!')
+            except Exception as e:
+                messages.warning(request, 'Intern updated successfully, but Email Failed to Send.')
+        else:
+            messages.success(request, 'Intern updated successfully!')
+        
         return redirect('intern_list')
     trainers = Trainer.objects.filter(status='Active')
     return render(request, 'core/intern_form.html', {'intern': intern, 'trainers': trainers})
@@ -385,7 +549,18 @@ def reports_approvals(request):
 
 # Business Monitoring
 def business_monitoring(request):
-    return render(request, 'core/business_monitoring.html')
+    total_enquiries = Enquiry.objects.count()
+    eligible_candidates = Eligibility.objects.filter(status='Eligible').count()
+    converted_count = Enquiry.objects.filter(status='Converted').count()
+    conversion_rate = 0
+    if total_enquiries > 0:
+        conversion_rate = round((converted_count / total_enquiries) * 100, 1)
+    
+    return render(request, 'core/business_monitoring.html', {
+        'total_enquiries': total_enquiries,
+        'eligible_candidates': eligible_candidates,
+        'conversion_rate': conversion_rate
+    })
 
 # Payment & Revenue
 def payment_revenue(request):
@@ -402,9 +577,28 @@ def payment_revenue(request):
             trainee.office_mail = office_email
             trainee.save()
     
-    trainees = Trainee.objects.all()
     payments = Payment.objects.all()
-    return render(request, 'core/payment_revenue.html', {'trainees': trainees, 'payments': payments})
+    
+    # Calculate stats
+    total_revenue = 0
+    total_collected = 0
+    total_pending = 0
+    pending_payments_count = 0
+    
+    for payment in payments:
+        total_revenue += payment.course_amount
+        total_collected += payment.paid
+        total_pending += payment.pending
+        if payment.status == 'Pending':
+            pending_payments_count += 1
+    
+    return render(request, 'core/payment_revenue.html', {
+        'payments': payments,
+        'total_revenue': total_revenue,
+        'total_collected': total_collected,
+        'total_pending': total_pending,
+        'pending_payments_count': pending_payments_count
+    })
 
 # Communication
 def communication(request):
@@ -412,11 +606,52 @@ def communication(request):
 
 # Settings
 def settings(request):
-    return render(request, 'core/settings.html')
+    # Get or create the first SystemSetting
+    setting, created = SystemSetting.objects.get_or_create(id=1)
+    
+    if request.method == 'POST':
+        # Update General
+        setting.organizer_name = request.POST.get('organizer_name', setting.organizer_name)
+        # Update SMTP
+        setting.smtp_email = request.POST.get('smtp_email', setting.smtp_email)
+        setting.smtp_host = request.POST.get('smtp_host', setting.smtp_host)
+        setting.smtp_port = request.POST.get('smtp_port', setting.smtp_port)
+        setting.smtp_user = request.POST.get('smtp_user', setting.smtp_user)
+        setting.smtp_password = request.POST.get('smtp_password', setting.smtp_password)
+        # Update WhatsApp
+        setting.whatsapp_number = request.POST.get('whatsapp_number', setting.whatsapp_number)
+        # Update Notifications
+        setting.enable_email_notification = request.POST.get('enable_email_notification') == 'on'
+        setting.enable_whatsapp_alerts = request.POST.get('enable_whatsapp_alerts') == 'on'
+        # Update Backup
+        setting.backup_frequency = request.POST.get('backup_frequency', setting.backup_frequency)
+        
+        # Update Permissions
+        setting.admin_edit_batch = request.POST.get('admin_edit_batch') == 'on'
+        setting.admin_batch_course_control = request.POST.get('admin_batch_course_control') == 'on'
+        setting.admin_reports_approval = request.POST.get('admin_reports_approval') == 'on'
+        setting.admin_payment_verification = request.POST.get('admin_payment_verification') == 'on'
+        
+        setting.trainer_attendance_update = request.POST.get('trainer_attendance_update') == 'on'
+        setting.trainer_task_project_update = request.POST.get('trainer_task_project_update') == 'on'
+        setting.trainer_report_submission = request.POST.get('trainer_report_submission') == 'on'
+        
+        setting.business_enquiry_check = request.POST.get('business_enquiry_check') == 'on'
+        setting.business_document_verification = request.POST.get('business_document_verification') == 'on'
+        setting.business_payment_handling = request.POST.get('business_payment_handling') == 'on'
+        setting.business_batch_allocation = request.POST.get('business_batch_allocation') == 'on'
+        setting.business_reports_approval = request.POST.get('business_reports_approval') == 'on'
+        
+        setting.save()
+        messages.success(request, 'Settings updated successfully!')
+        return redirect('settings')
+    
+    return render(request, 'core/settings.html', {'setting': setting})
 
 # Admin - Invoice
 def invoice(request):
-    return render(request, 'core/invoice.html')
+    payments = Payment.objects.all()
+    return render(request, 'core/invoice.html', {'payments': payments})
 
 # Admin - Calendar & Leave
 def calendar_leave(request):
@@ -439,7 +674,202 @@ def trainer_trainee_list(request):
 
 # Trainer - Tasks
 def trainer_tasks(request):
-    return render(request, 'core/trainer_tasks.html')
+    trainer = Trainer.objects.first()  # Current trainer
+    active_tab = request.GET.get('tab', 'tasks')
+    
+    tasks = []
+    projects = []
+    selected_task = None
+    trainee_tasks = []
+
+    if trainer:
+        tasks = Task.objects.filter(trainer=trainer)
+        projects = Project.objects.filter(trainer=trainer)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'update_trainee_task':
+            trainee_task_id = request.POST.get('trainee_task_id')
+            trainee_task = get_object_or_404(TraineeTask, id=trainee_task_id)
+            
+            status = request.POST.get('status')
+            completed_task = int(request.POST.get('completed_task', 0))
+            submission_date = request.POST.get('submission_date', None)
+            is_checked = request.POST.get('is_checked') == 'on'
+            
+            trainee_task.status = status
+            trainee_task.completed_task = completed_task
+            if submission_date:
+                trainee_task.submission_date = submission_date
+            trainee_task.is_checked = is_checked
+            trainee_task.save()
+            
+            messages.success(request, 'Task updated successfully!')
+            
+            return redirect(f'/trainer/tasks/?tab=trainees&task_id={trainee_task.task.id}')
+        
+        elif action == 'toggle_check':
+            trainee_task_id = request.POST.get('trainee_task_id')
+            trainee_task = get_object_or_404(TraineeTask, id=trainee_task_id)
+            trainee_task.is_checked = not trainee_task.is_checked
+            trainee_task.save()
+            
+            return redirect(f'/trainer/tasks/?tab=trainees&task_id={trainee_task.task.id}')
+    
+    task_id = request.GET.get('task_id')
+    if task_id:
+        selected_task = get_object_or_404(Task, id=task_id)
+        # Get all trainees for the task's batch
+        if selected_task.batch:
+            trainees = selected_task.batch.trainees.all()
+            # Create TraineeTask records if they don't exist yet
+            for trainee in trainees:
+                TraineeTask.objects.get_or_create(
+                    task=selected_task,
+                    trainee=trainee,
+                    defaults={
+                        'total_task': selected_task.total_task,
+                        'completed_task': 0,
+                        'status': 'Incomplete',
+                        'is_checked': False
+                    }
+                )
+            trainee_tasks = TraineeTask.objects.filter(task=selected_task)
+    
+    context = {
+        'active_tab': active_tab,
+        'tasks': tasks,
+        'projects': projects,
+        'selected_task': selected_task,
+        'trainee_tasks': trainee_tasks,
+    }
+    return render(request, 'core/trainer_tasks.html', context)
+
+
+# Trainer - Internship Management (Active Interns List)
+def trainer_internship_management(request):
+    # Get all interns (use sample data if no real data)
+    interns = Intern.objects.all()
+    return render(request, 'core/trainer_internship_management.html', {'interns': interns})
+
+
+# Trainer - Assign Work Page
+def trainer_assign_work(request):
+    intern_id = request.GET.get('intern_id')
+    intern = None
+    if intern_id:
+        intern = get_object_or_404(Intern, id=intern_id)
+    return render(request, 'core/trainer_assign_work.html', {'intern': intern})
+
+
+# Trainer - Intern Performance Page
+def trainer_intern_performance(request, intern_id):
+    intern = get_object_or_404(Intern, id=intern_id)
+    return render(request, 'core/trainer_intern_performance.html', {'intern': intern})
+
+
+# Trainer - Communication Page
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Q
+
+
+def trainer_communication(request):
+    # Get or create sample messages if none exist
+    if Message.objects.count() == 0:
+        # Get a default user or create one for sender
+        trainer_user = User.objects.filter(role='Trainer').first()
+        if not trainer_user:
+            trainer_user = User.objects.create_superuser(email="trainer@test.com", password="password123")
+        
+        # Create sample messages
+        sample_messages = [
+            {
+                "subject": "Task Doubt",
+                "preview": "Hi mam, I have doubt on today task...",
+                "avatar_initial": "P",
+                "avatar_color": "#9E69FF",
+                "created_at": timezone.now(),
+                "is_read": False
+            },
+            {
+                "subject": "Weekly Report Approved by business team",
+                "preview": "Hi mam, please find the report of batch 8 students weekly report",
+                "avatar_initial": "B",
+                "avatar_color": "#36B37E",
+                "created_at": timezone.now() - timedelta(days=1),
+                "is_read": True
+            },
+            {
+                "subject": "Task Doubt",
+                "preview": "Hi mam, I have doubt on today task...",
+                "avatar_initial": "R",
+                "avatar_color": "#FFAB00",
+                "created_at": timezone.now() - timedelta(days=2),
+                "is_read": True
+            },
+            {
+                "subject": "Daily Task (22/03/2026)",
+                "preview": "Trainee Name: Amire....",
+                "avatar_initial": "A",
+                "avatar_color": "#22C55E",
+                "created_at": timezone.now() - timedelta(days=3),
+                "is_read": True
+            },
+            {
+                "subject": "Daily Task (21/03/2026)",
+                "preview": "Trainee Name: Praveen....",
+                "avatar_initial": "P",
+                "avatar_color": "#9E69FF",
+                "created_at": timezone.now() - timedelta(days=4),
+                "is_read": True
+            }
+        ]
+        for msg in sample_messages:
+            Message.objects.create(
+                sender=trainer_user,
+                subject=msg["subject"],
+                preview=msg["preview"],
+                avatar_initial=msg["avatar_initial"],
+                avatar_color=msg["avatar_color"],
+                created_at=msg["created_at"],
+                is_read=msg["is_read"]
+            )
+    
+    # Handle POST requests
+    active_filter = request.GET.get('filter', 'all')
+    search_query = request.GET.get('q', '')
+
+    if request.method == "POST":
+        action = request.POST.get('action')
+        
+        if action == "toggle_read":
+            msg_id = request.POST.get('msg_id')
+            message = get_object_or_404(Message, id=msg_id)
+            message.is_read = not message.is_read
+            message.save()
+    
+    # Filter messages
+    messages_query = Message.objects.all()
+    if search_query:
+        messages_query = messages_query.filter(
+            Q(subject__icontains=search_query) | Q(preview__icontains=search_query)
+        )
+    if active_filter == 'unread':
+        messages_query = messages_query.filter(is_read=False)
+    messages = messages_query.order_by("-created_at")
+    
+    today = timezone.now().date()
+    yesterday = today - timedelta(days=1)
+
+    return render(request, 'core/trainer_communication.html', {
+        'messages': messages,
+        'today': today,
+        'yesterday': yesterday,
+        'active_filter': active_filter,
+        'search_query': search_query
+    })
 
 # Trainer - Projects
 def trainer_projects(request):
@@ -604,10 +1034,8 @@ def eligibility_management(request):
         'not_eligible_count': not_eligible_count
     })
 
-# Reports & Approvals (Business Team)
+# Reports & Approvals (Admin)
 def reports_approvals(request):
-    reports = Report.objects.all()
-    
     if request.method == 'POST':
         action = request.POST.get('action')
         report_id = request.POST.get('report_id')
@@ -615,14 +1043,36 @@ def reports_approvals(request):
         
         if action == 'approve':
             report.status = 'Approved'
-            report.save()
             messages.success(request, 'Report approved!')
         elif action == 'reject':
-            report.status = 'Pending'
-            report.save()
-            messages.success(request, 'Report sent back for review!')
+            report.status = 'Rejected'
+            messages.success(request, 'Report rejected!')
+        
+        report.save()
+        return redirect('reports_approvals')
     
-    return render(request, 'core/reports_approvals.html', {'reports': reports})
+    view_mode = request.GET.get('view')
+    report_id = request.GET.get('id')
+    active_tab = request.GET.get('tab', 'weekly')
+    
+    report = None
+    if view_mode == 'detail' and report_id:
+        report = get_object_or_404(Report, id=report_id)
+    
+    # Filter reports based on tab
+    if active_tab == 'daily':
+        reports = Report.objects.filter(report_type='Daily')
+    elif active_tab == 'monthly':
+        reports = Report.objects.filter(report_type='Monthly')
+    else:  # weekly
+        reports = Report.objects.filter(report_type='Weekly')
+    
+    return render(request, 'core/reports_approvals.html', {
+        'reports': reports,
+        'active_tab': active_tab,
+        'view_mode': view_mode,
+        'report': report
+    })
 
 # Admin - Batch Detail
 def batch_detail(request, pk):

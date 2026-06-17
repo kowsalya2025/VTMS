@@ -3,33 +3,120 @@
 {% block page_title %}Invoice{% endblock %}
 
 {% block admin_content %}
+<style>
+    .card {
+        padding: 24px;
+        margin-bottom: 24px;
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        overflow-x: hidden;
+    }
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        background-color: #3C2A5A;
+        padding: 12px 20px;
+        border-radius: 8px;
+    }
+    .card-header h2 {
+        margin: 0;
+        font-size: 18px;
+        color: white;
+    }
+    .generate-btn {
+        background-color: #F59E0B;
+        color: white;
+        padding: 8px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+    }
+    th, td {
+        padding: 15px 20px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+        font-size: 14px;
+    }
+    th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #444;
+    }
+    .status-paid {
+        color: #16a34a;
+        font-weight: 600;
+    }
+    .status-pending {
+        color: #d97706;
+        font-weight: 600;
+    }
+    .view-btn {
+        background: #ddd6fe;
+        color: #6d28d9;
+        padding: 6px 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+    }
+</style>
+
 <div class="card">
-    <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+    <div class="card-header">
         <h2>Invoice</h2>
-        <button class="btn btn-primary" style="background-color: var(--primary); color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;">Generate Invoice</button>
+        <button class="generate-btn">Generate Invoice</button>
     </div>
-    <table style="width: 100%; border-collapse: collapse;">
+    <table>
         <thead>
-            <tr style="background-color: #f8f9fa;">
-                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Invoice #</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Trainee/Intern</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Amount</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Status</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Date</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Actions</th>
+            <tr>
+                <th>Invoice #</th>
+                <th>Trainee/Intern</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">INV-001</td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">Rahul Sharma</td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">₹50,000</td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;"><span style="color: var(--accent-green); font-weight: 600;">Paid</span></td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">2025-01-10</td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">
-                    <button style="background: var(--accent-light-purple); color: var(--primary); padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;">View</button>
-                </td>
-            </tr>
+            {% for payment in payments %}
+                <tr>
+                    <td>INV-{{ payment.id|stringformat:"03d" }}</td>
+                    <td>
+                        {% if payment.trainee %}
+                            {{ payment.trainee.full_name }}
+                        {% elif payment.intern %}
+                            {{ payment.intern.full_name }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>₹{{ payment.course_amount }}</td>
+                    <td>
+                        <span class="status-{{ payment.status|lower }}">
+                            {{ payment.status }}
+                        </span>
+                    </td>
+                    <td>{{ payment.date|date:"Y-m-d" }}</td>
+                    <td>
+                        <button class="view-btn">View</button>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px;">No invoices found</td>
+                </tr>
+            {% endfor %}
         </tbody>
     </table>
 </div>
