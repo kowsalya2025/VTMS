@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
@@ -8,8 +8,46 @@ from django.db.models import Q
 from .models import User, Trainer, Course, Batch, Trainee, Intern, Payment, Report, Enquiry, Candidate, Eligibility, DocumentVerification, InterviewSchedule, SystemSetting, Task, TraineeTask, Project, Message
 from django.utils import timezone
 from datetime import timedelta
+from functools import wraps
+
+# ─── Role Guards ────────────────────────────────────────────────────────────────
+
+def login_required_role(*roles):
+    """Decorator: requires user to be logged in and have one of the given roles."""
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                messages.error(request, 'Please log in to continue.')
+                return redirect('login')
+            if request.user.role not in roles:
+                messages.error(request, 'You do not have permission to access that page.')
+                # Send back to their own dashboard
+                if request.user.role == User.Role.ADMIN:
+                    return redirect('admin_dashboard')
+                if request.user.role == User.Role.TRAINER:
+                    return redirect('trainer_dashboard')
+                if request.user.role == User.Role.BUSINESS_TEAM:
+                    return redirect('business_dashboard')
+                return redirect('login')
+            return view_func(request, *args, **kwargs)
+        return wrapper
+    return decorator
+
+ADMIN = User.Role.ADMIN
+TRAINER = User.Role.TRAINER
+BUSINESS = User.Role.BUSINESS_TEAM
 
 def login_view(request):
+    if request.user.is_authenticated:
+        # Already logged in — send to correct dashboard
+        if request.user.role == User.Role.ADMIN:
+            return redirect('admin_dashboard')
+        if request.user.role == User.Role.TRAINER:
+            return redirect('trainer_dashboard')
+        if request.user.role == User.Role.BUSINESS_TEAM:
+            return redirect('business_dashboard')
+
     if request.method == 'POST':
         email = request.POST.get('email', '').strip()
         password = request.POST.get('password', '')
@@ -43,6 +81,11 @@ def login_view(request):
 
     return render(request, 'core/login.html')
 
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+@login_required_role(ADMIN)
 def admin_dashboard(request):
     total_trainers = Trainer.objects.filter(status='Active').count()
     total_trainees = Trainee.objects.filter(status='Active').count()
@@ -60,6 +103,7 @@ def admin_dashboard(request):
     }
     return render(request, 'core/dashboard.html', context)
 
+@login_required_role(TRAINER)
 def trainer_dashboard(request):
     # Get current trainer (we'll assume first trainer for demo, you can update later)
     trainer = Trainer.objects.first()
@@ -89,6 +133,7 @@ def trainer_dashboard(request):
     }
     return render(request, 'core/trainer_dashboard.html', context)
 
+@login_required_role(BUSINESS)
 def business_dashboard(request):
     # Check if we need to create sample data
     if Enquiry.objects.count() == 0:
@@ -156,11 +201,13 @@ def business_dashboard(request):
     return render(request, 'core/business_dashboard.html', context)
 
 # Trainer Management
+@login_required_role(ADMIN)
 def trainer_list(request):
     trainers = Trainer.objects.all()
     courses = Course.objects.all()
     return render(request, 'core/trainer_list.html', {'trainers': trainers, 'courses': courses})
 
+@login_required_role(ADMIN)
 def trainer_add(request):
     if request.method == 'POST':
         # Create user first
@@ -189,8 +236,9 @@ def trainer_add(request):
         return redirect('trainer_list')
     
     courses = Course.objects.all()
-    return render(request, 'core/trainer_form.html', {'courses': courses})
+    return render(request, 'core/trainer_form.html', {'courses': courses, 'trainer': None})
 
+@login_required_role(ADMIN)
 def trainer_edit(request, pk):
     trainer = get_object_or_404(Trainer, pk=pk)
     if request.method == 'POST':
@@ -214,6 +262,7 @@ def trainer_edit(request, pk):
     courses = Course.objects.all()
     return render(request, 'core/trainer_form.html', {'trainer': trainer, 'courses': courses})
 
+@login_required_role(ADMIN)
 def trainer_delete(request, pk):
     trainer = get_object_or_404(Trainer, pk=pk)
     trainer.user.delete()  # Delete the associated user too
@@ -221,10 +270,12 @@ def trainer_delete(request, pk):
     return redirect('trainer_list')
 
 # Batch Management
+@login_required_role(ADMIN)
 def batch_list(request):
     batches = Batch.objects.all()
     return render(request, 'core/batch_list.html', {'batches': batches})
 
+@login_required_role(ADMIN)
 def batch_add(request):
     if request.method == 'POST':
         batch_name = request.POST['batch_name']
@@ -300,9 +351,11 @@ def batch_add(request):
         'trainees': trainees,
         'selected_days': [],
         'selected_trainees': [],
+        'batch': None,
         'days_list': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     })
 
+@login_required_role(ADMIN)
 def batch_edit(request, pk):
     batch = get_object_or_404(Batch, pk=pk)
     if request.method == 'POST':
@@ -382,6 +435,7 @@ def batch_edit(request, pk):
         'days_list': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     })
 
+@login_required_role(ADMIN)
 def batch_delete(request, pk):
     batch = get_object_or_404(Batch, pk=pk)
     batch.delete()
@@ -389,11 +443,13 @@ def batch_delete(request, pk):
     return redirect('batch_list')
 
 # Admin - Trainee List
+@login_required_role(ADMIN)
 def trainee_list(request):
     trainees = Trainee.objects.all()
     return render(request, 'core/trainee_list.html', {'trainees': trainees})
 
 # Admin - Trainee Add
+@login_required_role(ADMIN)
 def trainee_add(request):
     if request.method == 'POST':
         # Create user
@@ -430,14 +486,16 @@ def trainee_add(request):
     courses = Course.objects.all()
     batches = Batch.objects.all()
     trainers = Trainer.objects.filter(status='Active')
-    return render(request, 'core/trainee_form.html', {'courses': courses, 'batches': batches, 'trainers': trainers})
+    return render(request, 'core/trainee_form.html', {'courses': courses, 'batches': batches, 'trainers': trainers, 'trainee': None})
 
 # Admin - Trainee Detail
+@login_required_role(ADMIN)
 def trainee_detail(request, pk):
     trainee = get_object_or_404(Trainee, pk=pk)
     return render(request, 'core/trainee_detail.html', {'trainee': trainee})
 
 # Admin - Trainee Edit
+@login_required_role(ADMIN)
 def trainee_edit(request, pk):
     trainee = get_object_or_404(Trainee, pk=pk)
     if request.method == 'POST':
@@ -472,6 +530,7 @@ def trainee_edit(request, pk):
     return render(request, 'core/trainee_form.html', {'trainee': trainee, 'courses': courses, 'batches': batches, 'trainers': trainers})
 
 # Admin - Trainee Delete
+@login_required_role(ADMIN)
 def trainee_delete(request, pk):
     trainee = get_object_or_404(Trainee, pk=pk)
     trainee.user.delete()
@@ -479,11 +538,13 @@ def trainee_delete(request, pk):
     return redirect('trainee_list')
 
 # Intern Management
+@login_required_role(ADMIN)
 def intern_list(request):
     interns = Intern.objects.all()
     return render(request, 'core/intern_list.html', {'interns': interns})
 
 # Admin - Intern Add
+@login_required_role(ADMIN)
 def intern_add(request):
     if request.method == 'POST':
         user = User.objects.create_user(
@@ -533,14 +594,16 @@ def intern_add(request):
         
         return redirect('intern_list')
     trainers = Trainer.objects.filter(status='Active')
-    return render(request, 'core/intern_form.html', {'trainers': trainers})
+    return render(request, 'core/intern_form.html', {'trainers': trainers, 'intern': None})
 
 # Admin - Intern Detail
+@login_required_role(ADMIN)
 def intern_detail(request, pk):
     intern = get_object_or_404(Intern, pk=pk)
     return render(request, 'core/intern_detail.html', {'intern': intern})
 
 # Admin - Intern Edit
+@login_required_role(ADMIN)
 def intern_edit(request, pk):
     intern = get_object_or_404(Intern, pk=pk)
     if request.method == 'POST':
