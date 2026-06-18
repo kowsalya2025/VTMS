@@ -166,63 +166,44 @@
                 </tr>
             </thead>
             <tbody>
+                {% for doc in documents %}
                 <tr>
-                    <td>Arun Kumar</td>
-                    <td>Aadhaar Card</td>
-                    <td>10-06-2026</td>
-                    <td>10-06-2026</td>
-                    <td>Business Team</td>
-                    <td><span class="status-badge status-verified">Verified</span></td>
+                    <td>{{ doc.candidate.full_name }}</td>
+                    <td>{{ doc.document_type }}</td>
+                    <td>{{ doc.submitted_date|date:"d-m-Y" }}</td>
+                    <td>{% if doc.verification_date %}{{ doc.verification_date|date:"d-m-Y" }}{% else %}-{% endif %}</td>
+                    <td>{% if doc.verified_by %}{{ doc.verified_by.get_full_name|default:doc.verified_by.email }}{% else %}-{% endif %}</td>
+                    <td>
+                        {% if doc.status == 'Verified' %}
+                            <span class="status-badge status-verified">Verified</span>
+                        {% elif doc.status == 'Rejected' %}
+                            <span class="status-badge status-rejected">Rejected</span>
+                        {% else %}
+                            <span class="status-badge status-pending">Pending</span>
+                        {% endif %}
+                    </td>
                     <td>
                         <div class="action-buttons">
-                            <button class="action-btn btn-view">View</button>
-                            <button class="action-btn btn-edit">Edit</button>
+                            <a href="{% url 'document_verification_detail' doc.candidate.id %}" class="action-btn btn-view" title="View"><i class="fas fa-eye"></i></a>
+                            {% if doc.candidate.personal_email %}
+                            <a href="mailto:{{ doc.candidate.personal_email }}?subject=Regarding%20your%20document%20verification&body=Hi%20{{ doc.candidate.full_name }}," class="action-btn btn-email" title="Send Mail"><i class="fas fa-envelope"></i></a>
+                            {% endif %}
+                            {% if doc.status == 'Pending' %}
+                            <form method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="verify">
+                                <input type="hidden" name="doc_id" value="{{ doc.id }}">
+                                <button class="action-btn btn-verify">Verify</button>
+                            </form>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>
+                {% empty %}
                 <tr>
-                    <td>Priya Sharma</td>
-                    <td>10th Marksheet</td>
-                    <td>11-06-2026</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td><span class="status-badge status-pending">Pending</span></td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="action-btn btn-view">View</button>
-                            <button class="action-btn btn-verify">Verify</button>
-                            <button class="action-btn btn-edit">Edit</button>
-                        </div>
-                    </td>
+                    <td colspan="7">No documents found.</td>
                 </tr>
-                <tr>
-                    <td>Rahul Verma</td>
-                    <td>12th Marksheet</td>
-                    <td>09-06-2026</td>
-                    <td>09-06-2026</td>
-                    <td>Business Team</td>
-                    <td><span class="status-badge status-verified">Verified</span></td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="action-btn btn-view">View</button>
-                            <button class="action-btn btn-edit">Edit</button>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Ananya Patel</td>
-                    <td>Graduation Certificate</td>
-                    <td>08-06-2026</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td><span class="status-badge status-rejected">Rejected</span></td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="action-btn btn-view">View</button>
-                            <button class="action-btn btn-edit">Edit</button>
-                        </div>
-                    </td>
-                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>

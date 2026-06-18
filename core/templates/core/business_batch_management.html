@@ -1,0 +1,493 @@
+{% extends 'core/base_business.html' %}
+
+{% block page_title %}Batch Management{% endblock %}
+
+{% block business_content %}
+<style>
+    .business-batch-subtitle {
+        color: var(--text-color);
+        font-family: 'Poppins', sans-serif;
+        font-size: 22px;
+        font-weight: 600;
+        margin: 0 0 62px 0;
+    }
+
+    .batch-panel {
+        background: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+        padding: 38px 28px 34px;
+    }
+
+    .batch-panel-header {
+        display: grid;
+        grid-template-columns: 1fr minmax(280px, 480px);
+        align-items: center;
+        gap: 24px;
+        margin-bottom: 28px;
+    }
+
+    .batch-panel-title {
+        color: #111;
+        font-family: 'Poppins', sans-serif;
+        font-size: 22px;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .batch-search {
+        position: relative;
+        width: 100%;
+    }
+
+    .batch-search i {
+        color: #696969;
+        font-size: 20px;
+        left: 28px;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .batch-search input {
+        background: #e8e8e8;
+        border: 0;
+        border-radius: 6px;
+        color: #333;
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        height: 64px;
+        outline: none;
+        padding: 0 24px 0 82px;
+        width: 100%;
+    }
+
+    .batch-search input::placeholder {
+        color: #777;
+    }
+
+    .batch-table-wrap {
+        overflow-x: auto;
+    }
+
+    .business-batch-table {
+        border-collapse: collapse;
+        min-width: 980px;
+        width: 100%;
+    }
+
+    .business-batch-table th {
+        color: #6c6c6c;
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        font-weight: 600;
+        padding: 0 0 20px;
+        text-align: left;
+    }
+
+    .business-batch-table td {
+        color: #2f2f2f;
+        font-family: 'Poppins', sans-serif;
+        font-size: 16px;
+        font-weight: 400;
+        padding: 14px 0;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .business-batch-table th:nth-child(1),
+    .business-batch-table td:nth-child(1) {
+        width: 15%;
+    }
+
+    .business-batch-table th:nth-child(2),
+    .business-batch-table td:nth-child(2) {
+        width: 18%;
+    }
+
+    .business-batch-table th:nth-child(3),
+    .business-batch-table td:nth-child(3) {
+        width: 13%;
+    }
+
+    .business-batch-table th:nth-child(4),
+    .business-batch-table td:nth-child(4) {
+        width: 14%;
+    }
+
+    .business-batch-table th:nth-child(5),
+    .business-batch-table td:nth-child(5) {
+        width: 9%;
+    }
+
+    .business-batch-table th:nth-child(6),
+    .business-batch-table td:nth-child(6) {
+        width: 10%;
+    }
+
+    .status-pill {
+        border-radius: 5px;
+        display: inline-flex;
+        font-size: 16px;
+        font-weight: 500;
+        justify-content: center;
+        min-width: 98px;
+        padding: 9px 4px;
+    }
+
+    .status-upcoming {
+        background: var(--accent-light-orange);
+        color: var(--secondary);
+    }
+
+    .status-active {
+        background: #c9ffd3;
+        color: #0da32f;
+    }
+
+    .status-completed {
+        background: #d7ccff;
+        color: #4f43f5;
+    }
+
+    .batch-actions {
+        align-items: center;
+        display: flex;
+        gap: 18px;
+    }
+
+    .batch-action {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        color: #707070;
+        cursor: pointer;
+        display: inline-flex;
+        font-size: 16px;
+        height: 28px;
+        justify-content: center;
+        margin: 0;
+        padding: 0;
+        text-decoration: none;
+        width: 28px;
+    }
+
+    .batch-action:hover {
+        color: var(--secondary);
+    }
+
+    .empty-batches {
+        color: var(--icon-color);
+        padding: 38px 0;
+        text-align: center;
+    }
+
+    .trainee-modal-backdrop {
+        align-items: center;
+        background: rgba(0, 0, 0, 0.72);
+        display: none;
+        inset: 0;
+        justify-content: center;
+        position: fixed;
+        z-index: 100;
+    }
+
+    .trainee-modal-backdrop.open {
+        display: flex;
+    }
+
+    .trainee-modal {
+        background: var(--white);
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.18);
+        min-height: 674px;
+        padding: 52px 44px 48px;
+        width: 580px;
+    }
+
+    .trainee-modal h2 {
+        color: #060606;
+        font-family: 'Poppins', sans-serif;
+        font-size: 30px;
+        font-weight: 600;
+        margin: 0 0 40px;
+    }
+
+    .trainee-search {
+        position: relative;
+    }
+
+    .trainee-search i {
+        color: #696969;
+        font-size: 23px;
+        left: 34px;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .trainee-search input {
+        background: #e8e8e8;
+        border: 0;
+        border-radius: 5px;
+        color: #333;
+        font-family: 'Poppins', sans-serif;
+        font-size: 20px;
+        height: 62px;
+        margin: 0;
+        padding: 0 20px 0 82px;
+        width: 100%;
+    }
+
+    .trainee-field-label {
+        color: #000;
+        display: block;
+        font-family: 'Poppins', sans-serif;
+        font-size: 22px;
+        font-weight: 500;
+        margin: 19px 0 17px;
+    }
+
+    .trainee-list {
+        border: 1px solid #cfcfcf;
+        border-radius: 5px;
+        height: 222px;
+        overflow-y: auto;
+        padding: 12px 18px;
+    }
+
+    .trainee-list::-webkit-scrollbar {
+        width: 12px;
+    }
+
+    .trainee-list::-webkit-scrollbar-track {
+        background: #d7d7d7;
+        border-radius: 20px;
+    }
+
+    .trainee-list::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 20px;
+    }
+
+    .trainee-option {
+        align-items: center;
+        color: #252525;
+        display: flex;
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        gap: 20px;
+        min-height: 49px;
+    }
+
+    .trainee-option input {
+        appearance: none;
+        background: #d9d9d9;
+        border: 0;
+        border-radius: 2px;
+        flex: 0 0 30px;
+        height: 30px;
+        margin: 0;
+        padding: 0;
+        width: 30px;
+    }
+
+    .trainee-option input:checked {
+        background: var(--secondary);
+        box-shadow: inset 0 0 0 6px #d9d9d9;
+    }
+
+    .trainee-modal-actions {
+        display: grid;
+        gap: 30px;
+        grid-template-columns: 1fr 1fr;
+        margin-top: 92px;
+    }
+
+    .trainee-modal-btn {
+        align-items: center;
+        border-radius: 9px;
+        display: inline-flex;
+        font-family: 'Poppins', sans-serif;
+        font-size: 20px;
+        font-weight: 500;
+        height: 56px;
+        justify-content: center;
+    }
+
+    .trainee-cancel-btn {
+        background: var(--white);
+        border: 1px solid var(--secondary);
+        color: #252525;
+    }
+
+    .trainee-submit-btn {
+        background: var(--secondary);
+        color: var(--white);
+        gap: 24px;
+    }
+
+    .trainee-submit-btn i {
+        font-size: 21px;
+    }
+
+    .trainee-empty {
+        color: #777;
+        font-family: 'Poppins', sans-serif;
+        padding: 18px 0;
+        text-align: center;
+    }
+
+    @media (max-width: 900px) {
+        .business-batch-subtitle {
+            margin-bottom: 28px;
+        }
+
+        .batch-panel {
+            padding: 24px 18px;
+        }
+
+        .batch-panel-header {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<p class="business-batch-subtitle">Manage training batches and assignments</p>
+
+<section class="batch-panel">
+    <div class="batch-panel-header">
+        <h2 class="batch-panel-title">All Batches</h2>
+        <form class="batch-search" method="get">
+            <i class="fas fa-search"></i>
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Search batches" aria-label="Search batches">
+        </form>
+    </div>
+
+    <div class="batch-table-wrap">
+        <table class="business-batch-table">
+            <thead>
+                <tr>
+                    <th>Batch Name</th>
+                    <th>Course</th>
+                    <th>Trainer</th>
+                    <th>Start On</th>
+                    <th>Seats</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for batch in batches %}
+                <tr>
+                    <td>{{ batch.batch_name }}</td>
+                    <td>{{ batch.course.title|default:"-" }}</td>
+                    <td>{{ batch.trainer.full_name|default:"-" }}</td>
+                    <td>{{ batch.start_date|date:"d/m/Y" }}</td>
+                    <td>{{ batch.trainees.count }}</td>
+                    <td>
+                        {% if batch.status == 'Active' %}
+                            <span class="status-pill status-active">Active</span>
+                        {% elif batch.status == 'Completed' %}
+                            <span class="status-pill status-completed">Completed</span>
+                        {% else %}
+                            <span class="status-pill status-upcoming">Upcoming</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="batch-actions">
+                            <a href="{% url 'batch_detail' batch.id %}" class="batch-action" title="View batch"><i class="fas fa-eye"></i></a>
+                            <button type="button" class="batch-action trainee-modal-open" title="Add trainee" data-batch-id="{{ batch.id }}" data-batch-name="{{ batch.batch_name }}"><i class="fas fa-user-plus"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="empty-batches">No batches found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div class="trainee-modal-backdrop" id="traineeModal" aria-hidden="true">
+    <form class="trainee-modal" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="batch_id" id="modalBatchId">
+        <h2>Add Trainee</h2>
+
+        <div class="trainee-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="traineeSearch" placeholder="Search Trainee" aria-label="Search Trainee">
+        </div>
+
+        <label class="trainee-field-label">Select Trainee</label>
+        <div class="trainee-list" id="traineeList">
+            {% for trainee in trainees %}
+            <label class="trainee-option" data-trainee-name="{{ trainee.full_name|lower }}" data-current-batch-id="{% if trainee.batch %}{{ trainee.batch.id }}{% endif %}">
+                <input type="checkbox" name="trainees" value="{{ trainee.id }}">
+                <span>{{ trainee.full_name }}</span>
+            </label>
+            {% empty %}
+            <div class="trainee-empty">No active trainees found</div>
+            {% endfor %}
+        </div>
+
+        <div class="trainee-modal-actions">
+            <button type="button" class="trainee-modal-btn trainee-cancel-btn" id="traineeModalCancel">Cancel</button>
+            <button type="submit" class="trainee-modal-btn trainee-submit-btn"><i class="fas fa-plus"></i> Add Trainee</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const traineeModal = document.getElementById('traineeModal');
+    const modalBatchId = document.getElementById('modalBatchId');
+    const traineeSearch = document.getElementById('traineeSearch');
+    const traineeOptions = Array.from(document.querySelectorAll('.trainee-option'));
+    const cancelButton = document.getElementById('traineeModalCancel');
+
+    function openTraineeModal(batchId) {
+        modalBatchId.value = batchId;
+        traineeSearch.value = '';
+        traineeOptions.forEach((option) => {
+            const checkbox = option.querySelector('input[type="checkbox"]');
+            checkbox.checked = false;
+            option.style.display = 'flex';
+        });
+        traineeModal.classList.add('open');
+        traineeModal.setAttribute('aria-hidden', 'false');
+        traineeSearch.focus();
+    }
+
+    function closeTraineeModal() {
+        traineeModal.classList.remove('open');
+        traineeModal.setAttribute('aria-hidden', 'true');
+    }
+
+    document.querySelectorAll('.trainee-modal-open').forEach((button) => {
+        button.addEventListener('click', () => openTraineeModal(button.dataset.batchId));
+    });
+
+    traineeSearch.addEventListener('input', () => {
+        const query = traineeSearch.value.trim().toLowerCase();
+        traineeOptions.forEach((option) => {
+            option.style.display = option.dataset.traineeName.includes(query) ? 'flex' : 'none';
+        });
+    });
+
+    cancelButton.addEventListener('click', closeTraineeModal);
+
+    traineeModal.addEventListener('click', (event) => {
+        if (event.target === traineeModal) {
+            closeTraineeModal();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && traineeModal.classList.contains('open')) {
+            closeTraineeModal();
+        }
+    });
+</script>
+{% endblock %}

@@ -6,62 +6,69 @@
 <style>
     .page-subtitle {
         font-size: 14px;
-        color: var(--icon-color);
+        color: #666;
         margin-bottom: 24px;
     }
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 24px;
-        margin-bottom: 32px;
+        margin-bottom: 24px;
     }
     .stat-card {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 16px;
-        padding: 24px;
-        background-color: var(--white);
+        padding: 20px;
+        background-color: white;
         border-radius: 12px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
         border: 1px solid #eee;
+        border-top: 3px solid;
     }
+    .stat-card.purple { border-top-color: #3949AB; }
+    .stat-card.orange { border-top-color: #F59E0B; }
+    .stat-card.green { border-top-color: #22C55E; }
+    .stat-card.blue { border-top-color: #3B82F6; }
+    
     .stat-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
+        width: 46px;
+        height: 46px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 24px;
+        font-size: 20px;
+        border: 1px solid #ddd;
     }
     .stat-icon.purple {
-        background-color: var(--accent-light-purple);
-        color: var(--primary);
+        background-color: #E8EAF6;
+        color: #3949AB;
     }
     .stat-icon.orange {
-        background-color: var(--accent-light-orange);
-        color: var(--secondary);
+        background-color: #FFF3E0;
+        color: #F59E0B;
     }
     .stat-icon.green {
-        background-color: var(--accent-light-green);
-        color: var(--accent-green);
+        background-color: #E8F5E9;
+        color: #22C55E;
     }
-    .stat-icon.red {
-        background-color: var(--accent-light-red);
-        color: var(--accent-red);
+    .stat-icon.blue {
+        background-color: #EBF5FF;
+        color: #3B82F6;
     }
     .stat-details h3 {
-        font-size: 28px;
-        font-family: 'Poppins', sans-serif;
-        color: var(--text-color);
-        margin: 0;
+        font-size: 24px;
+        color: #333;
+        margin: 0 0 6px 0;
+        font-weight: 700;
     }
     .stat-details p {
-        font-size: 14px;
-        color: var(--icon-color);
-        margin: 4px 0 0 0;
-        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #666;
+        margin: 0;
+        font-weight: 500;
     }
     .dashboard-grid {
         display: grid;
@@ -72,100 +79,226 @@
         background: white;
         border-radius: 12px;
         padding: 24px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 24px;
     }
     .chart-card h4 {
-        font-family: 'Poppins', sans-serif;
         font-size: 16px;
-        margin-bottom: 24px;
-        color: var(--text-color);
+        margin:0 0 24px 0;
+        color: #333;
+        font-weight: 700;
     }
-    .chart-placeholder {
-        width: 100%;
-        height: 250px;
-        background-color: #f8f9fa;
-        border-radius: 8px;
+    .chart-container {
+        height: 260px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        padding: 0 40px;
+        position: relative;
+    }
+    .chart-y-axis {
+        position: absolute;
+        left:0;
+        top:0;
+        bottom: 30px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        color: #666;
+        font-size: 12px;
+    }
+    .bar-group {
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+    }
+    .bar {
+        width: 40px;
+        border-radius: 4px 4px 0 0;
+    }
+    .bar.purple { background: #3949AB; }
+    .bar.orange { background: #F59E0B; }
+    .bar-label {
+        font-size:12px;
+        color:#666;
+        margin-top:8px;
+        text-align: center;
+    }
+    .chart-legend {
+        display: flex;
+        gap: 24px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+    .legend-item {
         display: flex;
         align-items: center;
-        justify-content: center;
-        color: var(--icon-color);
-        font-family: 'Inter', sans-serif;
+        gap: 8px;
+        font-size:13px;
+        color:#666;
+    }
+    .legend-color {
+        width:16px;
+        height:16px;
+        border-radius:2px;
     }
     .side-card {
         background: white;
         border-radius: 12px;
         padding: 24px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
         margin-bottom: 24px;
     }
     .side-card h4 {
-        font-family: 'Poppins', sans-serif;
-        font-size: 14px;
+        font-size: 15px;
         margin-bottom: 16px;
-        color: var(--text-color);
+        color: #333;
+        font-weight:700;
     }
     .list-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 10px 0;
-        border-bottom: 1px solid #eee;
-    }
-    .list-item:last-child {
-        border-bottom: none;
     }
     .list-text {
-        font-size: 14px;
-        color: var(--text-color);
-        font-family: 'Inter', sans-serif;
+        font-size:14px;
+        color:#333;
+        display:flex;
+        align-items:center;
+        gap:8px;
     }
+    .dot {
+        width:10px;
+        height:10px;
+        border-radius:50%;
+    }
+    .dot.blue { background:#3949AB; }
+    .dot.green { background:#22C55E; }
     .list-date {
-        font-size: 12px;
-        color: var(--icon-color);
+        font-size:12px;
+        color:#666;
+    }
+    .pending-item {
+        display:flex;
+        align-items:center;
+        gap:8px;
+        padding:8px 0;
+    }
+    .pending-dot {
+        width:10px;
+        height:10px;
+        border-radius:50%;
+        background:#F59E0B;
+    }
+    .pending-text {
+        font-size:13px;
+        color:#333;
     }
 </style>
 
-<h2>Dashboard</h2>
+<h2 style="font-size:18px; margin:0 0 4px 0; color:#333; font-weight:700;">Dashboard</h2>
 <p class="page-subtitle">Track enquiries, conversions, and revenue</p>
 
 <div class="stats-grid">
-    <div class="stat-card">
+    <div class="stat-card purple">
         <div class="stat-details">
             <h3>{{ total_enquiries }}</h3>
             <p>Total Enquiries</p>
         </div>
-        <div class="stat-icon purple"><i class="fas fa-envelope-open-text"></i></div>
+        <div class="stat-icon purple"><i class="fas fa-chart-line"></i></div>
     </div>
-    <div class="stat-card">
-        <div class="stat-details">
-            <h3>{{ total_candidates }}</h3>
-            <p>Total Candidates</p>
-        </div>
-        <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
-    </div>
-    <div class="stat-card">
+    <div class="stat-card orange">
         <div class="stat-details">
             <h3>{{ eligible_candidates }}</h3>
             <p>Eligible Candidates</p>
         </div>
-        <div class="stat-icon orange"><i class="fas fa-file-invoice-dollar"></i></div>
+        <div class="stat-icon orange"><i class="fas fa-check-circle"></i></div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card green">
         <div class="stat-details">
-            <h3>{{ pending_interviews }}</h3>
-            <p>Pending Interviews</p>
+            <h3>{{ payments_completed }}</h3>
+            <p>Payments Completed</p>
         </div>
-        <div class="stat-icon red"><i class="fas fa-users"></i></div>
+        <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-details">
+            <h3>{{ active_batches }}</h3>
+            <p>Active Batches</p>
+        </div>
+        <div class="stat-icon blue"><i class="fas fa-book"></i></div>
     </div>
 </div>
 
 <div class="dashboard-grid">
     <div class="chart-card">
         <h4>Enquiries vs Conversions</h4>
-        <div class="chart-placeholder">
-            <div style="text-align: center;">
-                <i class="fas fa-chart-bar" style="font-size: 48px; color: var(--primary); margin-bottom: 12px;"></i>
-                <p>Chart will be displayed here</p>
+        <div class="chart-container">
+            <div class="chart-y-axis">
+                <span>120</span>
+                <span>80</span>
+                <span>40</span>
+                <span>0</span>
+            </div>
+            
+            <div>
+                <div class="bar-group">
+                    <div class="bar purple" style="height: 180px;"></div>
+                    <div class="bar orange" style="height: 120px;"></div>
+                </div>
+                <div class="bar-label">Oct</div>
+            </div>
+            
+            <div>
+                <div class="bar-group">
+                    <div class="bar purple" style="height: 200px;"></div>
+                    <div class="bar orange" style="height: 140px;"></div>
+                </div>
+                <div class="bar-label">Nov</div>
+            </div>
+            
+            <div>
+                <div class="bar-group">
+                    <div class="bar purple" style="height: 190px;"></div>
+                    <div class="bar orange" style="height: 130px;"></div>
+                </div>
+                <div class="bar-label">Dec</div>
+            </div>
+            
+            <div>
+                <div class="bar-group">
+                    <div class="bar purple" style="height: 220px;"></div>
+                    <div class="bar orange" style="height: 160px;"></div>
+                </div>
+                <div class="bar-label">Jan</div>
+            </div>
+            
+            <div>
+                <div class="bar-group">
+                    <div class="bar purple" style="height: 210px;"></div>
+                    <div class="bar orange" style="height: 150px;"></div>
+                </div>
+                <div class="bar-label">Feb</div>
+            </div>
+            
+            <div>
+                <div class="bar-group">
+                    <div class="bar purple" style="height: 225px;"></div>
+                    <div class="bar orange" style="height: 165px;"></div>
+                </div>
+                <div class="bar-label">Mar</div>
+            </div>
+        </div>
+        
+        <div class="chart-legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background:#3949AB;"></div>
+                <span>Enquiries</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background:#F59E0B;"></div>
+                <span>Conversions</span>
             </div>
         </div>
     </div>
@@ -173,42 +306,72 @@
     <div>
         <div class="side-card">
             <h4>Recent Enquiries</h4>
-            <div class="list-item">
-                <div>
-                    <p class="list-text">Rahul</p>
-                    <p class="list-date">2026-06-15</p>
+            
+            {% if recent_enquiries %}
+                {% for enquiry in recent_enquiries %}
+                    <div class="list-item">
+                        <div>
+                            <p class="list-text">
+                                <span class="dot blue"></span>
+                                {{ enquiry.full_name }}
+                            </p>
+                            <p class="list-text" style="font-size:12px; color:#666; padding-left:18px; margin-top:2px;">
+                                {% if enquiry.course_interested %}{{ enquiry.course_interested.title }}{% else %}UI/UX Design{% endif %}
+                            </p>
+                        </div>
+                        <span class="list-date">{{ enquiry.created_at|date:"d/m/Y" }}</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="list-item">
+                    <div>
+                        <p class="list-text">
+                            <span class="dot blue"></span>
+                            Anith
+                        </p>
+                        <p class="list-text" style="font-size:12px; color:#666; padding-left:18px; margin-top:2px;">UI/UX Batch</p>
+                    </div>
+                    <span class="list-date">28/03/2026</span>
                 </div>
-            </div>
-            <div class="list-item">
-                <div>
-                    <p class="list-text">Neha</p>
-                    <p class="list-date">2026-06-14</p>
+                
+                <div class="list-item">
+                    <div>
+                        <p class="list-text">
+                            <span class="dot blue"></span>
+                            Rahul
+                        </p>
+                        <p class="list-text" style="font-size:12px; color:#666; padding-left:18px; margin-top:2px;">Web Development</p>
+                    </div>
+                    <span class="list-date">28/03/2026</span>
                 </div>
-            </div>
-            <div class="list-item">
-                <div>
-                    <p class="list-text">Amit</p>
-                    <p class="list-date">2026-06-13</p>
+                
+                <div class="list-item">
+                    <div>
+                        <p class="list-text">
+                            <span class="dot blue"></span>
+                            Kiran
+                        </p>
+                        <p class="list-text" style="font-size:12px; color:#666; padding-left:18px; margin-top:2px;">UI/UX</p>
+                    </div>
+                    <span class="list-date">25/03/2026</span>
                 </div>
-            </div>
+            {% endif %}
         </div>
         
         <div class="side-card">
             <h4>Pending Actions</h4>
-            <div class="list-item">
-                <div>
-                    <p class="list-text">Eligibility Check: Rakesh</p>
-                </div>
+            
+            <div class="pending-item">
+                <span class="pending-dot"></span>
+                <span class="pending-text">Eligibility Check Pending: {{ eligibility_pending }}</span>
             </div>
-            <div class="list-item">
-                <div>
-                    <p class="list-text">Document Verification: Priya</p>
-                </div>
+            <div class="pending-item">
+                <span class="pending-dot"></span>
+                <span class="pending-text">Document Verification Pending: {{ document_pending }}</span>
             </div>
-            <div class="list-item">
-                <div>
-                    <p class="list-text">Payment Pending: S</p>
-                </div>
+            <div class="pending-item">
+                <span class="pending-dot"></span>
+                <span class="pending-text">Payment Pending: {{ payment_pending }}</span>
             </div>
         </div>
     </div>

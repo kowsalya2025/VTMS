@@ -57,6 +57,10 @@ urlpatterns = [
     path('business/eligibility/', views.eligibility_management, name='eligibility_management'),
     path('business/candidates/', views.candidate_management, name='candidate_management'),
     path('business/document-verification/', views.document_verification, name='document_verification'),
+    path('business/document-verification/<int:candidate_id>/', views.document_verification_detail, name='document_verification_detail'),
+    path('business/payments/', views.business_payment_management, name='business_payment_management'),
+    path('business/batches/', views.business_batch_management, name='business_batch_management'),
+    path('business/reports/', views.business_reports, name='business_reports'),
     path('business/interview-scheduling/', views.interview_scheduling, name='interview_scheduling'),
     path('business/profile/', views.business_profile, name='business_profile'),
 ]

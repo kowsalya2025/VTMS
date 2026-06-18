@@ -1,0 +1,53 @@
+{% extends 'core/base_business.html' %}
+
+{% block page_title %}Document Verification - Detail{% endblock %}
+
+{% block business_content %}
+<style>
+.detail-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+.attachments { display:flex; gap:16px; margin-top:16px; }
+.attachment { width:200px; border:1px solid #eee; border-radius:8px; padding:12px; text-align:center; }
+.actions { display:flex; gap:12px; justify-content:flex-end; margin-top:20px; }
+.btn { padding:10px 18px; border-radius:8px; font-weight:600; cursor:pointer; }
+.btn-verified { background:#22c55e; color:white; }
+.btn-reject { background:#dc2626; color:white; }
+.btn-back { background:#f5f5f5; }
+</style>
+
+<div class="detail-card">
+    <h3>{{ candidate.full_name }}</h3>
+    <div style="display:flex; gap:40px; margin-top:12px;">
+        <div>
+            <p><strong>Email :</strong> {{ candidate.personal_email }}</p>
+            <p><strong>Phone :</strong> {{ candidate.phone }}</p>
+            <p><strong>Course :</strong> {% if candidate.course %}{{ candidate.course.title }}{% endif %}</p>
+            <p><strong>Age :</strong> {{ candidate.age|default:'-' }}</p>
+            <p><strong>Eligibility Status :</strong> {{ candidate.status }}</p>
+        </div>
+        <div style="flex:1">
+            <h4>Documents</h4>
+            <div class="attachments">
+                {% for doc in documents %}
+                <div class="attachment">
+                    <div style="height:120px; background:#fafafa; margin-bottom:8px; display:flex; align-items:center; justify-content:center;">Preview</div>
+                    <div>{{ doc.document_type }}</div>
+                    <div style="margin-top:8px">
+                        {% if doc.document_file %}
+                        <a href="{{ doc.document_file.url }}" download>Download</a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <a href="{% url 'document_verification' %}" class="btn btn-back">Back</a>
+        <a href="mailto:{{ candidate.personal_email }}?subject=Regarding%20your%20documents" class="btn btn-back">Send Mail</a>
+    </div>
+</div>
+
+{% endblock %}

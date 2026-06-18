@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -45,6 +47,7 @@ class User(AbstractUser):
 
 class Course(models.Model):
     title = models.CharField(max_length=100)
+    fees = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=[('Active', 'Active'), ('Inactive', 'Inactive')], default='Active')
 
     def __str__(self):
@@ -110,6 +113,21 @@ class Trainee(models.Model):
     def __str__(self):
         return self.full_name
 
+@receiver(post_save, sender=Trainee)
+def create_trainee_payment(sender, instance, created, **kwargs):
+    if instance.course:
+        from .models import Payment
+        if not Payment.objects.filter(trainee=instance).exists():
+            Payment.objects.create(
+                trainee=instance,
+                course_amount=instance.course.fees,
+                paid=0,
+                pending=instance.course.fees,
+                status='Pending',
+                plan='-',
+                payment_method='-',
+            )
+
 class Intern(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=100)
@@ -167,6 +185,9 @@ class Payment(models.Model):
     pending = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=[('Paid', 'Paid'), ('Pending', 'Pending')])
     date = models.DateField(auto_now_add=True)
+    plan = models.CharField(max_length=100, blank=True, null=True, help_text="e.g., 2 - Installment, One - Time Payment")
+    payment_method = models.CharField(max_length=100, blank=True, null=True, help_text="e.g., UPI, Bank Transfer")
+    due_date = models.DateField(blank=True, null=True)
 
 class SystemSetting(models.Model):
     # General
@@ -259,6 +280,13 @@ class Enquiry(models.Model):
     course_interested = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True)
     message = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.NEW)
+    
+    # Additional fields
+    age = models.IntegerField(blank=True, null=True)
+    gender = models.CharField(max_length=10, choices=[('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')], blank=True, null=True)
+    qualification = models.CharField(max_length=100, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -279,6 +307,10 @@ class Candidate(models.Model):
     fees = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     payment_status = models.CharField(max_length=20, choices=[('Paid', 'Paid'), ('Pending', 'Pending')], default='Pending')
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    
+    # Additional fields
+    age = models.IntegerField(blank=True, null=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -294,8 +326,10 @@ class Eligibility(models.Model):
     candidate = models.ForeignKey(Candidate, on_delete=models.CASCADE)
     education = models.CharField(max_length=200)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    reason = models.TextField(blank=True, null=True)
     verified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     verified_at = models.DateTimeField(null=True, blank=True)
+    is_auto_eligible = models.BooleanField(default=False)  # Track if auto-marked by age rule
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

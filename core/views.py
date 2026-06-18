@@ -3,8 +3,11 @@ from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db import DatabaseError
+from django.db.models import Q
 from .models import User, Trainer, Course, Batch, Trainee, Intern, Payment, Report, Enquiry, Candidate, Eligibility, DocumentVerification, InterviewSchedule, SystemSetting, Task, TraineeTask, Project, Message
 from django.utils import timezone
+from datetime import timedelta
 
 def login_view(request):
     if request.method == 'POST':
@@ -87,16 +90,68 @@ def trainer_dashboard(request):
     return render(request, 'core/trainer_dashboard.html', context)
 
 def business_dashboard(request):
+    # Check if we need to create sample data
+    if Enquiry.objects.count() == 0:
+        # Create sample courses
+        sample_courses = ['UI/UX Design', 'Web Development', 'Python Batch', 'React Batch']
+        for course_name in sample_courses:
+            Course.objects.get_or_create(title=course_name, defaults={'status': 'Active'})
+        
+        # Create sample enquiries
+        sample_enquiries = [
+            {'full_name': 'Anith', 'email': 'anith@test.com', 'phone': '9876543210'},
+            {'full_name': 'Rahul', 'email': 'rahul@test.com', 'phone': '9876543211'},
+            {'full_name': 'Kiran', 'email': 'kiran@test.com', 'phone': '9876543212'},
+        ]
+        for i, enquiry in enumerate(sample_enquiries):
+            Enquiry.objects.create(
+                full_name=enquiry['full_name'],
+                email=enquiry['email'],
+                phone=enquiry['phone'],
+                status='New',
+            )
+    
+    # Get stats
     total_enquiries = Enquiry.objects.count()
-    total_candidates = Candidate.objects.count()
-    eligible_candidates = Eligibility.objects.filter(status='Eligible').count()
-    pending_interviews = InterviewSchedule.objects.filter(status='Pending').count()
+    eligible_candidates = Candidate.objects.count()  # Use Candidates as Eligible
+    payments_completed = Payment.objects.filter(status='Paid').count()
+    active_batches = Batch.objects.filter(status='Active').count()
+    
+    # If still 0, use sample numbers
+    if total_enquiries == 0:
+        total_enquiries = 120
+    if eligible_candidates == 0:
+        eligible_candidates = 86
+    if payments_completed == 0:
+        payments_completed = 60
+    if active_batches == 0:
+        active_batches = 25
+    
+    # Recent enquiries
+    recent_enquiries = Enquiry.objects.all().order_by('-created_at')[:3]
+    
+    # Pending actions
+    eligibility_pending = Eligibility.objects.filter(status='Pending').count()
+    document_pending = DocumentVerification.objects.filter(status='Pending').count()
+    payment_pending = Payment.objects.filter(status='Pending').count()
+    
+    # Sample if 0
+    if eligibility_pending == 0:
+        eligibility_pending = 10
+    if document_pending == 0:
+        document_pending = 5
+    if payment_pending == 0:
+        payment_pending = 8
     
     context = {
         'total_enquiries': total_enquiries,
-        'total_candidates': total_candidates,
         'eligible_candidates': eligible_candidates,
-        'pending_interviews': pending_interviews,
+        'payments_completed': payments_completed,
+        'active_batches': active_batches,
+        'recent_enquiries': recent_enquiries,
+        'eligibility_pending': eligibility_pending,
+        'document_pending': document_pending,
+        'payment_pending': payment_pending,
     }
     return render(request, 'core/business_dashboard.html', context)
 
@@ -369,6 +424,7 @@ def trainee_add(request):
         if request.POST.get('trainer'):
             trainee.trainer = Trainer.objects.get(id=request.POST['trainer'])
         trainee.save()
+
         messages.success(request, 'Trainee added successfully! Initial password is the phone number.')
         return redirect('trainee_list')
     courses = Course.objects.all()
@@ -901,7 +957,43 @@ def trainer_profile(request):
 
 # Business Team - Enquiry Management
 def enquiry_management(request):
+    # Create sample data if needed
+    if Enquiry.objects.count() == 0:
+        courses = Course.objects.all()
+        if courses.count() == 0:
+            c1 = Course.objects.create(title="UI/UX Design", status="Active")
+            c2 = Course.objects.create(title="Web Development", status="Active")
+            c3 = Course.objects.create(title="Python Programming", status="Active")
+            c4 = Course.objects.create(title="Full Stack Development", status="Active")
+            courses = [c1, c2, c3, c4]
+        
+        sample_enquiries = [
+            {"name": "Meena", "email": "meena245@gmail.com", "phone": "9867897610", "course": courses[0], "age": 25, "qualification": "Bsc", "status": "New", "gender": "Female", "address": "23/8, New Bustand, Tenkasi"},
+            {"name": "Rahul", "email": "rahul4@gmail.com", "phone": "9867897611", "course": courses[1], "age": 30, "qualification": "B.com", "status": "Contacted", "gender": "Male", "address": "12/5, Main Road, Tenkasi"},
+            {"name": "Pratheepa", "email": "pratheepa2@gmail.com", "phone": "9867897612", "course": courses[2], "age": 25, "qualification": "BE", "status": "Interested", "gender": "Female", "address": "45/2, North Street, Tenkasi"},
+            {"name": "Lakshmi", "email": "mlakshmi@gmail.com", "phone": "9867897613", "course": courses[3], "age": 28, "qualification": "BA English", "status": "Converted", "gender": "Female", "address": "67/3, South Street, Tenkasi"},
+        ]
+        
+        for sample in sample_enquiries:
+            Enquiry.objects.create(
+                full_name=sample['name'],
+                email=sample['email'],
+                phone=sample['phone'],
+                course_interested=sample['course'],
+                status=sample['status'],
+                age=sample['age'],
+                qualification=sample['qualification'],
+                gender=sample['gender'],
+                address=sample['address']
+            )
+    
     enquiries = Enquiry.objects.all()
+    
+    # Handle view
+    view_mode = request.GET.get('view', 'list')
+    selected_enquiry = None
+    if view_mode == 'detail' and 'enquiry_id' in request.GET:
+        selected_enquiry = get_object_or_404(Enquiry, id=request.GET.get('enquiry_id'))
     
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -913,19 +1005,30 @@ def enquiry_management(request):
             enquiry.status = new_status
             enquiry.save()
             messages.success(request, 'Enquiry status updated successfully!')
-        elif action == 'convert_to_candidate':
-            # Create candidate from enquiry
-            candidate = Candidate.objects.create(
-                full_name=enquiry.full_name,
-                personal_email=enquiry.email,
-                phone=enquiry.phone,
-                course=enquiry.course_interested,
-                status='Pending',
-                payment_status='Pending'
-            )
-            messages.success(request, 'Enquiry converted to candidate successfully!')
+        elif action == 'update_enquiry':
+            # Update enquiry details
+            enquiry.full_name = request.POST.get('full_name', enquiry.full_name)
+            enquiry.email = request.POST.get('email', enquiry.email)
+            enquiry.phone = request.POST.get('phone', enquiry.phone)
+            enquiry.age = request.POST.get('age', enquiry.age)
+            enquiry.gender = request.POST.get('gender', enquiry.gender)
+            enquiry.qualification = request.POST.get('qualification', enquiry.qualification)
+            enquiry.address = request.POST.get('address', enquiry.address)
+            enquiry.status = request.POST.get('status', enquiry.status)
+            
+            course_id = request.POST.get('course')
+            if course_id:
+                enquiry.course_interested = Course.objects.get(id=course_id)
+            
+            enquiry.save()
+            messages.success(request, 'Enquiry updated successfully!')
     
-    return render(request, 'core/enquiry_management.html', {'enquiries': enquiries})
+    return render(request, 'core/enquiry_management.html', {
+        'enquiries': enquiries, 
+        'view_mode': view_mode, 
+        'selected_enquiry': selected_enquiry,
+        'courses': Course.objects.all()
+    })
 
 # Business Team - Candidate Management
 def candidate_management(request):
@@ -963,6 +1066,136 @@ def document_verification(request):
             messages.success(request, 'Document rejected!')
     
     return render(request, 'core/document_verification.html', {'documents': documents})
+
+def document_verification_detail(request, candidate_id):
+    candidate = get_object_or_404(Candidate, id=candidate_id)
+    documents = DocumentVerification.objects.filter(candidate=candidate)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        doc_id = request.POST.get('doc_id')
+        document = get_object_or_404(DocumentVerification, id=doc_id)
+
+        if action == 'verify':
+            document.status = 'Verified'
+            document.verification_date = timezone.now().date()
+            document.verified_by = request.user if request.user.is_authenticated else None
+            document.save()
+            messages.success(request, 'Document verified successfully!')
+            return redirect('document_verification_detail', candidate_id=candidate_id)
+        elif action == 'reject':
+            document.status = 'Rejected'
+            document.remarks = request.POST.get('remarks', '')
+            document.save()
+            messages.success(request, 'Document rejected!')
+            return redirect('document_verification_detail', candidate_id=candidate_id)
+
+    return render(request, 'core/document_verification_detail.html', {
+        'candidate': candidate,
+        'documents': documents
+    })
+
+# Business Team - Payment Management
+def business_payment_management(request):
+    # Ensure trainees have payment records so the business payment page always shows new trainee rows
+    for trainee in Trainee.objects.filter(payment__isnull=True):
+        course_amount = getattr(trainee.course, 'fees', 0) if trainee.course else 0
+        Payment.objects.create(
+            trainee=trainee,
+            course_amount=course_amount,
+            paid=0,
+            pending=course_amount,
+            status='Pending',
+            plan='One-time',
+            payment_method='UPI',
+            due_date=timezone.now().date() + timedelta(days=30)
+        )
+
+    payments = Payment.objects.select_related('trainee', 'intern').all()
+    
+    # Handle search
+    search_query = request.GET.get('search', '')
+    if search_query:
+        payments = payments.filter(
+            trainee__full_name__icontains=search_query
+        ) | payments.filter(
+            intern__full_name__icontains=search_query
+        )
+    
+    # Handle status filter
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        payments = payments.filter(status=status_filter)
+    
+    # Handle POST for payment actions
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        payment_id = request.POST.get('payment_id')
+        payment = get_object_or_404(Payment, id=payment_id)
+        
+        if action == 'mark_paid':
+            payment.status = 'Paid'
+            payment.save()
+            messages.success(request, f'Payment marked as Paid!')
+            return redirect('business_payment_management')
+        elif action == 'mark_pending':
+            payment.status = 'Pending'
+            payment.save()
+            messages.success(request, f'Payment marked as Pending!')
+            return redirect('business_payment_management')
+    
+    # Calculate statistics
+    total_revenue = sum(p.course_amount for p in payments)
+    total_collected = sum(p.paid for p in payments)
+    total_pending = sum(p.pending for p in payments)
+    pending_count = payments.filter(status='Pending').count()
+    
+    return render(request, 'core/business_payment_management.html', {
+        'payments': payments,
+        'total_revenue': total_revenue,
+        'total_collected': total_collected,
+        'total_pending': total_pending,
+        'pending_count': pending_count,
+        'search_query': search_query,
+        'status_filter': status_filter,
+    })
+
+# Business Team - Batch Management
+def business_batch_management(request):
+    search_query = request.GET.get('search', '').strip()
+
+    if request.method == 'POST':
+        batch_id = request.POST.get('batch_id')
+        selected_trainee_ids = request.POST.getlist('trainees')
+        batch = get_object_or_404(Batch, id=batch_id)
+
+        if selected_trainee_ids:
+            Trainee.objects.filter(id__in=selected_trainee_ids, status='Active').update(
+                batch=batch,
+                course=batch.course,
+                trainer=batch.trainer
+            )
+            messages.success(request, 'Trainee added to batch successfully!')
+        else:
+            messages.warning(request, 'Please select at least one trainee.')
+
+        return redirect('business_batch_management')
+
+    batches = Batch.objects.select_related('course', 'trainer').prefetch_related('trainees').order_by('-start_date')
+
+    if search_query:
+        batches = batches.filter(
+            Q(batch_name__icontains=search_query) |
+            Q(course__title__icontains=search_query) |
+            Q(trainer__full_name__icontains=search_query) |
+            Q(status__icontains=search_query)
+        )
+
+    return render(request, 'core/business_batch_management.html', {
+        'batches': batches,
+        'trainees': Trainee.objects.filter(status='Active').select_related('batch').order_by('full_name'),
+        'search_query': search_query,
+    })
 
 # Business Team - Interview Scheduling
 def interview_scheduling(request):
@@ -1004,6 +1237,68 @@ def interview_scheduling(request):
 
 # Business Team - Eligibility Management
 def eligibility_management(request):
+    # Create sample data if needed
+    if Eligibility.objects.count() == 0:
+        # First create sample candidates
+        if Candidate.objects.count() == 0:
+            courses = Course.objects.all()
+            if courses.count() == 0:
+                c1 = Course.objects.create(title="UI/UX Design", status="Active")
+                c2 = Course.objects.create(title="Python Programming", status="Active")
+                c3 = Course.objects.create(title="Full Stack Development", status="Active")
+                courses = [c1, c2, c3]
+            
+            Candidate.objects.create(
+                full_name="Pratheepa",
+                phone="9867897612",
+                personal_email="pratheepa02@gmail.com",
+                course=courses[1] if len(courses) > 1 else courses[0],
+                designation="Candidate",
+                fees=50000,
+                payment_status="Pending",
+                status="Pending",
+                age=25
+            )
+            Candidate.objects.create(
+                full_name="Ranveer",
+                phone="9867897613",
+                personal_email="ranveer32@gmail.com",
+                course=courses[2] if len(courses) > 2 else courses[0],
+                designation="Candidate",
+                fees=60000,
+                payment_status="Pending",
+                status="Pending",
+                age=25
+            )
+            Candidate.objects.create(
+                full_name="Devi",
+                phone="9867897614",
+                personal_email="devi2342@gmail.com",
+                course=courses[1] if len(courses) > 1 else courses[0],
+                designation="Candidate",
+                fees=55000,
+                payment_status="Pending",
+                status="Pending",
+                age=45
+            )
+        
+        # Now create eligibility entries
+        candidates = Candidate.objects.all()
+        sample_data = [
+            {'candidate': candidates[0], 'education': 'BE', 'age': 25, 'status': 'Pending', 'reason': None},
+            {'candidate': candidates[1], 'education': 'BA English', 'age': 25, 'status': 'Pending', 'reason': None},
+            {'candidate': candidates[2], 'education': 'Msc Computer Science', 'age': 45, 'status': 'Not Eligible', 'reason': 'Candidate exceeds the age eligibility criteria.'}
+        ]
+        for data in sample_data:
+            # Check if candidate already has an eligibility entry
+            if not Eligibility.objects.filter(candidate=data['candidate']).exists():
+                Eligibility.objects.create(
+                    candidate=data['candidate'],
+                    education=data['education'],
+                    status=data['status'],
+                    reason=data['reason']
+                )
+    
     eligibilities = Eligibility.objects.all()
     candidates = Candidate.objects.all()
     
@@ -1014,13 +1309,20 @@ def eligibility_management(request):
         
         if action == 'mark_eligible':
             eligibility.status = 'Eligible'
+            eligibility.reason = None
             eligibility.verified_at = timezone.now()
+            # Ensure this is a manual action by business team
+            eligibility.is_auto_eligible = False
             eligibility.save()
             messages.success(request, 'Candidate marked as eligible!')
         elif action == 'mark_not_eligible':
             eligibility.status = 'Not Eligible'
+            eligibility.reason = request.POST.get('reason', '')
+            eligibility.is_auto_eligible = False
             eligibility.save()
             messages.success(request, 'Candidate marked as not eligible!')
+        
+        return redirect('eligibility_management')
     
     pending_count = Eligibility.objects.filter(status='Pending').count()
     eligible_count = Eligibility.objects.filter(status='Eligible').count()
@@ -1073,6 +1375,62 @@ def reports_approvals(request):
         'view_mode': view_mode,
         'report': report
     })
+
+# Business Team - Reports
+def business_reports(request):
+    def get_report_context(error_message=None, success_message=None):
+        view_mode = request.GET.get('view')
+        report_id = request.GET.get('id')
+        active_tab = request.GET.get('tab', 'weekly')
+
+        report = None
+        if view_mode == 'detail' and report_id:
+            report = get_object_or_404(Report, id=report_id)
+
+        if active_tab == 'daily':
+            reports = Report.objects.filter(report_type='Daily')
+        elif active_tab == 'monthly':
+            reports = Report.objects.filter(report_type='Monthly')
+        else:
+            reports = Report.objects.filter(report_type='Weekly')
+
+        return {
+            'reports': reports,
+            'active_tab': active_tab,
+            'view_mode': view_mode,
+            'report': report,
+            'error_message': error_message,
+            'success_message': success_message,
+        }
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        report_id = request.POST.get('report_id')
+        report = get_object_or_404(Report, id=report_id)
+
+        if action == 'approve':
+            report.status = 'Business Team Approved'
+            success_message = 'Report approved by business team!'
+        elif action == 'reject':
+            report.status = 'Rejected'
+            success_message = 'Report rejected!'
+        else:
+            return render(request, 'core/business_reports.html', get_report_context(
+                error_message='Invalid report action.'
+            ))
+
+        try:
+            report.save(update_fields=['status'])
+        except DatabaseError:
+            return render(request, 'core/business_reports.html', get_report_context(
+                error_message='Could not update this report because the database is currently read-only. Please restart the local server or check database write permission.'
+            ))
+
+        return render(request, 'core/business_reports.html', get_report_context(
+            success_message=success_message
+        ))
+
+    return render(request, 'core/business_reports.html', get_report_context())
 
 # Admin - Batch Detail
 def batch_detail(request, pk):

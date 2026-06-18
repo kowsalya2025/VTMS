@@ -1,0 +1,331 @@
+{% extends 'core/base_business.html' %}
+
+{% block page_title %}Report{% endblock %}
+
+{% block business_content %}
+<style>
+    .section-title {
+        font-size: 14px;
+        color: var(--icon-color);
+        margin-bottom: 20px;
+    }
+    .report-message {
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 16px;
+        padding: 12px 16px;
+    }
+    .report-message.success {
+        background: #dcfce7;
+        color: #166534;
+    }
+    .report-message.error {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    .tabs-container {
+        background-color: #e9ecef;
+        border-radius: 8px;
+        padding: 4px;
+        display: inline-flex;
+        gap: 4px;
+        margin-bottom: 24px;
+    }
+    .tab-btn {
+        padding: 8px 22px;
+        border: none;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text-color);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    .tab-btn.active {
+        background-color: var(--secondary);
+        color: white;
+    }
+    .report-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        margin-bottom: 24px;
+    }
+    .table-wrapper {
+        overflow-x: auto;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    th {
+        color: #666;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    td {
+        color: var(--text-color);
+        font-size: 14px;
+    }
+    .status-badge {
+        display: inline-flex;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    .status-pending {
+        background: #ffeedd;
+        color: #d97706;
+    }
+    .status-approved {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+    .status-rejected {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    .action-btn {
+        background: transparent;
+        border: 0;
+        color: var(--icon-color);
+        cursor: pointer;
+        font-size: 14px;
+        padding: 4px 8px;
+        text-decoration: none;
+    }
+    .action-btn.approve {
+        color: #16a34a;
+    }
+    .action-btn.reject {
+        color: #dc2626;
+    }
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+    .detail-section {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+    .detail-item {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    .detail-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #e9ecef;
+        color: #666;
+    }
+    .detail-label {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 4px;
+    }
+    .detail-value {
+        font-size: 14px;
+        font-weight: 500;
+    }
+    .back-btn, .action-section button {
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 10px 18px;
+    }
+    .back-btn {
+        background: white;
+        border: 1px solid #ddd;
+        color: var(--text-color);
+        text-decoration: none;
+    }
+    .action-section button {
+        width: 100%;
+        margin-bottom: 12px;
+    }
+    .btn-approve {
+        background: var(--secondary);
+        color: white;
+    }
+    .btn-reject {
+        background: #dc2626;
+        color: white;
+    }
+    @media (max-width: 900px) {
+        .detail-grid,
+        .detail-section {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+{% if success_message %}
+    <div class="report-message success">{{ success_message }}</div>
+{% endif %}
+{% if error_message %}
+    <div class="report-message error">{{ error_message }}</div>
+{% endif %}
+
+{% if view_mode == 'detail' and report %}
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <h3>{{ report.report_type }} Report</h3>
+        <a href="{% url 'business_reports' %}" class="back-btn">Back</a>
+    </div>
+
+    <div class="detail-grid">
+        <div class="report-card">
+            <h4 style="margin-bottom:16px;">Report Information</h4>
+            <div class="detail-section">
+                <div class="detail-item">
+                    <div class="detail-icon"><i class="fas fa-user"></i></div>
+                    <div>
+                        <div class="detail-label">Trainer</div>
+                        <div class="detail-value">{{ report.trainer.full_name }}</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <div>
+                        <div class="detail-label">Batch</div>
+                        <div class="detail-value">{{ report.batch.batch_name }}</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon"><i class="fas fa-calendar"></i></div>
+                    <div>
+                        <div class="detail-label">Report Date</div>
+                        <div class="detail-value">{{ report.date|date:"F d, Y" }}</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon"><i class="fas fa-clock"></i></div>
+                    <div>
+                        <div class="detail-label">Submitted At</div>
+                        <div class="detail-value">{{ report.submitted_at|date:"F d, Y" }} {{ report.submitted_at|time:"g:i A" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="report-card action-section">
+            <h4 style="margin-bottom:16px;">Action</h4>
+            <p>
+                <span>Status: </span>
+                <span class="status-badge {% if report.status == 'Approved' or report.status == 'Business Team Approved' %}status-approved{% elif report.status == 'Rejected' %}status-rejected{% else %}status-pending{% endif %}">
+                    {{ report.status }}
+                </span>
+            </p>
+            {% if report.status == 'Pending' or report.status == 'Approved' %}
+                <form method="POST" action="{% url 'business_reports' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="report_id" value="{{ report.id }}">
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="btn-approve"><i class="fas fa-check"></i> Approve</button>
+                </form>
+                <form method="POST" action="{% url 'business_reports' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="report_id" value="{{ report.id }}">
+                    <input type="hidden" name="action" value="reject">
+                    <button type="submit" class="btn-reject"><i class="fas fa-times"></i> Reject</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="report-card">
+        <h4 style="margin-bottom:16px;">Report Content</h4>
+        <p style="font-size:14px; line-height:1.6;">{{ report.content|default:"No content available." }}</p>
+    </div>
+{% else %}
+    <p class="section-title">Review trainer reports without leaving the Business Team dashboard</p>
+
+    <div class="tabs-container">
+        <button class="tab-btn {% if active_tab == 'daily' %}active{% endif %}" onclick="switchBusinessReportTab('daily')">Daily Reports</button>
+        <button class="tab-btn {% if active_tab == 'weekly' or not active_tab %}active{% endif %}" onclick="switchBusinessReportTab('weekly')">Weekly Reports</button>
+        <button class="tab-btn {% if active_tab == 'monthly' %}active{% endif %}" onclick="switchBusinessReportTab('monthly')">Monthly Reports</button>
+    </div>
+
+    <div class="report-card">
+        <h3 style="margin-bottom:16px; font-size:16px;">
+            {% if active_tab == 'daily' %}Daily Reports{% elif active_tab == 'monthly' %}Monthly Reports{% else %}Weekly Reports{% endif %}
+        </h3>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Trainer</th>
+                        <th>Batch</th>
+                        <th>Period</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    <tr>
+                        <td>{{ report.trainer.full_name }}</td>
+                        <td>{{ report.batch.batch_name }}</td>
+                        <td>Week {{ report.date|date:"W" }} ({{ report.date|date:"M d" }})</td>
+                        <td>
+                            <span class="status-badge {% if report.status == 'Approved' or report.status == 'Business Team Approved' %}status-approved{% elif report.status == 'Rejected' %}status-rejected{% else %}status-pending{% endif %}">
+                                {{ report.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'business_reports' %}?view=detail&id={{ report.id }}&tab={{ active_tab }}" class="action-btn"><i class="fas fa-eye"></i></a>
+                                {% if report.status == 'Pending' or report.status == 'Approved' %}
+                                <form method="POST" action="{% url 'business_reports' %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="report_id" value="{{ report.id }}">
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" class="action-btn approve"><i class="fas fa-check"></i></button>
+                                </form>
+                                <form method="POST" action="{% url 'business_reports' %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="report_id" value="{{ report.id }}">
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit" class="action-btn reject"><i class="fas fa-times"></i></button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align:center; padding:32px;">No reports available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+
+<script>
+function switchBusinessReportTab(tab) {
+    window.location.href = "{% url 'business_reports' %}?tab=" + tab;
+}
+</script>
+{% endblock %}

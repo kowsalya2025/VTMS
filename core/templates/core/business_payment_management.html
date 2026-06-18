@@ -1,0 +1,391 @@
+{% extends 'core/base_business.html' %}
+
+{% block page_title %}Payment Management{% endblock %}
+
+{% block business_content %}
+<style>
+    .page-header {
+        margin-bottom: 24px;
+    }
+    
+    .page-title {
+        font-size: 28px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin: 0 0 4px 0;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: #666;
+        margin: 0;
+    }
+    
+    .card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 16px;
+    }
+    
+    .card-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin: 0;
+    }
+    
+    .search-box {
+        position: relative;
+        width: 280px;
+    }
+    
+    .search-box input {
+        width: 100%;
+        padding: 10px 12px 10px 36px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 13px;
+        background: #f5f5f5;
+        transition: all 0.2s;
+    }
+    
+    .search-box input::placeholder {
+        color: #999;
+    }
+    
+    .search-box input:focus {
+        outline: none;
+        border-color: #007bff;
+        background: white;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+        font-size: 13px;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    table thead {
+        background: #f8f9fa;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    table th {
+        padding: 12px 10px;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 600;
+        color: #666;
+        white-space: nowrap;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    
+    table td {
+        padding: 12px 10px;
+        border-bottom: 1px solid #e9ecef;
+        font-size: 13px;
+        color: #333;
+    }
+    
+    table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+    
+    .status-badge.pending {
+        background-color: #fef3e0;
+        color: #f39c12;
+    }
+    
+    .status-badge.paid {
+        background-color: #d4edda;
+        color: #27ae60;
+    }
+    
+    .amount-positive {
+        color: #27ae60;
+        font-weight: 500;
+    }
+    
+    .amount-negative {
+        color: #e74c3c;
+        font-weight: 500;
+    }
+    
+    .dash {
+        color: #999;
+    }
+    
+    .action-icons {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    
+    .action-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        background: #f0f0f0;
+        color: #666;
+        text-decoration: none;
+        transition: all 0.2s;
+        cursor: pointer;
+        border: none;
+        font-size: 12px;
+    }
+    
+    .action-icon:hover {
+        transform: scale(1.05);
+    }
+    
+    .action-icon.link:hover {
+        background: #007bff;
+        color: white;
+    }
+    
+    .action-icon.edit:hover {
+        background: #28a745;
+        color: white;
+    }
+    
+    .action-icon.eye:hover {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .action-icon.document:hover {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .action-text-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 8px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #666;
+        background: transparent;
+        text-decoration: none;
+        transition: all 0.2s;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    .action-text-btn:hover {
+        background: #e8f0f8;
+        color: #007bff;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 48px 24px;
+        color: #999;
+    }
+    
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        color: #ddd;
+    }
+    
+    .empty-state p {
+        font-size: 14px;
+        margin: 0;
+    }
+    
+    .messages {
+        margin-bottom: 16px;
+    }
+    
+    .alert {
+        padding: 10px 14px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">Payment Management</h1>
+    <p class="page-subtitle">Manage payments and generate payment links</p>
+</div>
+
+<!-- Messages -->
+<div class="messages">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                <i class="fas fa-check-circle"></i>
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<!-- Payment Transactions Table -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Payment Transactions</h2>
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <form method="GET" style="width: 100%;">
+                <input type="text" name="search" placeholder="Search name..." value="{{ search_query }}">
+            </form>
+        </div>
+    </div>
+    
+    {% if payments %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Course</th>
+                        <th>Amount</th>
+                        <th>Plan</th>
+                        <th>Payment Method</th>
+                        <th>Paid</th>
+                        <th>Pending</th>
+                        <th>Date</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                        <tr>
+                            <td>
+                                {% if payment.trainee %}
+                                    {{ payment.trainee.full_name }}
+                                {% elif payment.intern %}
+                                    {{ payment.intern.full_name }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if payment.trainee and payment.trainee.course %}
+                                    {{ payment.trainee.course.title }}
+                                {% elif payment.intern %}
+                                    {% if payment.intern.role %}{{ payment.intern.role }}{% else %}<span class="dash">-</span>{% endif %}
+                                {% else %}
+                                    <span class="dash">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                ₹{{ payment.course_amount|floatformat:0 }}
+                            </td>
+                            <td>
+                                {% if payment.plan %}
+                                    {{ payment.plan }}
+                                {% else %}
+                                    <span class="dash">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if payment.payment_method %}
+                                    {{ payment.payment_method }}
+                                {% else %}
+                                    <span class="dash">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="amount-positive">₹{{ payment.paid|floatformat:0 }}</span>
+                            </td>
+                            <td>
+                                <span class="amount-negative">₹{{ payment.pending|floatformat:0 }}</span>
+                            </td>
+                            <td>{{ payment.date|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if payment.due_date %}
+                                    {{ payment.due_date|date:"d/m/Y" }}
+                                {% else %}
+                                    <span class="dash">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="status-badge {% if payment.status == 'Paid' %}paid{% elif payment.status == 'Pending' %}pending{% endif %}">
+                                    {{ payment.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="action-icons">
+                                    <!-- Generate Payment Link -->
+                                    <a href="#" class="action-icon link" title="Generate Payment Link">
+                                        <i class="fas fa-link"></i>
+                                    </a>
+                                    
+                                    <!-- Update Payment -->
+                                    <a href="#" class="action-text-btn">Update</a>
+                                    
+                                    <!-- View Details -->
+                                    <a href="#" class="action-icon eye" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    <!-- Download Invoice -->
+                                    <a href="#" class="action-icon document" title="Document">
+                                        <i class="fas fa-file-alt"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <p>No payments found</p>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
