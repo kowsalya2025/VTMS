@@ -263,7 +263,7 @@
     }
 </style>
 
-<p class="welcome-text">Welcome back! {% if trainer %}{{ trainer.name }}{% else %}Priya Sharma{% endif %}.</p>
+<p class="welcome-text">Welcome back! {% if trainer %}{{ trainer.full_name }}{% else %}Trainer{% endif %}.</p>
 
 
 
@@ -301,70 +301,37 @@
 <div class="dashboard-sections">
     <div class="section-card">
         <h3>Today's Schedule</h3>
+        {% for batch in active_batches %}
         <div class="schedule-item">
             <div class="schedule-label">
                 <div class="schedule-dot green"></div>
                 <div>
-                    <p>UI/UX Batch</p>
-                    <span>UI/UX Batch</span>
+                    <p>{{ batch.batch_name }}</p>
+                    <span>{{ batch.course.title|default:'-' }}</span>
                 </div>
             </div>
-            <span class="schedule-time">Ongoing</span>
+            <span class="schedule-time">{{ batch.timing_start|time:"g:i A" }} - {{ batch.timing_end|time:"g:i A" }}</span>
         </div>
-        <div class="schedule-item">
-            <div class="schedule-label">
-                <div class="schedule-dot blue"></div>
-                <div>
-                    <p>Full Stack Batch</p>
-                </div>
-            </div>
-            <span class="schedule-time">Upcoming<br>2:00 PM</span>
-        </div>
+        {% empty %}
+        <p style="color:#999; font-size:14px;">No active batches today.</p>
+        {% endfor %}
     </div>
     
     <div class="section-card">
         <h3>Active Batches</h3>
-        {% if active_batches %}
-            {% for batch in active_batches %}
-            <div class="batch-item">
-                <div class="batch-label">
-                    <div class="batch-dot"></div>
-                    <div>
-                        <p>{{ batch.name }}</p>
-                        <span>{{ batch.trainee_set.count }} Trainees</span>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
+        {% for batch in active_batches %}
         <div class="batch-item">
             <div class="batch-label">
                 <div class="batch-dot"></div>
                 <div>
-                    <p>UI/UX Batch</p>
-                    <span>15 Trainees</span>
+                    <p>{{ batch.batch_name }}</p>
+                    <span>{{ batch.trainees.count }} Trainees</span>
                 </div>
             </div>
         </div>
-        <div class="batch-item">
-            <div class="batch-label">
-                <div class="batch-dot"></div>
-                <div>
-                    <p>Full Stack Batch</p>
-                    <span>10 Trainees</span>
-                </div>
-            </div>
-        </div>
-        <div class="batch-item">
-            <div class="batch-label">
-                <div class="batch-dot"></div>
-                <div>
-                    <p>Python Batch</p>
-                    <span>12 Trainees</span>
-                </div>
-            </div>
-        </div>
-        {% endif %}
+        {% empty %}
+        <p style="color:#999; font-size:14px;">No active batches assigned.</p>
+        {% endfor %}
         <div class="actions-row">
             <a href="{% url 'trainer_batch_list' %}" class="view-btn">View Batches</a>
         </div>

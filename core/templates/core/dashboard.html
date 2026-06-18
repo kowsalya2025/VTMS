@@ -200,57 +200,21 @@
             {% endfor %}
         </div>
         <div class="section-card">
-            <h3>Recent Activities</h3>
+            <h3>Recent Payments</h3>
+            {% for p in recent_payments %}
             <div class="activity-item">
                 <div class="activity-item-inner">
                     <div class="activity-dot"></div>
                     <div class="activity-info">
-                        <span class="activity-title">New trainee enrolled</span>
-                        <span class="activity-time">2 hours ago</span>
-                        <span class="batch-trainer">Rahul Kumar</span>
+                        <span class="activity-title">Payment — {{ p.trainee.full_name|default:'N/A' }}</span>
+                        <span class="batch-trainer">₹{{ p.paid }} / ₹{{ p.course_amount }} — {{ p.status }}</span>
+                        <span class="activity-time">{{ p.date|date:"d/m/Y" }}</span>
                     </div>
                 </div>
             </div>
-            <div class="activity-item">
-                <div class="activity-item-inner">
-                    <div class="activity-dot"></div>
-                    <div class="activity-info">
-                        <span class="activity-title">Batch completed</span>
-                        <span class="activity-time">8 hours ago</span>
-                        <span class="batch-trainer">Batch 5</span>
-                    </div>
-                </div>
-            </div>
-            <div class="activity-item">
-                <div class="activity-item-inner">
-                    <div class="activity-dot"></div>
-                    <div class="activity-info">
-                        <span class="activity-title">Payment received</span>
-                        <span class="activity-time">1 day ago</span>
-                        <span class="batch-trainer">₹50,000 from Priya Sharma</span>
-                    </div>
-                </div>
-            </div>
-            <div class="activity-item">
-                <div class="activity-item-inner">
-                    <div class="activity-dot"></div>
-                    <div class="activity-info">
-                        <span class="activity-title">New trainer added</span>
-                        <span class="activity-time">2 days ago</span>
-                        <span class="batch-trainer">Anita Singh</span>
-                    </div>
-                </div>
-            </div>
-            <div class="activity-item">
-                <div class="activity-item-inner">
-                    <div class="activity-dot"></div>
-                    <div class="activity-info">
-                        <span class="activity-title">Report submitted</span>
-                        <span class="activity-time">3 days ago</span>
-                        <span class="batch-trainer">Priya submitted Weekly Report - Week 12</span>
-                    </div>
-                </div>
-            </div>
+            {% empty %}
+            <p style="color:var(--icon-color); font-size:14px;">No recent payments.</p>
+            {% endfor %}
         </div>
     </div>
     <div class="dashboard-right">
@@ -261,45 +225,31 @@
             </div>
             <div class="report-item">
                 <div class="report-row">
-                    <span class="report-text">Daily Reports Pending: 5</span>
+                    <span class="report-text">Daily Reports Pending: {{ daily_pending }}</span>
                 </div>
                 <div class="report-row">
-                    <span class="report-text">Weekly Reports Pending: 2</span>
+                    <span class="report-text">Weekly Reports Pending: {{ weekly_pending }}</span>
                 </div>
                 <div class="report-row">
-                    <span class="report-text">Monthly Reports Pending: 1</span>
+                    <span class="report-text">Monthly Reports Pending: {{ monthly_pending }}</span>
                 </div>
             </div>
         </div>
         <div class="section-card">
             <div class="report-row">
-                <h3>Notifications</h3>
-                <a href="#" class="btn-view-report">View Report</a>
+                <h3>Recent Trainees</h3>
+                <a href="{% url 'trainee_list' %}" class="btn-view-report">View All</a>
             </div>
+            {% for t in recent_trainees %}
             <div class="notification-item">
                 <div class="notification-info">
-                    <span class="notification-title">3 pending trainer reports need approval</span>
-                    <span class="notification-time">1 hour ago</span>
+                    <span class="notification-title">{{ t.full_name }} — {{ t.course.title|default:'No Course' }}</span>
+                    <span class="notification-time">Status: {{ t.status }}</span>
                 </div>
             </div>
-            <div class="notification-item">
-                <div class="notification-info">
-                    <span class="notification-title">New batch starting on March 28, 2026</span>
-                    <span class="notification-time">2 hours ago</span>
-                </div>
-            </div>
-            <div class="notification-item">
-                <div class="notification-info">
-                    <span class="notification-title">Payment reminder: 5 installments due this week</span>
-                    <span class="notification-time">5 hours ago</span>
-                </div>
-            </div>
-            <div class="notification-item">
-                <div class="notification-info">
-                    <span class="notification-title">System backup completed successfully</span>
-                    <span class="notification-time">1 day ago</span>
-                </div>
-            </div>
+            {% empty %}
+            <p style="color:var(--icon-color); font-size:14px;">No trainees yet.</p>
+            {% endfor %}
         </div>
     </div>
 </div>

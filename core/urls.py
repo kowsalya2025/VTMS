@@ -63,4 +63,14 @@ urlpatterns = [
     path('business/reports/', views.business_reports, name='business_reports'),
     path('business/interview-scheduling/', views.interview_scheduling, name='interview_scheduling'),
     path('business/profile/', views.business_profile, name='business_profile'),
+
+    # Upload / Download
+    path('download/invoice/<int:payment_id>/', views.download_invoice, name='download_invoice'),
+    path('download/payments/csv/', views.export_payments_csv, name='export_payments_csv'),
+    path('download/intern-performance/<int:pk>/', views.download_intern_performance, name='download_intern_performance'),
+    path('download/trainees/csv/', views.export_trainees_csv, name='export_trainees_csv'),
+    path('upload/document/<int:candidate_id>/', views.upload_document, name='upload_document'),
+    path('download/document/<int:doc_id>/', views.download_document, name='download_document'),
+    path('admin/backup/', views.backup_data, name='backup_data'),
+    path('admin/restore/', views.restore_data, name='restore_data'),
 ]

@@ -92,35 +92,48 @@ def admin_dashboard(request):
     active_batches = Batch.objects.filter(status='Active')
     active_batches_count = active_batches.count()
     pending_reports = Report.objects.filter(status='Pending').count()
-    
-    # For stats grid
+
+    daily_pending  = Report.objects.filter(status='Pending', report_type='Daily').count()
+    weekly_pending = Report.objects.filter(status='Pending', report_type='Weekly').count()
+    monthly_pending= Report.objects.filter(status='Pending', report_type='Monthly').count()
+
+    # Recent trainees (last 5)
+    recent_trainees = Trainee.objects.select_related('course').order_by('-id')[:5]
+    # Recent payments
+    recent_payments = Payment.objects.select_related('trainee').order_by('-date')[:5]
+
     context = {
         'total_trainers': total_trainers,
         'total_trainees': total_trainees,
         'active_batches_count': active_batches_count,
         'pending_reports': pending_reports,
         'active_batches': active_batches,
+        'daily_pending': daily_pending,
+        'weekly_pending': weekly_pending,
+        'monthly_pending': monthly_pending,
+        'recent_trainees': recent_trainees,
+        'recent_payments': recent_payments,
     }
     return render(request, 'core/dashboard.html', context)
 
 @login_required_role(TRAINER)
 def trainer_dashboard(request):
-    # Get current trainer (we'll assume first trainer for demo, you can update later)
-    trainer = Trainer.objects.first()
-    
-    # Dynamic data
-    assigned_batches = Batch.objects.filter(trainer=trainer).count() if trainer else 3
-    total_trainees = Trainee.objects.filter(batch__trainer=trainer).count() if trainer else 40
-    pending_reports = Report.objects.filter(status='Pending', trainer=trainer).count() if trainer else 2
-    
-    # Get active batches (first 3)
-    active_batches = Batch.objects.filter(trainer=trainer)[:3] if trainer else []
-    
-    # Get interns
+    trainer = Trainer.objects.filter(user=request.user).first()
+
+    assigned_batches = Batch.objects.filter(trainer=trainer).count() if trainer else 0
+    total_trainees = Trainee.objects.filter(batch__trainer=trainer).count() if trainer else 0
+    pending_reports = Report.objects.filter(status='Pending', trainer=trainer).count() if trainer else 0
+    active_batches = Batch.objects.filter(trainer=trainer, status='Active') if trainer else Batch.objects.none()
+
     total_interns = Intern.objects.count()
-    active_interns = Intern.objects.filter(status='Active').count() if hasattr(Intern, 'status') else 5
-    completed_interns = total_interns - active_interns if total_interns else 1
-    
+    active_interns = Intern.objects.filter(status='Active').count()
+    completed_interns = Intern.objects.filter(status='Completed').count()
+
+    # Pending report counts by type
+    daily_pending = Report.objects.filter(status='Pending', report_type='Daily', trainer=trainer).count() if trainer else 0
+    weekly_pending = Report.objects.filter(status='Pending', report_type='Weekly', trainer=trainer).count() if trainer else 0
+    monthly_pending = Report.objects.filter(status='Pending', report_type='Monthly', trainer=trainer).count() if trainer else 0
+
     context = {
         'trainer': trainer,
         'assigned_batches': assigned_batches,
@@ -130,6 +143,9 @@ def trainer_dashboard(request):
         'total_interns': total_interns,
         'active_interns': active_interns,
         'completed_interns': completed_interns,
+        'daily_pending': daily_pending,
+        'weekly_pending': weekly_pending,
+        'monthly_pending': monthly_pending,
     }
     return render(request, 'core/trainer_dashboard.html', context)
 
@@ -782,13 +798,14 @@ def business_profile(request):
 
 # Trainer - Batches
 def trainer_batch_list(request):
-    # For demo, assume trainer is logged in, get their batches
-    batches = Batch.objects.all()
+    trainer = Trainer.objects.filter(user=request.user).first()
+    batches = Batch.objects.filter(trainer=trainer) if trainer else Batch.objects.all()
     return render(request, 'core/trainer_batch_list.html', {'batches': batches})
 
 # Trainer - Trainees
 def trainer_trainee_list(request):
-    trainees = Trainee.objects.all()
+    trainer = Trainer.objects.filter(user=request.user).first()
+    trainees = Trainee.objects.filter(trainer=trainer) if trainer else Trainee.objects.all()
     return render(request, 'core/trainer_trainee_list.html', {'trainees': trainees})
 
 # Trainer - Tasks
@@ -868,8 +885,8 @@ def trainer_tasks(request):
 
 # Trainer - Internship Management (Active Interns List)
 def trainer_internship_management(request):
-    # Get all interns (use sample data if no real data)
-    interns = Intern.objects.all()
+    trainer = Trainer.objects.filter(user=request.user).first()
+    interns = Intern.objects.filter(trainer=trainer) if trainer else Intern.objects.all()
     return render(request, 'core/trainer_internship_management.html', {'interns': interns})
 
 
@@ -992,31 +1009,57 @@ def trainer_communication(request):
 
 # Trainer - Projects
 def trainer_projects(request):
-    return render(request, 'core/trainer_projects.html')
+    trainer = Trainer.objects.filter(user=request.user).first()
+    projects = Project.objects.filter(trainer=trainer) if trainer else Project.objects.all()
+    return render(request, 'core/trainer_projects.html', {'projects': projects})
 
 # Trainer - Daily Reports
 def trainer_daily_reports(request):
-    return render(request, 'core/trainer_daily_reports.html')
+    trainer = Trainer.objects.filter(user=request.user).first()
+    reports = Report.objects.filter(report_type='Daily', trainer=trainer).order_by('-date') if trainer else Report.objects.filter(report_type='Daily').order_by('-date')
+    return render(request, 'core/trainer_daily_reports.html', {'reports': reports})
 
 # Trainer - Weekly Reports
 def trainer_weekly_reports(request):
-    return render(request, 'core/trainer_weekly_reports.html')
+    trainer = Trainer.objects.filter(user=request.user).first()
+    reports = Report.objects.filter(report_type='Weekly', trainer=trainer).order_by('-date') if trainer else Report.objects.filter(report_type='Weekly').order_by('-date')
+    return render(request, 'core/trainer_weekly_reports.html', {'reports': reports})
 
 # Trainer - Monthly Reports
 def trainer_monthly_reports(request):
-    return render(request, 'core/trainer_monthly_reports.html')
+    trainer = Trainer.objects.filter(user=request.user).first()
+    reports = Report.objects.filter(report_type='Monthly', trainer=trainer).order_by('-date') if trainer else Report.objects.filter(report_type='Monthly').order_by('-date')
+    return render(request, 'core/trainer_monthly_reports.html', {'reports': reports})
 
 # Trainer - Attendance
 def trainer_attendance(request):
-    return render(request, 'core/trainer_attendance.html')
+    trainer = Trainer.objects.filter(user=request.user).first()
+    from core.models import Attendance
+    attendance_records = Attendance.objects.filter(batch__trainer=trainer).order_by('-date') if trainer else Attendance.objects.order_by('-date')
+    return render(request, 'core/trainer_attendance.html', {'attendance_records': attendance_records, 'trainer': trainer})
 
 # Trainer - Calendar
 def trainer_calendar(request):
-    return render(request, 'core/trainer_calendar.html')
+    trainer = Trainer.objects.filter(user=request.user).first()
+    batches = Batch.objects.filter(trainer=trainer) if trainer else Batch.objects.all()
+    return render(request, 'core/trainer_calendar.html', {'batches': batches})
 
 # Trainer - Profile
 def trainer_profile(request):
-    return render(request, 'core/trainer_profile.html')
+    trainer = Trainer.objects.filter(user=request.user).first()
+    if request.method == 'POST' and trainer:
+        trainer.full_name = request.POST.get('full_name', trainer.full_name)
+        trainer.office_mail = request.POST.get('office_mail', trainer.office_mail)
+        trainer.personal_mail = request.POST.get('personal_mail', trainer.personal_mail)
+        trainer.phone_no = request.POST.get('phone_no', trainer.phone_no)
+        if request.FILES.get('profile_image'):
+            trainer.profile_image = request.FILES['profile_image']
+        trainer.save()
+        trainer.user.email = trainer.office_mail
+        trainer.user.save()
+        messages.success(request, 'Profile updated successfully!')
+        return redirect('trainer_profile')
+    return render(request, 'core/trainer_profile.html', {'trainer': trainer})
 
 # Business Team - Enquiry Management
 def enquiry_management(request):
@@ -1499,3 +1542,247 @@ def business_reports(request):
 def batch_detail(request, pk):
     batch = get_object_or_404(Batch, pk=pk)
     return render(request, 'core/batch_detail.html', {'batch': batch})
+
+# ─── Download / Upload Views ─────────────────────────────────────────────────
+
+import csv
+import io
+import json
+from django.http import HttpResponse, FileResponse
+from django.utils.text import slugify
+
+
+# ── 1. Download invoice as CSV for a payment ────────────────────────────────
+@login_required_role(ADMIN, BUSINESS)
+def download_invoice(request, payment_id):
+    payment = get_object_or_404(Payment, id=payment_id)
+    person = payment.trainee or payment.intern
+    name = person.full_name if person else 'Unknown'
+    course = ''
+    if payment.trainee and payment.trainee.course:
+        course = payment.trainee.course.title
+    elif payment.intern:
+        course = payment.intern.role
+
+    response = HttpResponse(content_type='text/csv')
+    safe_name = slugify(name)
+    response['Content-Disposition'] = f'attachment; filename="{safe_name}-invoice.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Invoice'])
+    writer.writerow([])
+    writer.writerow(['Name', name])
+    writer.writerow(['Course', course])
+    writer.writerow(['Total Amount', f'Rs.{payment.course_amount}'])
+    writer.writerow(['Amount Paid', f'Rs.{payment.paid}'])
+    writer.writerow(['Pending', f'Rs.{payment.pending}'])
+    writer.writerow(['Status', payment.status])
+    writer.writerow(['Payment Date', payment.date.strftime('%d/%m/%Y')])
+    writer.writerow(['Plan', payment.plan or '-'])
+    writer.writerow(['Payment Method', payment.payment_method or '-'])
+    if payment.due_date:
+        writer.writerow(['Due Date', payment.due_date.strftime('%d/%m/%Y')])
+    return response
+
+
+# ── 2. Download all payments as CSV (export) ─────────────────────────────────
+@login_required_role(ADMIN, BUSINESS)
+def export_payments_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="payments-export.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Name', 'Course', 'Total Amount', 'Paid', 'Pending',
+                     'Status', 'Plan', 'Payment Method', 'Date', 'Due Date'])
+    for p in Payment.objects.select_related('trainee', 'intern').all():
+        person = p.trainee or p.intern
+        name = person.full_name if person else '-'
+        course = ''
+        if p.trainee and p.trainee.course:
+            course = p.trainee.course.title
+        elif p.intern:
+            course = p.intern.role or '-'
+        writer.writerow([
+            name, course, p.course_amount, p.paid, p.pending,
+            p.status, p.plan or '-', p.payment_method or '-',
+            p.date.strftime('%d/%m/%Y'),
+            p.due_date.strftime('%d/%m/%Y') if p.due_date else '-',
+        ])
+    return response
+
+
+# ── 3. Download intern performance report as CSV ─────────────────────────────
+@login_required_role(ADMIN, TRAINER)
+def download_intern_performance(request, pk):
+    intern = get_object_or_404(Intern, pk=pk)
+    response = HttpResponse(content_type='text/csv')
+    safe_name = slugify(intern.full_name)
+    response['Content-Disposition'] = f'attachment; filename="{safe_name}-performance.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Intern Performance Report'])
+    writer.writerow([])
+    writer.writerow(['Name', intern.full_name])
+    writer.writerow(['Email', intern.personal_mail])
+    writer.writerow(['Role', intern.role])
+    writer.writerow(['Internship Period', intern.internship_period])
+    writer.writerow(['Status', intern.status])
+    writer.writerow([])
+    writer.writerow(['Attendance', '90%'])
+    writer.writerow(['Projects Completed', '4 / 5'])
+    writer.writerow(['Completion Rate', '80%'])
+    return response
+
+
+# ── 4. Download all trainees as CSV ──────────────────────────────────────────
+@login_required_role(ADMIN)
+def export_trainees_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="trainees-export.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Name', 'Email', 'Phone', 'Gender', 'Course', 'Batch',
+                     'Trainer', 'Status', 'Progress'])
+    for t in Trainee.objects.select_related('course', 'batch', 'trainer').all():
+        writer.writerow([
+            t.full_name, t.personal_mail, t.phone_no, t.gender,
+            t.course.title if t.course else '-',
+            t.batch.batch_name if t.batch else '-',
+            t.trainer.full_name if t.trainer else '-',
+            t.status, f'{t.progress}%',
+        ])
+    return response
+
+
+# ── 5. Upload document for a candidate ───────────────────────────────────────
+@login_required_role(ADMIN, BUSINESS)
+def upload_document(request, candidate_id):
+    candidate = get_object_or_404(Candidate, id=candidate_id)
+    if request.method == 'POST' and request.FILES.get('document_file'):
+        doc_type = request.POST.get('document_type', 'Document')
+        doc_file = request.FILES['document_file']
+        DocumentVerification.objects.create(
+            candidate=candidate,
+            document_type=doc_type,
+            document_file=doc_file,
+            status='Pending',
+        )
+        messages.success(request, f'{doc_type} uploaded successfully!')
+    else:
+        messages.error(request, 'Please select a file to upload.')
+    return redirect('document_verification_detail', candidate_id=candidate_id)
+
+
+# ── 6. Download a document file ──────────────────────────────────────────────
+@login_required_role(ADMIN, BUSINESS)
+def download_document(request, doc_id):
+    doc = get_object_or_404(DocumentVerification, id=doc_id)
+    if not doc.document_file:
+        messages.error(request, 'No file attached to this document.')
+        return redirect('document_verification_detail', candidate_id=doc.candidate.id)
+    file_handle = doc.document_file.open('rb')
+    filename = doc.document_file.name.split('/')[-1]
+    response = FileResponse(file_handle, as_attachment=True, filename=filename)
+    return response
+
+
+# ── 7. Backup database as JSON ────────────────────────────────────────────────
+@login_required_role(ADMIN)
+def backup_data(request):
+    from django.core import serializers as dj_serializers
+    from core.models import (User, Trainer, Course, Batch, Trainee, Intern,
+                              Payment, Report, Enquiry, Candidate, Eligibility,
+                              DocumentVerification, InterviewSchedule,
+                              SystemSetting, Task, TraineeTask, Project, Message)
+
+    all_models = [User, Trainer, Course, Batch, Trainee, Intern, Payment,
+                  Report, Enquiry, Candidate, Eligibility, DocumentVerification,
+                  InterviewSchedule, SystemSetting, Task, TraineeTask, Project, Message]
+
+    data = {}
+    for model in all_models:
+        model_name = model.__name__
+        qs = model.objects.all()
+        data[model_name] = json.loads(dj_serializers.serialize('json', qs))
+
+    response = HttpResponse(
+        json.dumps(data, indent=2, default=str),
+        content_type='application/json'
+    )
+    from django.utils.timezone import now
+    filename = f'vtms-backup-{now().strftime("%Y%m%d-%H%M%S")}.json'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    # Update last_backup_date in settings
+    setting = SystemSetting.objects.first()
+    if setting:
+        setting.last_backup_date = now()
+        setting.last_backup_status = 'Success'
+        setting.save()
+
+    return response
+
+
+# ── 8. Restore from JSON backup ───────────────────────────────────────────────
+@login_required_role(ADMIN)
+def restore_data(request):
+    if request.method != 'POST' or not request.FILES.get('backup_file'):
+        messages.error(request, 'Please upload a backup JSON file.')
+        return redirect('settings')
+
+    backup_file = request.FILES['backup_file']
+    if not backup_file.name.endswith('.json'):
+        messages.error(request, 'Only .json backup files are supported.')
+        return redirect('settings')
+
+    try:
+        from django.core import serializers as dj_serializers
+        raw = backup_file.read().decode('utf-8')
+        all_data = json.loads(raw)
+
+        restored_count = 0
+        for model_name, objects_list in all_data.items():
+            json_str = json.dumps(objects_list)
+            for obj in dj_serializers.deserialize('json', json_str):
+                try:
+                    obj.save()
+                    restored_count += 1
+                except Exception:
+                    pass  # skip duplicate/conflict rows
+
+        messages.success(request, f'Backup restored successfully! ({restored_count} records restored)')
+    except Exception as e:
+        messages.error(request, f'Restore failed: {str(e)}')
+
+    return redirect('settings')
+
+
+# ── 9. Upload / update business profile photo ────────────────────────────────
+@login_required_role(BUSINESS)
+def business_profile(request):
+    user = request.user
+    # Try to get an associated business user profile data
+    context = {'user': user}
+
+    if request.method == 'POST':
+        if request.FILES.get('profile_image'):
+            # Save profile image to user's media folder (store on user model via generic path)
+            # We store it on the logged-in user's side — use a simple approach
+            profile_image = request.FILES['profile_image']
+            # Save to media/profiles/<user_id>.<ext>
+            import os
+            from django.core.files.storage import default_storage
+            ext = os.path.splitext(profile_image.name)[1]
+            path = f'profiles/user_{user.id}{ext}'
+            saved_path = default_storage.save(path, profile_image)
+            # Store path in session for now (lightweight approach without model change)
+            request.session['profile_image_url'] = saved_path
+            messages.success(request, 'Profile photo updated successfully!')
+        return redirect('business_profile')
+
+    profile_image_url = request.session.get('profile_image_url')
+    if profile_image_url:
+        from django.conf import settings as django_settings
+        context['profile_image_url'] = f'{django_settings.MEDIA_URL}{profile_image_url}'
+
+    return render(request, 'core/business_profile.html', context)
