@@ -5,7 +5,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.db import DatabaseError
 from django.db.models import Q
-from .models import User, Trainer, Course, Batch, Trainee, Intern, Payment, Report, Enquiry, Candidate, Eligibility, DocumentVerification, InterviewSchedule, SystemSetting, Task, TraineeTask, Project, Message
+from .models import User, Trainer, Course, Batch, Trainee, Intern, Payment, Report, Enquiry, Candidate, Eligibility, DocumentVerification, InterviewSchedule, SystemSetting, Task, TraineeTask, Project, Message, ContactQuery
 from django.utils import timezone
 from datetime import timedelta
 from functools import wraps
@@ -105,6 +105,11 @@ def admin_dashboard(request):
     recent_trainees = Trainee.objects.select_related('course').order_by('-id')[:5]
     # Recent payments
     recent_payments = Payment.objects.select_related('trainee').order_by('-date')[:5]
+    # Unread contact queries
+    unread_queries = ContactQuery.objects.filter(is_read=False).order_by('-created_at')
+    unread_queries_count = unread_queries.count()
+    # Recent queries (last 5)
+    recent_queries = ContactQuery.objects.order_by('-created_at')[:5]
 
     context = {
         'total_trainers': total_trainers,
@@ -117,6 +122,9 @@ def admin_dashboard(request):
         'monthly_pending': monthly_pending,
         'recent_trainees': recent_trainees,
         'recent_payments': recent_payments,
+        'unread_queries': unread_queries,
+        'unread_queries_count': unread_queries_count,
+        'recent_queries': recent_queries,
     }
     return render(request, 'core/dashboard.html', context)
 
@@ -798,7 +806,31 @@ def calendar_leave(request):
 
 # Business - Profile
 def business_profile(request):
-    return render(request, 'core/business_profile.html')
+    user = request.user
+    if request.method == 'POST':
+        # Update user profile
+        user.email = request.POST.get('office_mail', user.email)
+        user.first_name = request.POST.get('name', user.first_name)
+        user.save()
+        messages.success(request, 'Profile updated successfully!')
+        return redirect('business_profile')
+    return render(request, 'core/business_profile.html', {'user': user})
+
+# Trainer - Profile
+@login_required_role('Trainer')
+def trainer_profile(request):
+    trainer = Trainer.objects.filter(user=request.user).first()
+    if request.method == 'POST':
+        if trainer:
+            trainer.full_name = request.POST.get('full_name', trainer.full_name)
+            trainer.office_mail = request.POST.get('office_mail', trainer.office_mail)
+            trainer.personal_mail = request.POST.get('personal_mail', trainer.personal_mail)
+            trainer.phone_no = request.POST.get('phone_no', trainer.phone_no)
+            trainer.gender = request.POST.get('gender', trainer.gender)
+            trainer.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('trainer_profile')
+    return render(request, 'core/trainer_profile.html', {'trainer': trainer, 'user': request.user})
 
 # Trainer - Batches
 def trainer_batch_list(request):
@@ -1899,3 +1931,120 @@ def business_profile(request):
         context['profile_image_url'] = f'{django_settings.MEDIA_URL}{profile_image_url}'
 
     return render(request, 'core/business_profile.html', context)
+
+# Forgot Password
+def forgot_password(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        role = request.POST.get('role')
+        
+        try:
+            user = User.objects.get(email=email, role=role)
+            # In a real app, you would send an email with a reset link
+            # For this demo, we'll show a success message and proceed
+            messages.success(request, f'Password reset link sent to {email}. Please check your email.')
+            # Store user ID in session for reset (in real app, use token)
+            request.session['reset_user_id'] = user.id
+            return redirect('reset_password')
+        except User.DoesNotExist:
+            messages.error(request, 'No account found with this email and role.')
+    
+    return render(request, 'core/forgot_password.html')
+
+# Reset Password
+def reset_password(request):
+    if 'reset_user_id' not in request.session:
+        messages.error(request, 'Please start the password reset process first.')
+        return redirect('forgot_password')
+    
+    user_id = request.session['reset_user_id']
+    
+    if request.method == 'POST':
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        if new_password != confirm_password:
+            messages.error(request, 'Passwords do not match.')
+        elif len(new_password) < 6:
+            messages.error(request, 'Password must be at least 6 characters long.')
+        else:
+            try:
+                user = User.objects.get(id=user_id)
+                user.set_password(new_password)
+                user.save()
+                # Clear session
+                del request.session['reset_user_id']
+                messages.success(request, 'Password reset successfully! Please login with your new password.')
+                return redirect('login')
+            except User.DoesNotExist:
+                messages.error(request, 'User not found.')
+                return redirect('forgot_password')
+    
+    return render(request, 'core/reset_password.html')
+
+# Contact Admin
+def contact_admin(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        message = request.POST.get('message')
+        
+        # Save the contact query to database
+        ContactQuery.objects.create(
+            name=name,
+            email=email,
+            message=message
+        )
+        
+        messages.success(request, 'Your message has been sent to admin. They will contact you soon.')
+        return redirect('login')
+    
+    return render(request, 'core/contact_admin.html')
+
+# Admin: View all contact queries
+@login_required_role(ADMIN)
+def contact_queries(request):
+    queries = ContactQuery.objects.all().order_by('-created_at')
+    context = {
+        'queries': queries,
+    }
+    return render(request, 'core/contact_queries.html', context)
+
+# Admin: Mark query as read and view details
+@login_required_role(ADMIN)
+def mark_query_read(request, query_id):
+    query = get_object_or_404(ContactQuery, id=query_id)
+    query.is_read = True
+    query.save()
+    return redirect('contact_queries')
+
+# Admin: Update query status
+@login_required_role(ADMIN)
+def update_query_status(request, query_id):
+    if request.method == 'POST':
+        query = get_object_or_404(ContactQuery, id=query_id)
+        status = request.POST.get('status')
+        query.status = status
+        query.save()
+        messages.success(request, 'Query status updated successfully!')
+    return redirect('contact_queries')
+
+# Mark message as read (works for all roles)
+@login_required_role(ADMIN, TRAINER, BUSINESS)
+def mark_message_read(request, message_id):
+    message = get_object_or_404(Message, id=message_id)
+    # Make sure the user is the recipient of the message
+    if message.recipient == request.user:
+        message.is_read = True
+        message.save()
+    # Redirect back to the previous page or dashboard
+    next_url = request.META.get('HTTP_REFERER')
+    if next_url:
+        return redirect(next_url)
+    # Fallback to appropriate dashboard
+    if request.user.role == ADMIN:
+        return redirect('admin_dashboard')
+    elif request.user.role == TRAINER:
+        return redirect('trainer_dashboard')
+    else:
+        return redirect('business_dashboard')

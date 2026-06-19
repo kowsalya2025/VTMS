@@ -204,3 +204,29 @@ Traceback (most recent call last):
     )
 django.core.exceptions.ValidationError: ['“” value has an invalid date format. It must be in YYYY-MM-DD format.']
 "POST /admin/trainees/1/edit/ HTTP/1.1" 500 145
+Internal Server Error: /admin-dashboard/
+Traceback (most recent call last):
+  File "C:\Users\Selvaraj S\Downloads\VTMS_new\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Selvaraj S\Downloads\VTMS_new\venv\Lib\site-packages\django\core\handlers\base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\Selvaraj S\Downloads\VTMS_new\core\views.py", line 33, in wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\Selvaraj S\Downloads\VTMS_new\core\views.py", line 109, in admin_dashboard
+    unread_queries = ContactQuery.objects.filter(is_read=False).order_by('-created_at')
+                     ^^^^^^^^^^^^
+NameError: name 'ContactQuery' is not defined. Did you mean: 'contact_queries'?
+"GET /admin-dashboard/ HTTP/1.1" 500 85302
+Internal Server Error: /admin-dashboard/
+Traceback (most recent call last):
+  File "C:\Users\Selvaraj S\Downloads\VTMS_new\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Selvaraj S\Downloads\VTMS_new\venv\Lib\site-packages\django\core\handlers\base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\Selvaraj S\Downloads\VTMS_new\core\views.py", line 33, in wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\Selvaraj S\Downloads\VTMS_new\core\views.py", line 109, in admin_dashboard
+    unread_queries = ContactQuery.objects.filter(is_read=False).order_by('-created_at')
+                     ^^^^^^^^^^^^
+NameError: name 'ContactQuery' is not defined. Did you mean: 'contact_queries'?
+"GET /admin-dashboard/ HTTP/1.1" 500 85302

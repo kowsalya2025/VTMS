@@ -1,0 +1,174 @@
+{% extends 'core/base_admin.html' %}
+{% load static %}
+
+{% block page_title %}Contact Queries{% endblock %}
+{% block page_subtitle %}Manage and respond to user queries{% endblock %}
+
+{% block admin_content %}
+<style>
+    .queries-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .queries-table th,
+    .queries-table td {
+        padding: 16px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    .queries-table th {
+        font-weight: 600;
+        color: var(--text-color);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .query-row.unread {
+        background-color: #fff9f5;
+    }
+    .query-row:hover {
+        background-color: #f9f9f9;
+    }
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        display: inline-block;
+    }
+    .status-badge.new {
+        background-color: #fff3e0;
+        color: #e65100;
+    }
+    .status-badge.in_progress {
+        background-color: #e3f2fd;
+        color: #1565c0;
+    }
+    .status-badge.resolved {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+    .read-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    .read-indicator.unread {
+        background-color: var(--accent-red);
+    }
+    .read-indicator.read {
+        background-color: #ccc;
+    }
+    .action-btn {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+        margin-right: 6px;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .action-btn.primary {
+        background-color: var(--secondary);
+        color: white;
+    }
+    .action-btn.primary:hover {
+        background-color: #4433b0;
+    }
+    .status-select {
+        padding: 6px 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+    .query-name {
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 4px;
+    }
+    .query-email {
+        font-size: 13px;
+        color: #666;
+    }
+    .query-message {
+        font-size: 14px;
+        color: #555;
+        max-width: 400px;
+    }
+    .query-date {
+        font-size: 13px;
+        color: #999;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999;
+    }
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+</style>
+
+<div class="card">
+    {% if queries %}
+        <table class="queries-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;"></th>
+                    <th>From</th>
+                    <th>Message</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for query in queries %}
+                    <tr class="query-row {% if not query.is_read %}unread{% endif %}">
+                        <td>
+                            <span class="read-indicator {% if not query.is_read %}unread{% else %}read{% endif %}"></span>
+                        </td>
+                        <td>
+                            <div class="query-name">{{ query.name }}</div>
+                            <div class="query-email">{{ query.email }}</div>
+                        </td>
+                        <td>
+                            <div class="query-message">{{ query.message|truncatechars:100 }}</div>
+                        </td>
+                        <td>
+                            <div class="query-date">{{ query.created_at|date:"M d, Y H:i" }}</div>
+                        </td>
+                        <td>
+                            <form method="post" action="{% url 'update_query_status' query.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <select name="status" class="status-select" onchange="this.form.submit()">
+                                    <option value="NEW" {% if query.status == 'NEW' %}selected{% endif %}>New</option>
+                                    <option value="IN_PROGRESS" {% if query.status == 'IN_PROGRESS' %}selected{% endif %}>In Progress</option>
+                                    <option value="RESOLVED" {% if query.status == 'RESOLVED' %}selected{% endif %}>Resolved</option>
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            {% if not query.is_read %}
+                                <a href="{% url 'mark_query_read' query.id %}" class="action-btn primary">Mark as Read</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h3>No queries yet</h3>
+            <p>When users submit queries through the contact form, they will appear here.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

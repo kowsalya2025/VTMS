@@ -145,16 +145,43 @@ class Intern(models.Model):
 
 
 class Message(models.Model):
+    class NotificationType(models.TextChoices):
+        REPORT = 'REPORT', 'Report'
+        PAYMENT = 'PAYMENT', 'Payment'
+        ENQUIRY = 'ENQUIRY', 'Enquiry'
+        GENERAL = 'GENERAL', 'General'
+        TASK = 'TASK', 'Task'
+        BATCH = 'BATCH', 'Batch'
+
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_messages")
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name="received_messages", null=True, blank=True)
     subject = models.CharField(max_length=200)
     preview = models.TextField(blank=True)
     is_read = models.BooleanField(default=False)
+    notification_type = models.CharField(max_length=20, choices=NotificationType.choices, default=NotificationType.GENERAL)
     created_at = models.DateTimeField(auto_now_add=True)
     avatar_color = models.CharField(max_length=20, default="#9E69FF") # hex color
     avatar_initial = models.CharField(max_length=1)
 
     def __str__(self):
         return self.subject
+
+class ContactQuery(models.Model):
+    class Status(models.TextChoices):
+        NEW = 'New', 'New'
+        IN_PROGRESS = 'In Progress', 'In Progress'
+        RESOLVED = 'Resolved', 'Resolved'
+
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    message = models.TextField()
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.NEW)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.email}"
 
 class Attendance(models.Model):
     trainee = models.ForeignKey(Trainee, on_delete=models.CASCADE, null=True, blank=True)

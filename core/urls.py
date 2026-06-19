@@ -6,6 +6,13 @@ from django.shortcuts import redirect
 urlpatterns = [
     path('', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path('forgot-password/', views.forgot_password, name='forgot_password'),
+    path('reset-password/', views.reset_password, name='reset_password'),
+    path('contact-admin/', views.contact_admin, name='contact_admin'),
+    path('admin/contact-queries/', views.contact_queries, name='contact_queries'),
+    path('admin/contact-queries/<int:query_id>/mark-read/', views.mark_query_read, name='mark_query_read'),
+    path('admin/contact-queries/<int:query_id>/update-status/', views.update_query_status, name='update_query_status'),
+    path('messages/<int:message_id>/mark-read/', views.mark_message_read, name='mark_message_read'),
     path('admin/', views.admin_redirect_view),
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('trainer-dashboard/', views.trainer_dashboard, name='trainer_dashboard'),
@@ -41,6 +48,7 @@ urlpatterns = [
     path('admin/calendar/', views.calendar_leave, name='calendar_leave'),
     
     # Trainer Pages
+    path('trainer/profile/', views.trainer_profile, name='trainer_profile'),
     path('trainer/batches/', views.trainer_batch_list, name='trainer_batch_list'),
     path('trainer/trainees/', views.trainer_trainee_list, name='trainer_trainee_list'),
     path('trainer/tasks/', views.trainer_tasks, name='trainer_tasks'),
