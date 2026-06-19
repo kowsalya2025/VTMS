@@ -171,8 +171,18 @@
     }
     .page-title {
         font-size: 24px;
-        margin-bottom: 24px;
+        margin: 0 0 4px 0;
         color: var(--text-color);
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: #666;
+        margin: 0;
+    }
+    
+    .page-header {
+        margin-bottom: 24px;
     }
     
     /* Card Styles */
@@ -206,13 +216,18 @@
             <li><a href="{% url 'reports_approvals' %}" class="{% if request.resolver_match.url_name == 'reports_approvals' %}active{% endif %}"><i class="fas fa-chart-line"></i> Reports & Approvals</a></li>
             <li><a href="{% url 'business_monitoring' %}" class="{% if request.resolver_match.url_name == 'business_monitoring' %}active{% endif %}"><i class="fas fa-briefcase"></i> Business Monitoring</a></li>
             <li><a href="{% url 'payment_revenue' %}" class="{% if request.resolver_match.url_name == 'payment_revenue' %}active{% endif %}"><i class="fas fa-file-invoice-dollar"></i> Payment & Revenue</a></li>
-            <li><a href="{% url 'invoice' %}" class="{% if request.resolver_match.url_name == 'invoice' %}active{% endif %}"><i class="fas fa-file-invoice"></i> Invoice</a></li>
+            <!-- <li><a href="{% url 'invoice' %}" class="{% if request.resolver_match.url_name == 'invoice' %}active{% endif %}"><i class="fas fa-file-invoice"></i> Invoice</a></li> -->
             <li><a href="{% url 'communication' %}" class="{% if request.resolver_match.url_name == 'communication' %}active{% endif %}"><i class="fas fa-comments"></i> Communication</a></li>
             <li><a href="{% url 'calendar_leave' %}" class="{% if request.resolver_match.url_name == 'calendar_leave' %}active{% endif %}"><i class="fas fa-calendar-alt"></i> Calendar & Leave</a></li>
             <li><a href="{% url 'settings' %}" class="{% if request.resolver_match.url_name == 'settings' %}active{% endif %}"><i class="fas fa-cog"></i> Setting</a></li>
         </ul>
         <div class="logout-btn">
-            <a href="{% url 'login' %}"><i class="fas fa-sign-out-alt"></i> &nbsp; Logout</a>
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" style="background: none; border: none; color: var(--white); display: flex; align-items: center; text-decoration: none; font-weight: 500; cursor: pointer; padding: 0;">
+                    <i class="fas fa-sign-out-alt"></i> &nbsp; Logout
+                </button>
+            </form>
         </div>
     </aside>
 
@@ -234,7 +249,12 @@
 
         <!-- Content Area -->
         <div class="content-area">
-            <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+            <div class="page-header">
+                <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                {% if page_subtitle or self.page_subtitle %}
+                    <p class="page-subtitle">{% block page_subtitle %}{% endblock %}</p>
+                {% endif %}
+            </div>
             {% block admin_content %}
             {% endblock %}
         </div>

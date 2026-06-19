@@ -86,6 +86,10 @@ def logout_view(request):
     return redirect('login')
 
 @login_required_role(ADMIN)
+def admin_redirect_view(request):
+    return redirect('admin_dashboard')
+
+@login_required_role(ADMIN)
 def admin_dashboard(request):
     total_trainers = Trainer.objects.filter(status='Active').count()
     total_trainees = Trainee.objects.filter(status='Active').count()
@@ -1203,6 +1207,8 @@ def document_verification_detail(request, candidate_id):
 
 # Business Team - Payment Management
 def business_payment_management(request):
+    import json
+    from django.core.serializers.json import DjangoJSONEncoder
     # Ensure trainees have payment records so the business payment page always shows new trainee rows
     for trainee in Trainee.objects.filter(payment__isnull=True):
         course_amount = getattr(trainee.course, 'fees', 0) if trainee.course else 0
@@ -1217,7 +1223,7 @@ def business_payment_management(request):
             due_date=timezone.now().date() + timedelta(days=30)
         )
 
-    payments = Payment.objects.select_related('trainee', 'intern').all()
+    payments = Payment.objects.select_related('trainee', 'intern', 'trainee__course').all()
     
     # Handle search
     search_query = request.GET.get('search', '')
@@ -1233,31 +1239,56 @@ def business_payment_management(request):
     if status_filter:
         payments = payments.filter(status=status_filter)
     
-    # Handle POST for payment actions
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        payment_id = request.POST.get('payment_id')
-        payment = get_object_or_404(Payment, id=payment_id)
-        
-        if action == 'mark_paid':
-            payment.status = 'Paid'
-            payment.save()
-            messages.success(request, f'Payment marked as Paid!')
-            return redirect('business_payment_management')
-        elif action == 'mark_pending':
-            payment.status = 'Pending'
-            payment.save()
-            messages.success(request, f'Payment marked as Pending!')
-            return redirect('business_payment_management')
-    
     # Calculate statistics
     total_revenue = sum(p.course_amount for p in payments)
     total_collected = sum(p.paid for p in payments)
     total_pending = sum(p.pending for p in payments)
     pending_count = payments.filter(status='Pending').count()
+
+    # Prepare payments json
+    payments_list = []
+    for payment in payments:
+        payment_dict = {
+            'id': payment.id,
+            'course_amount': payment.course_amount,
+            'paid': payment.paid,
+            'pending': payment.pending,
+            'status': payment.status,
+            'plan': payment.plan,
+            'payment_method': payment.payment_method,
+            'date': payment.date.isoformat() if payment.date else None,
+            'due_date': payment.due_date.isoformat() if payment.due_date else None,
+        }
+        if payment.trainee:
+            payment_dict['trainee'] = {
+                'full_name': payment.trainee.full_name,
+                'personal_mail': payment.trainee.personal_mail,
+                'phone_no': payment.trainee.phone_no,
+                'gender': payment.trainee.gender,
+                'date_of_birth': payment.trainee.date_of_birth.isoformat() if payment.trainee.date_of_birth else None,
+                'address': payment.trainee.address,
+            }
+            if payment.trainee.course:
+                payment_dict['trainee']['course'] = {'title': payment.trainee.course.title}
+        else:
+            payment_dict['trainee'] = None
+        
+        if payment.intern:
+            payment_dict['intern'] = {
+                'full_name': payment.intern.full_name,
+                'personal_email': payment.intern.personal_email,
+                'phone_no': payment.intern.phone_no,
+                'role': payment.intern.role,
+            }
+        else:
+            payment_dict['intern'] = None
+        payments_list.append(payment_dict)
+
+    payments_json = json.dumps(payments_list, cls=DjangoJSONEncoder)
     
     return render(request, 'core/business_payment_management.html', {
         'payments': payments,
+        'payments_json': payments_json,
         'total_revenue': total_revenue,
         'total_collected': total_collected,
         'total_pending': total_pending,
@@ -1265,6 +1296,88 @@ def business_payment_management(request):
         'search_query': search_query,
         'status_filter': status_filter,
     })
+
+# Update Payment
+def update_payment(request):
+    if request.method == 'POST':
+        payment_id = request.POST.get('payment_id')
+        payment = get_object_or_404(Payment, id=payment_id)
+        
+        if request.POST.get('course_amount'):
+            payment.course_amount = float(request.POST.get('course_amount'))
+        payment.plan = request.POST.get('plan', payment.plan)
+        payment.payment_method = request.POST.get('payment_method', payment.payment_method)
+        
+        if request.POST.get('paid'):
+            payment.paid = float(request.POST.get('paid'))
+            payment.pending = payment.course_amount - payment.paid
+        
+        if request.POST.get('date'):
+            from datetime import datetime
+            payment.date = datetime.strptime(request.POST.get('date'), '%Y-%m-%d').date()
+        
+        if request.POST.get('due_date'):
+            from datetime import datetime
+            payment.due_date = datetime.strptime(request.POST.get('due_date'), '%Y-%m-%d').date()
+        
+        payment.status = request.POST.get('status', payment.status)
+        payment.save()
+        messages.success(request, 'Payment updated successfully!')
+    return redirect('business_payment_management')
+
+# Send Payment Email
+def send_payment_email(request):
+    if request.method == 'POST':
+        payment_id = request.POST.get('payment_id')
+        payment = get_object_or_404(Payment, id=payment_id)
+        to_email = request.POST.get('to_email')
+        subject = request.POST.get('subject', 'Payment Request')
+        message = request.POST.get('message')
+        
+        try:
+            from django.core.mail import send_mail
+            from django.conf import settings
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [to_email],
+                fail_silently=False,
+            )
+            messages.success(request, 'Email sent successfully!')
+        except Exception as e:
+            messages.error(request, f'Failed to send email: {e}')
+    
+    return redirect('business_payment_management')
+
+# Download Invoice
+def download_invoice(request, payment_id):
+    from django.http import HttpResponse
+    from django.template.loader import get_template
+    from xhtml2pdf import pisa
+    from io import BytesIO
+    
+    payment = get_object_or_404(Payment, id=payment_id)
+    
+    template_path = 'core/invoice_pdf.html'
+    context = {'payment': payment}
+    
+    # Create a Django response object, and specify content_type as pdf
+    response = HttpResponse(content_type='application/pdf')
+    filename = f"{payment.trainee.full_name.replace(' ', '_') if payment.trainee else payment.intern.full_name.replace(' ', '_')}_invoice.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    # find the template and render it.
+    template = get_template(template_path)
+    html = template.render(context)
+    
+    # create a pdf
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    
+    # if error then show some fun view
+    if pisa_status.err:
+        return HttpResponse('We had some errors <pre>' + html + '</pre>')
+    return response
 
 # Business Team - Batch Management
 def business_batch_management(request):

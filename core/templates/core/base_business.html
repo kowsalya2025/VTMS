@@ -168,8 +168,18 @@
     }
     .page-title {
         font-size: 24px;
-        margin-bottom: 24px;
+        margin: 0 0 4px 0;
         color: var(--text-color);
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: #666;
+        margin: 0;
+    }
+    
+    .page-header {
+        margin-bottom: 24px;
     }
     
     /* Card Styles */
@@ -204,7 +214,14 @@
             <li><a href="{% url 'candidate_management' %}" class="{% if request.resolver_match.url_name == 'candidate_management' %}active{% endif %}"><i class="fas fa-users"></i> Candidate Management</a></li>
             <li><a href="{% url 'business_batch_management' %}" class="{% if request.resolver_match.url_name == 'business_batch_management' %}active{% endif %}"><i class="far fa-rectangle-list"></i> Batch Management</a></li>
             <li><a href="{% url 'business_reports' %}" class="{% if request.resolver_match.url_name == 'business_reports' %}active{% endif %}"><i class="fas fa-chart-line"></i> Report</a></li>
-            <li><a href="{% url 'login' %}"><i class="fas fa-right-from-bracket"></i> Logout</a></li>
+            <li>
+                <form action="{% url 'logout' %}" method="post" style="margin: 0; padding: 0;">
+                    {% csrf_token %}
+                    <button type="submit" style="background: none; border: none; color: var(--white); display: flex; align-items: center; text-decoration: none; font-weight: 400; cursor: pointer; padding: 12px 24px; width: 100%; text-align: left; font-size: 14px;">
+                        <i class="fas fa-right-from-bracket"></i> Logout
+                    </button>
+                </form>
+            </li>
         </ul>
     </aside>
 
@@ -229,7 +246,12 @@
 
         <!-- Content Area -->
         <div class="content-area">
-            <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+            <div class="page-header">
+                <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                {% if page_subtitle or self.page_subtitle %}
+                    <p class="page-subtitle">{% block page_subtitle %}{% endblock %}</p>
+                {% endif %}
+            </div>
             {% block business_content %}
             {% endblock %}
         </div>

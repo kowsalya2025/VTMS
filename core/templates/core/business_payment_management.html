@@ -1,6 +1,7 @@
 {% extends 'core/base_business.html' %}
 
 {% block page_title %}Payment Management{% endblock %}
+{% block page_subtitle %}Manage payments and generate payment links{% endblock %}
 
 {% block business_content %}
 <style>
@@ -156,9 +157,9 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 24px;
-        height: 24px;
-        border-radius: 4px;
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
         background: #f0f0f0;
         color: #666;
         text-decoration: none;
@@ -192,19 +193,25 @@
         color: white;
     }
     
+    .action-icon.email:hover {
+        background: #ff6b35;
+        color: white;
+    }
+    
     .action-text-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 4px 8px;
+        padding: 4px 12px;
         font-size: 12px;
         font-weight: 500;
         color: #666;
         background: transparent;
         text-decoration: none;
         transition: all 0.2s;
-        border-radius: 4px;
+        border-radius: 6px;
         cursor: pointer;
+        border: 1px solid #e0e0e0;
     }
     
     .action-text-btn:hover {
@@ -248,12 +255,259 @@
         color: #155724;
         border: 1px solid #c3e6cb;
     }
-</style>
 
-<div class="page-header">
-    <h1 class="page-title">Payment Management</h1>
-    <p class="page-subtitle">Manage payments and generate payment links</p>
-</div>
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+
+    .modal {
+        background: white;
+        border-radius: 12px;
+        max-width: 800px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin: 0;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: #999;
+        cursor: pointer;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+    }
+
+    .modal-close:hover {
+        background: #f5f5f5;
+        color: #333;
+    }
+
+    .modal-body {
+        padding: 24px;
+    }
+
+    .modal-footer {
+        padding: 20px 24px;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        background: #f5f5f5;
+        transition: all 0.2s;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #007bff;
+        background: white;
+    }
+
+    .form-input[readonly] {
+        background: #e9ecef;
+        cursor: not-allowed;
+    }
+
+    .form-select {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        background: #f5f5f5;
+        cursor: pointer;
+    }
+
+    .form-select:focus {
+        outline: none;
+        border-color: #007bff;
+        background: white;
+    }
+
+    .form-textarea {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        background: #f5f5f5;
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .form-textarea:focus {
+        outline: none;
+        border-color: #007bff;
+        background: white;
+    }
+
+    .btn {
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary {
+        background: #ffab33;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #f39c12;
+    }
+
+    .btn-secondary {
+        background: white;
+        color: #666;
+        border: 1px solid #e0e0e0;
+    }
+
+    .btn-secondary:hover {
+        background: #f5f5f5;
+    }
+
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #218838;
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+
+    .detail-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+
+    .detail-item {
+        display: flex;
+        gap: 8px;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .invoice-preview {
+        border: 2px solid #ddd;
+        border-radius: 12px;
+        padding: 24px;
+        background: #f5f5f5;
+        text-align: center;
+    }
+
+    .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        background: #f8f9fa;
+        padding: 8px;
+        border-radius: 12px;
+    }
+
+    .tab {
+        flex: 1;
+        padding: 10px 20px;
+        border: none;
+        background: transparent;
+        color: #666;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .tab.active {
+        background: white;
+        color: #ffab33;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .tab:hover {
+        background: rgba(255,255,255,0.5);
+    }
+
+    .hidden {
+        display: none !important;
+    }
+</style>
 
 <!-- Messages -->
 <div class="messages">
@@ -362,16 +616,26 @@
                                     </a>
                                     
                                     <!-- Update Payment -->
-                                    <a href="#" class="action-text-btn">Update</a>
+                                    <button class="action-text-btn" onclick="openUpdateModal({{ payment.id }})">Update</button>
                                     
-                                    <!-- View Details -->
-                                    <a href="#" class="action-icon eye" title="View">
+                                    <!-- Edit Payment Icon -->
+                                    <button class="action-icon edit" title="Edit" onclick="openUpdateModal({{ payment.id }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    
+                                    <!-- View Invoice (Eye) -->
+                                    <button class="action-icon eye" title="View" onclick="openViewModal({{ payment.id }})">
                                         <i class="fas fa-eye"></i>
-                                    </a>
+                                    </button>
+                                    
+                                    <!-- Send Email -->
+                                    <button class="action-icon email" title="Send Email" onclick="openEmailModal({{ payment.id }})">
+                                        <i class="fas fa-envelope"></i>
+                                    </button>
                                     
                                     <!-- Download Invoice -->
-                                    <a href="#" class="action-icon document" title="Document">
-                                        <i class="fas fa-file-alt"></i>
+                                    <a href="{% url 'download_invoice' payment.id %}" class="action-icon document" title="Download Invoice">
+                                        <i class="fas fa-download"></i>
                                     </a>
                                 </div>
                             </td>
@@ -388,4 +652,296 @@
     {% endif %}
 </div>
 
+<!-- Update Payment Modal -->
+<div id="updateModal" class="modal-overlay hidden">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Update Payment</h3>
+            <button class="modal-close" onclick="closeModal('updateModal')">&times;</button>
+        </div>
+        <form method="POST" action="{% url 'update_payment' %}">
+            {% csrf_token %}
+            <div class="modal-body">
+                <input type="hidden" name="payment_id" id="update_payment_id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-input" id="update_name" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Course Name</label>
+                        <input type="text" class="form-input" id="update_course" readonly>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Course Fee</label>
+                        <input type="number" class="form-input" id="update_course_amount" name="course_amount">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Plan Type</label>
+                        <select class="form-select" id="update_plan" name="plan">
+                            <option value="One - Time">One - Time</option>
+                            <option value="Installment-2">Installment-2</option>
+                            <option value="Installment-3">Installment-3</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Payment Method</label>
+                        <select class="form-select" id="update_payment_method" name="payment_method">
+                            <option value="UPI">UPI</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Card">Card</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Amount Paid</label>
+                        <input type="number" class="form-input" id="update_paid" name="paid">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-input" id="update_date" name="date">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Due Date</label>
+                        <input type="date" class="form-input" id="update_due_date" name="due_date">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="update_status" name="status">
+                        <option value="Pending">Pending</option>
+                        <option value="Paid">Paid</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('updateModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- View Invoice Modal -->
+<div id="viewModal" class="modal-overlay hidden">
+    <div class="modal" style="max-width: 900px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Invoice</h3>
+            <button class="modal-close" onclick="closeModal('viewModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-grid">
+                <div class="card">
+                    <h4 style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-id-card"></i> Candidate Details</h4>
+                    <div class="detail-row">
+                        <div class="detail-item"><span class="detail-label">Name</span><span>:</span><span id="view_name"></span></div>
+                        <div class="detail-item"><span class="detail-label">Age</span><span>:</span><span id="view_age">25</span></div>
+                        <div class="detail-item"><span class="detail-label">Course Amount</span><span>:</span><span id="view_course_amount"></span></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-item"><span class="detail-label">Email ID</span><span>:</span><span id="view_email"></span></div>
+                        <div class="detail-item"><span class="detail-label">Qualification</span><span>:</span><span>Bsc</span></div>
+                        <div class="detail-item"><span class="detail-label">Amount Paid</span><span>:</span><span id="view_amount_paid"></span></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-item"><span class="detail-label">Phone Number</span><span>:</span><span id="view_phone"></span></div>
+                        <div class="detail-item"><span class="detail-label">Address</span><span>:</span><span id="view_address">23/8, New Bustand, Tenkasi</span></div>
+                        <div class="detail-item"><span class="detail-label">Date</span><span>:</span><span id="view_date"></span></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-item"><span class="detail-label">Course Enrolled</span><span>:</span><span id="view_course"></span></div>
+                        <div class="detail-item"><span class="detail-label">Plan</span><span>:</span><span id="view_plan">One-Time Payment</span></div>
+                        <div class="detail-item"></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-item"><span class="detail-label">Gender</span><span>:</span><span id="view_gender"></span></div>
+                        <div class="detail-item"><span class="detail-label">Payment mode</span><span>:</span><span id="view_payment_method">Cash</span></div>
+                        <div class="detail-item"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h4 style="margin-bottom: 20px;">Invoice</h4>
+                    <div class="invoice-preview">
+                        <img src="https://coresg-normal.trae.ai/api/ide/v1/text-to-image?prompt=professional%20invoice%20document%20preview&image_size=square" alt="Invoice Preview" style="max-width: 100%; border-radius: 8px;">
+                        <div style="margin-top: 12px; font-size: 14px; color: #666;" id="view_file_name"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('viewModal')">Close</button>
+            <a id="view_download_btn" href="#" class="btn btn-primary">
+                <i class="fas fa-download"></i> Download
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Send Email Modal -->
+<div id="emailModal" class="modal-overlay hidden">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Send Email to Candidate</h3>
+            <button class="modal-close" onclick="closeModal('emailModal')">&times;</button>
+        </div>
+        <form method="POST" action="{% url 'send_payment_email' %}">
+            {% csrf_token %}
+            <div class="modal-body">
+                <input type="hidden" name="payment_id" id="email_payment_id">
+                
+                <div class="tabs">
+                    <button type="button" class="tab active" onclick="switchTab('email')">Send Email</button>
+                    <button type="button" class="tab" onclick="switchTab('message')">Send Message</button>
+                </div>
+
+                <div id="emailTab">
+                    <div class="form-group">
+                        <label class="form-label">From</label>
+                        <input type="email" class="form-input" value="businessteam@vtms.com" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">To</label>
+                        <input type="email" class="form-input" id="email_to" name="to_email" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Subject</label>
+                        <input type="text" class="form-input" name="subject" value="Payment Request for Course Enrollment">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-textarea" name="message" placeholder="Type your message..."></textarea>
+                    </div>
+                </div>
+
+                <div id="messageTab" class="hidden">
+                    <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <input type="text" class="form-input" id="message_phone" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-textarea" name="sms_message" placeholder="Type your message..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('emailModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-envelope"></i> Send Email
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const payments = {{ payments_json|safe }};
+
+    function openUpdateModal(paymentId) {
+        const payment = payments.find(p => p.id === paymentId);
+        if (!payment) return;
+        
+        document.getElementById('update_payment_id').value = payment.id;
+        document.getElementById('update_name').value = payment.trainee?.full_name || payment.intern?.full_name || '';
+        document.getElementById('update_course').value = payment.trainee?.course?.title || payment.intern?.role || '';
+        document.getElementById('update_course_amount').value = payment.course_amount;
+        document.getElementById('update_plan').value = payment.plan || '';
+        document.getElementById('update_payment_method').value = payment.payment_method || 'UPI';
+        document.getElementById('update_paid').value = payment.paid;
+        document.getElementById('update_date').value = payment.date || '';
+        document.getElementById('update_due_date').value = payment.due_date || '';
+        document.getElementById('update_status').value = payment.status || 'Pending';
+        
+        document.getElementById('updateModal').classList.remove('hidden');
+    }
+
+    function openViewModal(paymentId) {
+        const payment = payments.find(p => p.id === paymentId);
+        if (!payment) return;
+        
+        const trainee = payment.trainee;
+        const intern = payment.intern;
+        const person = trainee || intern;
+        
+        document.getElementById('view_name').textContent = person?.full_name || '';
+        document.getElementById('view_course').textContent = (trainee?.course?.title || intern?.role || '') + ' | 30 Days';
+        document.getElementById('view_course_amount').textContent = '₹' + payment.course_amount;
+        document.getElementById('view_amount_paid').textContent = '₹' + payment.paid;
+        document.getElementById('view_email').textContent = person?.personal_email || person?.personal_mail || '';
+        document.getElementById('view_phone').textContent = person?.phone_no || '';
+        document.getElementById('view_gender').textContent = person?.gender || '';
+        document.getElementById('view_date').textContent = payment.date ? payment.date.split('-').reverse().join('/') : '';
+        document.getElementById('view_plan').textContent = payment.plan || 'One-Time Payment';
+        document.getElementById('view_payment_method').textContent = payment.payment_method || 'Cash';
+        document.getElementById('view_address').textContent = trainee?.address || '23/8, New Bustand, Tenkasi';
+        document.getElementById('view_file_name').textContent = (person?.full_name || 'invoice').toLowerCase().replace(/\s+/g, '-') + '-invoice.pdf';
+        document.getElementById('view_download_btn').href = "{% url 'download_invoice' 0 %}".replace('0', paymentId);
+        
+        // Calculate age if DOB available
+        if (trainee?.date_of_birth) {
+            const dob = new Date(trainee.date_of_birth);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const m = today.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+            document.getElementById('view_age').textContent = age || '25';
+        }
+        
+        document.getElementById('viewModal').classList.remove('hidden');
+    }
+
+    function openEmailModal(paymentId) {
+        const payment = payments.find(p => p.id === paymentId);
+        if (!payment) return;
+        
+        const trainee = payment.trainee;
+        const intern = payment.intern;
+        const person = trainee || intern;
+        
+        document.getElementById('email_payment_id').value = paymentId;
+        document.getElementById('email_to').value = person?.personal_email || person?.personal_mail || '';
+        document.getElementById('message_phone').value = person?.phone_no || '';
+        
+        document.getElementById('emailModal').classList.remove('hidden');
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+    }
+
+    function switchTab(tab) {
+        const emailTab = document.getElementById('emailTab');
+        const messageTab = document.getElementById('messageTab');
+        const tabs = document.querySelectorAll('.tabs .tab');
+        
+        tabs.forEach(t => t.classList.remove('active'));
+        
+        if (tab === 'email') {
+            emailTab.classList.remove('hidden');
+            messageTab.classList.add('hidden');
+            tabs[0].classList.add('active');
+        } else {
+            emailTab.classList.add('hidden');
+            messageTab.classList.remove('hidden');
+            tabs[1].classList.add('active');
+        }
+    }
+
+    // Close modal on outside click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.classList.add('hidden');
+            }
+        });
+    });
+</script>
 {% endblock %}

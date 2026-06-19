@@ -10,31 +10,18 @@
         background-color: white;
         border-radius: 12px;
         box-shadow: 0 2px 15px rgba(0,0,0,0.08);
-        overflow-x: hidden;
+        overflow-x: auto;
     }
     .card-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
-        background-color: #3C2A5A;
-        padding: 12px 20px;
-        border-radius: 8px;
     }
     .card-header h2 {
         margin: 0;
         font-size: 18px;
-        color: white;
-    }
-    .generate-btn {
-        background-color: #F59E0B;
-        color: white;
-        padding: 8px 20px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 600;
+        color: #333;
     }
     table {
         width: 100%;
@@ -70,12 +57,96 @@
         font-size: 12px;
         font-weight: 600;
     }
+    .view-btn:hover {
+        background: #6d28d9;
+        color: white;
+    }
+    .download-btn {
+        background: #28a745;
+        color: white;
+        padding: 6px 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 8px;
+        text-decoration: none;
+    }
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 40px;
+    }
+    .modal {
+        background: white;
+        border-radius: 8px;
+        max-width: 600px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .modal-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #212529;
+        margin: 0;
+    }
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 28px;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+    }
+    .modal-close:hover {
+        background: #f8f9fa;
+        color: #212529;
+    }
+    .modal-body {
+        padding: 24px;
+    }
+    .invoice-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .invoice-table td {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        font-size: 14px;
+    }
+    .invoice-table .label {
+        font-weight: bold;
+    }
 </style>
 
 <div class="card">
     <div class="card-header">
-        <h2>Invoice</h2>
-        <button class="generate-btn">Generate Invoice</button>
+        <h2>Invoices</h2>
     </div>
     <table>
         <thead>
@@ -90,34 +161,149 @@
         </thead>
         <tbody>
             {% for payment in payments %}
-                <tr>
-                    <td>INV-{{ payment.id|stringformat:"03d" }}</td>
-                    <td>
-                        {% if payment.trainee %}
-                            {{ payment.trainee.full_name }}
-                        {% elif payment.intern %}
-                            {{ payment.intern.full_name }}
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </td>
-                    <td>₹{{ payment.course_amount }}</td>
-                    <td>
-                        <span class="status-{{ payment.status|lower }}">
-                            {{ payment.status }}
-                        </span>
-                    </td>
-                    <td>{{ payment.date|date:"Y-m-d" }}</td>
-                    <td>
-                        <button class="view-btn">View</button>
-                    </td>
-                </tr>
+            <tr>
+                <td>INV-{{ payment.id|stringformat:"04d" }}</td>
+                <td>
+                    {% if payment.trainee %}
+                        {{ payment.trainee.full_name }}
+                    {% elif payment.intern %}
+                        {{ payment.intern.full_name }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+                <td>₹{{ payment.course_amount|floatformat:2 }}</td>
+                <td>
+                    <span class="status-{{ payment.status|lower }}">
+                        {{ payment.status }}
+                    </span>
+                </td>
+                <td>{{ payment.date|date:"d/m/Y" }}</td>
+                <td>
+                    <button class="view-btn" onclick="openInvoiceModal({{ payment.id }})">View</button>
+                    <a href="{% url 'download_invoice' payment.id %}" class="download-btn">Download</a>
+                </td>
+            </tr>
             {% empty %}
-                <tr>
-                    <td colspan="6" style="text-align: center; padding: 40px;">No invoices found</td>
-                </tr>
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 48px;">No invoices found</td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<!-- Invoice Modal -->
+<div id="invoiceModal" class="modal-overlay hidden">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Invoice</h3>
+            <button class="modal-close" onclick="closeInvoiceModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="invoiceModalBody">
+            <!-- Invoice content will be inserted here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    const payments = [
+        {% for payment in payments %}
+        {
+            id: {{ payment.id }},
+            trainee: {% if payment.trainee %}
+                {
+                    full_name: "{{ payment.trainee.full_name }}",
+                    personal_mail: "{{ payment.trainee.personal_mail }}",
+                    phone_no: "{{ payment.trainee.phone_no }}",
+                    address: "{{ payment.trainee.address|default:'' }}",
+                    course: {% if payment.trainee.course %}
+                        {
+                            title: "{{ payment.trainee.course.title }}"
+                        }
+                    {% else %}null{% endif %}
+                }
+            {% else %}null{% endif %},
+            intern: {% if payment.intern %}
+                {
+                    full_name: "{{ payment.intern.full_name }}",
+                    personal_email: "{{ payment.intern.personal_email }}",
+                    phone_no: "{{ payment.intern.phone_no }}",
+                    role: "{{ payment.intern.role|default:'' }}"
+                }
+            {% else %}null{% endif %},
+            course_amount: {{ payment.course_amount }},
+            paid: {{ payment.paid }},
+            pending: {{ payment.pending }},
+            status: "{{ payment.status }}",
+            plan: "{{ payment.plan|default:'' }}",
+            payment_method: "{{ payment.payment_method|default:'' }}",
+            date: "{{ payment.date|date:'d/m/Y' }}",
+            due_date: {% if payment.due_date %}"{{ payment.due_date|date:'d/m/Y' }}"{% else %}null{% endif %}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    function openInvoiceModal(paymentId) {
+        const payment = payments.find(p => p.id === paymentId);
+        if (!payment) return;
+
+        const name = payment.trainee?.full_name || payment.intern?.full_name || 'N/A';
+        const course = payment.trainee?.course?.title || payment.intern?.role || '-';
+        const dueDateHtml = payment.due_date ? 
+            `<tr><td class="label">Due Date</td><td>${payment.due_date}</td></tr>` : '';
+
+        const invoiceHtml = `
+            <table class="invoice-table">
+                <tr>
+                    <td class="label">Invoice</td>
+                </tr>
+                <tr>
+                    <td class="label">Name</td>
+                    <td>${name}</td>
+                </tr>
+                <tr>
+                    <td class="label">Course</td>
+                    <td>${course}</td>
+                </tr>
+                <tr>
+                    <td class="label">Total Amo</td>
+                    <td>₹${payment.course_amount.toFixed(2)}</td>
+                </tr>
+                <tr>
+                    <td class="label">Paid</td>
+                    <td>₹${payment.paid.toFixed(2)}</td>
+                </tr>
+                <tr>
+                    <td class="label">Pending</td>
+                    <td>₹${payment.pending.toFixed(2)}</td>
+                </tr>
+                <tr>
+                    <td class="label">Status</td>
+                    <td>${payment.status}</td>
+                </tr>
+                <tr>
+                    <td class="label">Payment</td>
+                    <td>${payment.payment_method || ''}</td>
+                </tr>
+                <tr>
+                    <td class="label">Plan</td>
+                    <td>${payment.plan || ''}</td>
+                </tr>
+                <tr>
+                    <td class="label">Date</td>
+                    <td>${payment.date}</td>
+                </tr>
+                ${dueDateHtml}
+            </table>
+        `;
+
+        document.getElementById('invoiceModalBody').innerHTML = invoiceHtml;
+        document.getElementById('invoiceModal').classList.remove('hidden');
+    }
+
+    function closeInvoiceModal() {
+        document.getElementById('invoiceModal').classList.add('hidden');
+    }
+</script>
 {% endblock %}

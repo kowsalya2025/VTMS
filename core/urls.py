@@ -5,7 +5,8 @@ from django.shortcuts import redirect
 
 urlpatterns = [
     path('', views.login_view, name='login'),
-    path('admin/', lambda request: redirect('admin_dashboard')),
+    path('logout/', views.logout_view, name='logout'),
+    path('admin/', views.admin_redirect_view),
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('trainer-dashboard/', views.trainer_dashboard, name='trainer_dashboard'),
     path('business-dashboard/', views.business_dashboard, name='business_dashboard'),
@@ -59,6 +60,8 @@ urlpatterns = [
     path('business/document-verification/', views.document_verification, name='document_verification'),
     path('business/document-verification/<int:candidate_id>/', views.document_verification_detail, name='document_verification_detail'),
     path('business/payments/', views.business_payment_management, name='business_payment_management'),
+    path('business/payments/update/', views.update_payment, name='update_payment'),
+    path('business/payments/send-email/', views.send_payment_email, name='send_payment_email'),
     path('business/batches/', views.business_batch_management, name='business_batch_management'),
     path('business/reports/', views.business_reports, name='business_reports'),
     path('business/interview-scheduling/', views.interview_scheduling, name='interview_scheduling'),
