@@ -137,7 +137,7 @@
         <h3 style="font-family: 'Poppins', sans-serif; font-size: 16px; margin: 0;">All Batches</h3>
         <div class="search-bar">
             <i class="fas fa-search" style="color: var(--icon-color);"></i>
-            <input type="text" placeholder="Search batches">
+            <input type="text" placeholder="Search batches" id="batchSearchInput">
         </div>
         <a href="{% url 'batch_add' %}" class="btn-add">+ Create New Batch</a>
     </div>
@@ -191,4 +191,16 @@
         </table>
     </div>
 </div>
+<script>
+    const batchSearchInput = document.getElementById('batchSearchInput');
+    if (batchSearchInput) {
+        batchSearchInput.addEventListener('keyup', function(e) {
+            const query = e.target.value.toLowerCase();
+            document.querySelectorAll('table tbody tr').forEach(row => {
+                if (row.cells.length < 2) return;
+                row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
+            });
+        });
+    }
+</script>
 {% endblock %}

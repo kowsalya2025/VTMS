@@ -1,13 +1,18 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
-from django.db import DatabaseError
+from django.db import DatabaseError, IntegrityError
 from django.db.models import Q
-from .models import User, Trainer, Course, Batch, Trainee, Intern, Payment, Report, Enquiry, Candidate, Eligibility, DocumentVerification, InterviewSchedule, SystemSetting, Task, TraineeTask, Project, Message, ContactQuery
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from .models import User, Trainer, Course, Batch, Trainee, Intern, Payment, Report, Enquiry, Candidate, Eligibility, DocumentVerification, InterviewSchedule, SystemSetting, Task, TraineeTask, Project, Message, ContactQuery, Leave
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, datetime, date
+import calendar as cal_module
+import json
 from functools import wraps
 
 # ─── Role Guards ────────────────────────────────────────────────────────────────
@@ -238,6 +243,24 @@ def trainer_list(request):
 @login_required_role(ADMIN)
 def trainer_add(request):
     if request.method == 'POST':
+        office_mail = request.POST.get('office_mail', '').strip()
+        personal_mail = request.POST.get('personal_mail', '').strip()
+        phone_no = request.POST.get('phone_no', '').strip()
+        try:
+            validate_email(office_mail)
+            validate_email(personal_mail)
+        except ValidationError:
+            messages.error(request, 'Please enter valid email addresses.')
+            courses = Course.objects.all()
+            return render(request, 'core/trainer_form.html', {'courses': courses, 'trainer': None})
+        if not phone_no.isdigit() or not (10 <= len(phone_no) <= 15):
+            messages.error(request, 'Please enter a valid phone number (10-15 digits).')
+            courses = Course.objects.all()
+            return render(request, 'core/trainer_form.html', {'courses': courses, 'trainer': None})
+        if User.objects.filter(email=office_mail).exists():
+            messages.error(request, 'A user with this office email already exists.')
+            courses = Course.objects.all()
+            return render(request, 'core/trainer_form.html', {'courses': courses, 'trainer': None})
         # Create user first
         user = User.objects.create_user(
             email=request.POST['office_mail'],
@@ -347,23 +370,29 @@ def batch_add(request):
         if selected_trainee_ids:
             Trainee.objects.filter(id__in=selected_trainee_ids).update(batch=batch)
         
-        # Send email
-        if email_to and email_subject:
+        # Send email notification to assigned trainer
+        if trainer and trainer.office_mail:
             try:
-                # Determine recipient email
-                recipient_list = [email_to]
-                if trainer and trainer.office_mail:
-                    recipient_list = [trainer.office_mail]
-                
-                send_mail(
-                    subject=email_subject,
-                    message=email_preview,
-                    from_email=email_from,
-                    recipient_list=recipient_list,
-                    fail_silently=True,
+                subject = email_subject or f'New Batch: {batch_name}'
+                body = email_preview or (
+                    f'Dear {trainer.full_name},\n\n'
+                    f'A new batch "{batch_name}" has been assigned to you.\n\n'
+                    f'Start Date: {start_date}\n'
+                    f'End Date: {end_date}\n\n'
+                    f'Please review the batch details in VTMS.\n\n'
+                    f'Best regards,\nAdmin'
                 )
+                email = EmailMessage(
+                    subject=subject,
+                    body=body,
+                    from_email=email_from,
+                    to=[trainer.office_mail],
+                )
+                if batch.batch_file:
+                    email.attach_file(batch.batch_file.path)
+                email.send(fail_silently=False)
                 messages.success(request, 'New Batch Added Successfully and Email Sent!')
-            except Exception as e:
+            except Exception:
                 messages.warning(request, 'New Batch Added Successfully, but Email Failed to Send.')
         else:
             messages.success(request, 'New Batch Added Successfully')
@@ -425,23 +454,27 @@ def batch_edit(request, pk):
         else:
             Trainee.objects.filter(batch=batch).update(batch=None)
         
-        # Send email
-        if email_to and email_subject:
+        # Send email notification to assigned trainer
+        if batch.trainer and batch.trainer.office_mail:
             try:
-                # Determine recipient email
-                recipient_list = [email_to]
-                if batch.trainer and batch.trainer.office_mail:
-                    recipient_list = [batch.trainer.office_mail]
-                
-                send_mail(
-                    subject=email_subject,
-                    message=email_preview,
-                    from_email=email_from,
-                    recipient_list=recipient_list,
-                    fail_silently=True,
+                subject = email_subject or f'Batch Updated: {batch.batch_name}'
+                body = email_preview or (
+                    f'Dear {batch.trainer.full_name},\n\n'
+                    f'Batch "{batch.batch_name}" has been updated.\n\n'
+                    f'Please review the latest details in VTMS.\n\n'
+                    f'Best regards,\nAdmin'
                 )
+                email = EmailMessage(
+                    subject=subject,
+                    body=body,
+                    from_email=email_from,
+                    to=[batch.trainer.office_mail],
+                )
+                if batch.batch_file:
+                    email.attach_file(batch.batch_file.path)
+                email.send(fail_silently=True)
                 messages.success(request, 'Batch Updated Successfully and Email Sent!')
-            except Exception as e:
+            except Exception:
                 messages.warning(request, 'Batch Updated Successfully, but Email Failed to Send.')
         else:
             messages.success(request, 'Batch Updated Successfully')
@@ -574,54 +607,70 @@ def intern_list(request):
 # Admin - Intern Add
 @login_required_role(ADMIN)
 def intern_add(request):
+    trainers = Trainer.objects.filter(status='Active')
     if request.method == 'POST':
-        user = User.objects.create_user(
-            email=request.POST['personal_mail'],
-            password=request.POST['phone_no'],
-            role=User.Role.INTERN,
-            phone_no=request.POST['phone_no'],
-        )
-        intern = Intern.objects.create(
-            user=user,
-            full_name=request.POST['full_name'],
-            personal_mail=request.POST['personal_mail'],
-            phone_no=request.POST['phone_no'],
-            gender=request.POST['gender'],
-            role=request.POST['role'],
-            internship_period=request.POST['internship_period'],
-            status=request.POST['status']
-        )
-        if request.POST.get('trainer'):
-            intern.trainer = Trainer.objects.get(id=request.POST['trainer'])
-        intern.save()
+        personal_mail = request.POST.get('personal_mail', '').strip()
+        phone_no = request.POST.get('phone_no', '').strip()
+        try:
+            validate_email(personal_mail)
+        except ValidationError:
+            messages.error(request, 'Please enter a valid email address.')
+            return render(request, 'core/intern_form.html', {'trainers': trainers, 'intern': None})
+        if not phone_no.isdigit() or not (10 <= len(phone_no) <= 15):
+            messages.error(request, 'Please enter a valid phone number (10-15 digits).')
+            return render(request, 'core/intern_form.html', {'trainers': trainers, 'intern': None})
+        if User.objects.filter(email=personal_mail).exists():
+            messages.error(request, 'A user with this email already exists.')
+            return render(request, 'core/intern_form.html', {'trainers': trainers, 'intern': None})
+        try:
+            user = User.objects.create_user(
+                email=personal_mail,
+                password=phone_no,
+                role=User.Role.INTERN,
+                phone_no=phone_no,
+            )
+            intern = Intern.objects.create(
+                user=user,
+                full_name=request.POST['full_name'],
+                personal_mail=personal_mail,
+                phone_no=phone_no,
+                gender=request.POST['gender'],
+                role=request.POST['role'],
+                internship_period=request.POST['internship_period'],
+                status=request.POST['status']
+            )
+            if request.POST.get('trainer'):
+                intern.trainer = Trainer.objects.get(id=request.POST['trainer'])
+            intern.save()
+        except (IntegrityError, ValidationError, KeyError):
+            messages.error(request, 'Failed to create intern. Please check all fields and try again.')
+            return render(request, 'core/intern_form.html', {'trainers': trainers, 'intern': None})
         
-        # Send email
+        # Send email notification to assigned trainer
         email_from = request.POST.get('email_from', 'admin@vetritsystems.com')
-        email_to = request.POST.get('email_to', '')
-        email_subject = request.POST.get('email_subject', '')
-        email_preview = request.POST.get('email_preview', '')
-        
-        if email_to and email_subject:
+        email_subject = request.POST.get('email_subject', '') or f'New Intern Assigned: {intern.full_name}'
+        email_preview = request.POST.get('email_preview', '') or (
+            f'Dear Trainer,\n\nA new intern "{intern.full_name}" has been assigned to you.\n\n'
+            f'Role: {intern.role}\n'
+            f'Internship Period: {intern.internship_period}\n\n'
+            f'Best regards,\nAdmin'
+        )
+        if intern.trainer and intern.trainer.office_mail:
             try:
-                recipient_list = [email_to]
-                if intern.trainer and intern.trainer.office_mail:
-                    recipient_list = [intern.trainer.office_mail]
-                
-                send_mail(
+                email = EmailMessage(
                     subject=email_subject,
-                    message=email_preview,
+                    body=email_preview,
                     from_email=email_from,
-                    recipient_list=recipient_list,
-                    fail_silently=True,
+                    to=[intern.trainer.office_mail],
                 )
-                messages.success(request, 'Intern added successfully and Email Sent! Initial password is the phone number.')
-            except Exception as e:
-                messages.warning(request, 'Intern added successfully, but Email Failed to Send. Initial password is the phone number.')
+                email.send(fail_silently=True)
+                messages.success(request, 'Intern added successfully and trainer notified! Initial password is the phone number.')
+            except Exception:
+                messages.warning(request, 'Intern added successfully, but trainer notification failed. Initial password is the phone number.')
         else:
             messages.success(request, 'Intern added successfully! Initial password is the phone number.')
         
         return redirect('intern_list')
-    trainers = Trainer.objects.filter(status='Active')
     return render(request, 'core/intern_form.html', {'trainers': trainers, 'intern': None})
 
 # Admin - Intern Detail
@@ -748,8 +797,52 @@ def payment_revenue(request):
     })
 
 # Communication
+@login_required_role(ADMIN)
 def communication(request):
-    return render(request, 'core/communication.html')
+    search_query = request.GET.get('q', '')
+    active_filter = request.GET.get('filter', 'all')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'toggle_read':
+            msg = get_object_or_404(Message, id=request.POST.get('msg_id'))
+            msg.is_read = not msg.is_read
+            msg.save()
+        elif action == 'send':
+            recipient_id = request.POST.get('recipient')
+            subject = request.POST.get('subject', '').strip()
+            body = request.POST.get('body', '').strip()
+            if recipient_id and subject and body:
+                recipient = get_object_or_404(User, id=recipient_id)
+                Message.objects.create(
+                    sender=request.user,
+                    recipient=recipient,
+                    subject=subject,
+                    preview=body[:200],
+                    is_read=False,
+                    avatar_initial=subject[0].upper() if subject else 'M',
+                )
+                messages.success(request, 'Message sent successfully!')
+            else:
+                messages.error(request, 'Please fill in recipient, subject, and message.')
+        return redirect('communication')
+
+    msgs = Message.objects.all().select_related('sender', 'recipient').order_by('-created_at')
+
+    if active_filter == 'unread':
+        msgs = msgs.filter(is_read=False, recipient=request.user)
+    elif active_filter == 'sent':
+        msgs = msgs.filter(sender=request.user)
+    if search_query:
+        msgs = msgs.filter(Q(subject__icontains=search_query) | Q(preview__icontains=search_query))
+
+    users = User.objects.exclude(id=request.user.id).order_by('email')
+    return render(request, 'core/communication.html', {
+        'messages_list': msgs,
+        'search_query': search_query,
+        'active_filter': active_filter,
+        'users': users,
+    })
 
 # Settings
 def settings(request):
@@ -801,8 +894,78 @@ def invoice(request):
     return render(request, 'core/invoice.html', {'payments': payments})
 
 # Admin - Calendar & Leave
+@login_required_role(ADMIN)
 def calendar_leave(request):
-    return render(request, 'core/calendar_leave.html')
+    batches = Batch.objects.all()
+    batch_id = request.GET.get('batch') or request.POST.get('batch_id')
+    selected_batch = None
+    if batch_id:
+        selected_batch = Batch.objects.filter(id=batch_id).first()
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'add_leave':
+            batch = get_object_or_404(Batch, id=request.POST.get('batch_id'))
+            leave_date = datetime.strptime(request.POST.get('leave_date'), '%Y-%m-%d').date()
+            reason = request.POST.get('reason', '').strip() or 'Leave'
+            day_name = leave_date.strftime('%A')
+            Leave.objects.create(batch=batch, date=leave_date, day=day_name, reason=reason)
+            messages.success(request, f'Leave added for {batch.batch_name} on {leave_date.strftime("%d/%m/%Y")}.')
+        elif action == 'generate_schedule':
+            batch = get_object_or_404(Batch, id=request.POST.get('batch_id'))
+            if batch.start_date and batch.end_date:
+                current = batch.start_date
+                created_count = 0
+                while current <= batch.end_date:
+                    if current.weekday() >= 5:
+                        day_name = current.strftime('%A')
+                        _, was_created = Leave.objects.get_or_create(
+                            batch=batch, date=current,
+                            defaults={'day': day_name, 'reason': 'Weekend / Non-working day'}
+                        )
+                        if was_created:
+                            created_count += 1
+                    current += timedelta(days=1)
+                messages.success(request, f'Schedule generated: {created_count} leave day(s) added for {batch.batch_name}.')
+            else:
+                messages.error(request, 'Batch must have start and end dates to generate a schedule.')
+        elif action == 'delete_leave':
+            leave = get_object_or_404(Leave, id=request.POST.get('leave_id'))
+            leave.delete()
+            messages.success(request, 'Leave entry removed.')
+        redirect_url = reverse('calendar_leave') + f'?year={request.POST.get("year", timezone.now().year)}'
+        if batch_id:
+            redirect_url += f'&batch={batch_id}'
+        return redirect(redirect_url)
+
+    try:
+        year = int(request.GET.get('year', timezone.now().year))
+    except (TypeError, ValueError):
+        year = timezone.now().year
+
+    leaves_qs = Leave.objects.select_related('batch').filter(date__year=year)
+    if selected_batch:
+        leaves_qs = leaves_qs.filter(batch=selected_batch)
+
+    leave_dates = [l.date.isoformat() for l in leaves_qs]
+    batch_dates = []
+    for b in batches:
+        if b.start_date and b.end_date:
+            current = b.start_date
+            while current <= b.end_date and current.year == year:
+                if current.weekday() < 5:
+                    batch_dates.append(current.isoformat())
+                current += timedelta(days=1)
+
+    return render(request, 'core/calendar_leave.html', {
+        'batches': batches,
+        'leaves': leaves_qs.order_by('-date'),
+        'leave_dates_json': json.dumps(leave_dates),
+        'batch_dates_json': json.dumps(batch_dates),
+        'year': year,
+        'selected_batch': selected_batch,
+        'month_names': list(cal_module.month_name)[1:],
+    })
 
 # Business - Profile
 def business_profile(request):

@@ -121,7 +121,7 @@
             </div>
             <div class="form-group">
                 <label>Phone No*</label>
-                <input type="text" name="phone_no" value="{{ intern.phone_no|default:'' }}" required>
+                <input type="text" name="phone_no" value="{{ intern.phone_no|default:'' }}" required pattern="[0-9]{10,15}" title="Please enter a valid phone number (10-15 digits)">
             </div>
         </div>
         <div class="form-row">

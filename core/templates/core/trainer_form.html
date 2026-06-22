@@ -128,7 +128,7 @@
             </div>
             <div class="form-group">
                 <label>Phone No*</label>
-                <input type="text" name="phone_no" value="{{ trainer.phone_no|default:'' }}" required placeholder="Enter phone number">
+                <input type="text" name="phone_no" value="{{ trainer.phone_no|default:'' }}" required placeholder="Enter phone number" pattern="[0-9]{10,15}" title="Please enter a valid phone number (10-15 digits)">
             </div>
         </div>
         

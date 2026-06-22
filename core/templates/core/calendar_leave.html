@@ -3,35 +3,532 @@
 {% block page_title %}Calendar & Leave{% endblock %}
 
 {% block admin_content %}
-<div class="card">
-    <h2 style="margin-bottom: 20px;">Calendar & Leave Schedule</h2>
-    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+<style>
+    .cal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    .cal-header h2 {
+        margin: 0;
+        font-family: 'Poppins', sans-serif;
+        font-size: 20px;
+    }
+    .date-cards {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+    .date-card {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 16px 28px;
+        text-align: center;
+        min-width: 120px;
+    }
+    .date-card.active {
+        border-color: #3949AB;
+        border-width: 2px;
+    }
+    .date-card label {
+        display: block;
+        font-size: 12px;
+        color: #888;
+        margin-bottom: 6px;
+        font-weight: 500;
+    }
+    .date-card span {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2b2b2b;
+    }
+    .year-nav {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--secondary);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 16px;
+    }
+    .year-nav button {
+        background: transparent;
+        border: none;
+        color: white;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 4px 8px;
+    }
+    .year-nav button:hover {
+        opacity: 0.8;
+    }
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 32px;
+    }
+    @media (max-width: 1200px) {
+        .calendar-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 900px) {
+        .calendar-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+        .calendar-grid { grid-template-columns: 1fr; }
+    }
+    .month-block {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .month-block h4 {
+        text-align: center;
+        margin: 0 0 12px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+    }
+    .month-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+    }
+    .month-table th {
+        padding: 4px 2px;
+        text-align: center;
+        font-weight: 600;
+        color: #666;
+    }
+    .month-table th.weekend {
+        background: #e3f2fd;
+    }
+    .month-table td {
+        padding: 4px 2px;
+        text-align: center;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+    .month-table td.weekend {
+        background: #e3f2fd;
+    }
+    .month-table td.empty {
+        cursor: default;
+    }
+    .month-table td.leave-day {
+        background: #1a237e;
+        color: white;
+        font-weight: 600;
+        border-radius: 4px;
+    }
+    .month-table td.batch-day {
+        background: #3949AB;
+        color: white;
+        font-weight: 600;
+        border-radius: 4px;
+    }
+    .month-table td.selected-day {
+        outline: 2px solid var(--secondary);
+        outline-offset: -2px;
+        font-weight: 700;
+    }
+    .month-table td:hover:not(.empty):not(.leave-day):not(.batch-day) {
+        background: #fff3e0;
+    }
+    .bottom-section {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+    }
+    @media (max-width: 900px) {
+        .bottom-section { grid-template-columns: 1fr; }
+    }
+    .leave-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .leave-table th, .leave-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+        font-size: 13px;
+    }
+    .leave-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+    }
+    .actions-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .actions-panel h3 {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+    }
+    .btn-action {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+    }
+    .btn-add-leave {
+        background: var(--primary);
+        color: white;
+    }
+    .btn-generate {
+        background: var(--secondary);
+        color: white;
+    }
+    .btn-delete-leave {
+        background: #fee2e2;
+        color: #dc2626;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    .batch-filter {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        font-size: 14px;
+        min-width: 200px;
+    }
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+        background: white;
+        border-radius: 12px;
+        padding: 28px;
+        width: 90%;
+        max-width: 480px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    .modal-box h3 {
+        margin: 0 0 20px 0;
+        font-size: 18px;
+    }
+    .modal-box .form-group {
+        margin-bottom: 16px;
+    }
+    .modal-box label {
+        display: block;
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+    .modal-box input, .modal-box select, .modal-box textarea {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+    .modal-btns {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+    }
+    .modal-btns button {
+        flex: 1;
+        padding: 10px;
+        border-radius: 6px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .btn-cancel-modal {
+        background: #f0f0f0;
+        color: #333;
+    }
+    .btn-submit-modal {
+        background: var(--secondary);
+        color: white;
+    }
+</style>
+
+<div class="card" style="padding: 24px;">
+    <div class="cal-header">
+        <h2>Calendar & Leave Schedule</h2>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <select class="batch-filter" id="batchFilter" onchange="filterByBatch(this.value)">
+                <option value="">All Batches</option>
+                {% for batch in batches %}
+                <option value="{{ batch.id }}" {% if selected_batch and selected_batch.id == batch.id %}selected{% endif %}>{{ batch.batch_name }}</option>
+                {% endfor %}
+            </select>
+            <div class="year-nav">
+                <button type="button" onclick="changeYear(-1)" aria-label="Previous year"><i class="fas fa-chevron-left"></i></button>
+                <span id="yearDisplay">{{ year }}</span>
+                <button type="button" onclick="changeYear(1)" aria-label="Next year"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="date-cards">
+        <div class="date-card" id="monthCard">
+            <label>Month</label>
+            <span id="selMonth">—</span>
+        </div>
+        <div class="date-card" id="dayCard">
+            <label>Day</label>
+            <span id="selDay">—</span>
+        </div>
+        <div class="date-card active" id="dateCard">
+            <label>Date</label>
+            <span id="selDate">—</span>
+        </div>
+    </div>
+
+    <div class="calendar-grid" id="calendarGrid"></div>
+
+    <div class="bottom-section">
         <div>
             <h3 style="margin-bottom: 16px;">Leave Requests</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr style="background-color: #f8f9fa;">
-                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Batch</th>
-                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Date</th>
-                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Day</th>
-                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Reason</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td style="padding: 12px; border-bottom: 1px solid #eee;">Batch A</td>
-                        <td style="padding: 12px; border-bottom: 1px solid #eee;">2025-01-15</td>
-                        <td style="padding: 12px; border-bottom: 1px solid #eee;">Wednesday</td>
-                        <td style="padding: 12px; border-bottom: 1px solid #eee;">Public Holiday</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div style="overflow-x: auto;">
+                <table class="leave-table">
+                    <thead>
+                        <tr>
+                            <th>Batch</th>
+                            <th>Date</th>
+                            <th>Day</th>
+                            <th>Reason</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for leave in leaves %}
+                        <tr>
+                            <td>{{ leave.batch.batch_name }}</td>
+                            <td>{{ leave.date|date:"d/m/Y" }}</td>
+                            <td>{{ leave.day }}</td>
+                            <td>{{ leave.reason }}</td>
+                            <td>
+                                <form method="POST" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_leave">
+                                    <input type="hidden" name="leave_id" value="{{ leave.id }}">
+                                    <input type="hidden" name="year" value="{{ year }}">
+                                    {% if selected_batch %}<input type="hidden" name="batch_id" value="{{ selected_batch.id }}">{% endif %}
+                                    <button type="submit" class="btn-delete-leave" onclick="return confirm('Remove this leave entry?')">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align:center; padding:32px; color:#888;">No leave entries for {{ year }}. Use Add Leave or Generate Schedule.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div>
-            <h3 style="margin-bottom: 16px;">Quick Actions</h3>
-            <button style="width: 100%; background-color: var(--primary); color: white; padding: 12px; border: none; border-radius: 8px; margin-bottom: 10px; cursor: pointer;">Add Leave</button>
-            <button style="width: 100%; background-color: var(--secondary); color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer;">Generate Schedule</button>
+        <div class="actions-panel">
+            <h3>Quick Actions</h3>
+            <button type="button" class="btn-action btn-add-leave" onclick="openAddLeaveModal()">Add Leave</button>
+            <button type="button" class="btn-action btn-generate" onclick="openGenerateModal()">Generate Schedule</button>
         </div>
     </div>
 </div>
+
+<!-- Add Leave Modal -->
+<div class="modal-overlay" id="addLeaveModal">
+    <div class="modal-box">
+        <h3>Add Leave</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_leave">
+            <input type="hidden" name="year" value="{{ year }}">
+            <div class="form-group">
+                <label>Batch *</label>
+                <select name="batch_id" required>
+                    <option value="">Select Batch</option>
+                    {% for batch in batches %}
+                    <option value="{{ batch.id }}" {% if selected_batch and selected_batch.id == batch.id %}selected{% endif %}>{{ batch.batch_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Date *</label>
+                <input type="date" name="leave_date" id="leaveDateInput" required>
+            </div>
+            <div class="form-group">
+                <label>Reason</label>
+                <textarea name="reason" rows="3" placeholder="e.g. Public Holiday, Trainer Leave"></textarea>
+            </div>
+            <div class="modal-btns">
+                <button type="button" class="btn-cancel-modal" onclick="closeModal('addLeaveModal')">Cancel</button>
+                <button type="submit" class="btn-submit-modal">Save Leave</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Generate Schedule Modal -->
+<div class="modal-overlay" id="generateModal">
+    <div class="modal-box">
+        <h3>Generate Schedule</h3>
+        <p style="font-size:13px; color:#666; margin-bottom:16px;">Automatically marks weekends (Sat/Sun) as non-working days within the batch date range.</p>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="generate_schedule">
+            <input type="hidden" name="year" value="{{ year }}">
+            <div class="form-group">
+                <label>Batch *</label>
+                <select name="batch_id" required>
+                    <option value="">Select Batch</option>
+                    {% for batch in batches %}
+                    <option value="{{ batch.id }}" {% if selected_batch and selected_batch.id == batch.id %}selected{% endif %}>{{ batch.batch_name }} ({{ batch.start_date|date:"d/m/Y" }} - {{ batch.end_date|date:"d/m/Y" }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="modal-btns">
+                <button type="button" class="btn-cancel-modal" onclick="closeModal('generateModal')">Cancel</button>
+                <button type="submit" class="btn-submit-modal">Generate</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const CURRENT_YEAR = {{ year }};
+    const LEAVE_DATES = {{ leave_dates_json|safe }};
+    const BATCH_DATES = {{ batch_dates_json|safe }};
+    const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+    let selectedDate = new Date(CURRENT_YEAR, new Date().getMonth(), new Date().getDate());
+    if (selectedDate.getFullYear() !== CURRENT_YEAR) {
+        selectedDate = new Date(CURRENT_YEAR, 0, 1);
+    }
+
+    function pad(n) { return n < 10 ? '0' + n : n; }
+    function toISO(d) { return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+
+    function updateDateCards() {
+        document.getElementById('selMonth').textContent = MONTH_NAMES[selectedDate.getMonth()];
+        document.getElementById('selDay').textContent = DAY_NAMES[selectedDate.getDay()];
+        document.getElementById('selDate').textContent = pad(selectedDate.getDate()) + '/' + pad(selectedDate.getMonth()+1) + '/' + selectedDate.getFullYear();
+        const leaveInput = document.getElementById('leaveDateInput');
+        if (leaveInput) leaveInput.value = toISO(selectedDate);
+    }
+
+    function buildCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        grid.innerHTML = '';
+        const leaveSet = new Set(LEAVE_DATES);
+        const batchSet = new Set(BATCH_DATES);
+        const selISO = toISO(selectedDate);
+
+        for (let m = 0; m < 12; m++) {
+            const block = document.createElement('div');
+            block.className = 'month-block';
+            block.innerHTML = '<h4>' + MONTH_NAMES[m] + '</h4>';
+
+            const table = document.createElement('table');
+            table.className = 'month-table';
+            const thead = document.createElement('thead');
+            const headRow = document.createElement('tr');
+            ['Mo','Tu','We','Th','Fr','Sa','Su'].forEach((d, i) => {
+                const th = document.createElement('th');
+                th.textContent = d;
+                if (i >= 5) th.classList.add('weekend');
+                headRow.appendChild(th);
+            });
+            thead.appendChild(headRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            const firstDay = new Date(CURRENT_YEAR, m, 1);
+            let startDow = firstDay.getDay();
+            startDow = startDow === 0 ? 6 : startDow - 1;
+            const daysInMonth = new Date(CURRENT_YEAR, m + 1, 0).getDate();
+
+            let row = document.createElement('tr');
+            for (let i = 0; i < startDow; i++) {
+                const td = document.createElement('td');
+                td.classList.add('empty');
+                row.appendChild(td);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dow = (startDow + day - 1) % 7;
+                if (dow === 0 && day > 1) {
+                    tbody.appendChild(row);
+                    row = document.createElement('tr');
+                }
+                const td = document.createElement('td');
+                td.textContent = day;
+                const iso = CURRENT_YEAR + '-' + pad(m+1) + '-' + pad(day);
+                if (dow >= 5) td.classList.add('weekend');
+                if (leaveSet.has(iso)) td.classList.add('leave-day');
+                else if (batchSet.has(iso)) td.classList.add('batch-day');
+                if (iso === selISO) td.classList.add('selected-day');
+                td.addEventListener('click', function() {
+                    selectedDate = new Date(CURRENT_YEAR, m, day);
+                    updateDateCards();
+                    buildCalendar();
+                });
+                row.appendChild(td);
+            }
+            while (row.cells.length < 7) {
+                const td = document.createElement('td');
+                td.classList.add('empty');
+                row.appendChild(td);
+            }
+            tbody.appendChild(row);
+            table.appendChild(tbody);
+            block.appendChild(table);
+            grid.appendChild(block);
+        }
+    }
+
+    function changeYear(delta) {
+        const batch = document.getElementById('batchFilter').value;
+        let url = '{% url "calendar_leave" %}?year=' + (CURRENT_YEAR + delta);
+        if (batch) url += '&batch=' + batch;
+        window.location.href = url;
+    }
+
+    function filterByBatch(batchId) {
+        let url = '{% url "calendar_leave" %}?year=' + CURRENT_YEAR;
+        if (batchId) url += '&batch=' + batchId;
+        window.location.href = url;
+    }
+
+    function openAddLeaveModal() { document.getElementById('addLeaveModal').classList.add('active'); }
+    function openGenerateModal() { document.getElementById('generateModal').classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
+    });
+
+    updateDateCards();
+    buildCalendar();
+</script>
 {% endblock %}

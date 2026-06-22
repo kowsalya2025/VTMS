@@ -264,7 +264,7 @@
 <div class="page-header">
     <a href="{% url 'batch_list' %}" class="btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
     <div class="btn-group-header">
-        <button class="btn-outline"><i class="fas fa-calendar-alt"></i> View Calender</button>
+        <a href="{% url 'calendar_leave' %}?batch={{ batch.id }}" class="btn-outline"><i class="fas fa-calendar-alt"></i> View Calendar</a>
         <button class="btn-primary"><i class="fas fa-exchange-alt"></i> Change Trainer</button>
     </div>
 </div>
