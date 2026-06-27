@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import (User, Course, Trainer, Batch, Trainee, Intern, Attendance, Report, Payment, 
+from .models import (User, Course, Trainer, Batch, Trainee, Intern, BusinessTeam, Attendance, Report, Payment, 
                      SystemSetting, Task, TraineeTask, Project, Leave, Enquiry, Candidate, Eligibility, 
                      DocumentVerification, InterviewSchedule)
 
@@ -36,6 +36,12 @@ class InternAdmin(admin.ModelAdmin):
     list_display = ['full_name', 'personal_mail', 'phone_no', 'role', 'trainer', 'status']
     list_filter = ['status', 'role', 'trainer']
     search_fields = ['full_name', 'personal_mail']
+
+@admin.register(BusinessTeam)
+class BusinessTeamAdmin(admin.ModelAdmin):
+    list_display = ['full_name', 'office_mail', 'phone_no', 'status']
+    list_filter = ['status']
+    search_fields = ['full_name', 'office_mail', 'personal_mail']
 
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):

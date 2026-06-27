@@ -126,6 +126,10 @@
         </div>
         <div class="form-row">
             <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="{% if trainee %}Leave empty to keep current{% else %}Leave empty to use phone number{% endif %}">
+            </div>
+            <div class="form-group">
                 <label>Gender*</label>
                 <select name="gender" required>
                     <option value="">Select</option>
@@ -138,6 +142,8 @@
                 <label>Date of Birth</label>
                 <input type="date" name="date_of_birth" value="{{ trainee.date_of_birth|date:'Y-m-d' }}">
             </div>
+        </div>
+        <div class="form-row">
             <div class="form-group">
                 <label>Status</label>
                 <select name="status" required>

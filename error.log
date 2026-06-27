@@ -230,3 +230,16 @@ Traceback (most recent call last):
                      ^^^^^^^^^^^^
 NameError: name 'ContactQuery' is not defined. Did you mean: 'contact_queries'?
 "GET /admin-dashboard/ HTTP/1.1" 500 85302
+Internal Server Error: /admin/business-team/
+Traceback (most recent call last):
+  File "C:\Users\Selvaraj S\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Selvaraj S\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\Selvaraj S\Downloads\VTMS_new\core\views.py", line 38, in wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\Selvaraj S\Downloads\VTMS_new\core\views.py", line 334, in business_team_list
+    business_team = BusinessTeam.objects.all()
+                    ^^^^^^^^^^^^
+NameError: name 'BusinessTeam' is not defined
+"GET /admin/business-team/ HTTP/1.1" 500 86492

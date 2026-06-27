@@ -8,7 +8,7 @@ from django.db import DatabaseError, IntegrityError
 from django.db.models import Q
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from .models import User, Trainer, Course, Batch, Trainee, Intern, Payment, Report, Enquiry, Candidate, Eligibility, DocumentVerification, InterviewSchedule, SystemSetting, Task, TraineeTask, Project, Message, ContactQuery, Leave
+from .models import User, Trainer, Course, Batch, Trainee, Intern, BusinessTeam, Payment, Report, Enquiry, Candidate, Eligibility, DocumentVerification, InterviewSchedule, SystemSetting, Task, TraineeTask, Project, Message, ContactQuery, Leave
 from django.utils import timezone
 from datetime import timedelta, datetime, date
 import calendar as cal_module
@@ -246,25 +246,29 @@ def trainer_add(request):
         office_mail = request.POST.get('office_mail', '').strip()
         personal_mail = request.POST.get('personal_mail', '').strip()
         phone_no = request.POST.get('phone_no', '').strip()
+        password = request.POST.get('password', '').strip()
         try:
             validate_email(office_mail)
             validate_email(personal_mail)
         except ValidationError:
             messages.error(request, 'Please enter valid email addresses.')
             courses = Course.objects.all()
-            return render(request, 'core/trainer_form.html', {'courses': courses, 'trainer': None})
+            return render(request, 'core/trainer_list.html', {'trainers': Trainer.objects.all(), 'courses': courses})
         if not phone_no.isdigit() or not (10 <= len(phone_no) <= 15):
             messages.error(request, 'Please enter a valid phone number (10-15 digits).')
             courses = Course.objects.all()
-            return render(request, 'core/trainer_form.html', {'courses': courses, 'trainer': None})
+            return render(request, 'core/trainer_list.html', {'trainers': Trainer.objects.all(), 'courses': courses})
         if User.objects.filter(email=office_mail).exists():
             messages.error(request, 'A user with this office email already exists.')
             courses = Course.objects.all()
-            return render(request, 'core/trainer_form.html', {'courses': courses, 'trainer': None})
+            return render(request, 'core/trainer_list.html', {'trainers': Trainer.objects.all(), 'courses': courses})
+        # If no password is provided, use phone number as default
+        if not password:
+            password = phone_no
         # Create user first
         user = User.objects.create_user(
             email=request.POST['office_mail'],
-            password=request.POST['phone_no'],
+            password=password,
             role=User.Role.TRAINER,
             phone_no=request.POST['phone_no'],
         )
@@ -283,11 +287,11 @@ def trainer_add(request):
         if request.FILES.get('profile_image'):
             trainer.profile_image = request.FILES['profile_image']
         trainer.save()
-        messages.success(request, 'New Trainer Added Successfully. Initial password is the phone number.')
+        messages.success(request, 'New Trainer Added Successfully.')
         return redirect('trainer_list')
     
     courses = Course.objects.all()
-    return render(request, 'core/trainer_form.html', {'courses': courses, 'trainer': None})
+    return render(request, 'core/trainer_list.html', {'trainers': Trainer.objects.all(), 'courses': courses})
 
 @login_required_role(ADMIN)
 def trainer_edit(request, pk):
@@ -305,13 +309,17 @@ def trainer_edit(request, pk):
             trainer.profile_image = request.FILES['profile_image']
         trainer.user.email = request.POST['office_mail']
         trainer.user.phone_no = request.POST['phone_no']
+        # Update password if provided
+        new_password = request.POST.get('password', '').strip()
+        if new_password:
+            trainer.user.set_password(new_password)
         trainer.user.save()
         trainer.save()
         messages.success(request, 'Trainer Updated Successfully')
         return redirect('trainer_list')
     
     courses = Course.objects.all()
-    return render(request, 'core/trainer_form.html', {'trainer': trainer, 'courses': courses})
+    return render(request, 'core/trainer_list.html', {'trainers': Trainer.objects.all(), 'courses': courses})
 
 @login_required_role(ADMIN)
 def trainer_delete(request, pk):
@@ -319,6 +327,91 @@ def trainer_delete(request, pk):
     trainer.user.delete()  # Delete the associated user too
     messages.success(request, 'Trainer Deleted Successfully')
     return redirect('trainer_list')
+
+# Business Team Management
+@login_required_role(ADMIN)
+def business_team_list(request):
+    business_team = BusinessTeam.objects.all()
+    return render(request, 'core/business_team_list.html', {'business_team': business_team})
+
+@login_required_role(ADMIN)
+def business_team_add(request):
+    if request.method == 'POST':
+        office_mail = request.POST.get('office_mail', '').strip()
+        personal_mail = request.POST.get('personal_mail', '').strip()
+        phone_no = request.POST.get('phone_no', '').strip()
+        password = request.POST.get('password', '').strip()
+        try:
+            validate_email(office_mail)
+            validate_email(personal_mail)
+        except ValidationError:
+            messages.error(request, 'Please enter valid email addresses.')
+            return render(request, 'core/business_team_list.html', {'business_team': BusinessTeam.objects.all()})
+        if not phone_no.isdigit() or not (10 <= len(phone_no) <= 15):
+            messages.error(request, 'Please enter a valid phone number (10-15 digits).')
+            return render(request, 'core/business_team_list.html', {'business_team': BusinessTeam.objects.all()})
+        if User.objects.filter(email=office_mail).exists():
+            messages.error(request, 'A user with this office email already exists.')
+            return render(request, 'core/business_team_list.html', {'business_team': BusinessTeam.objects.all()})
+        # If no password provided, use phone number as default
+        if not password:
+            password = phone_no
+        # Create user first
+        user = User.objects.create_user(
+            email=request.POST['office_mail'],
+            password=password,
+            role=User.Role.BUSINESS_TEAM,
+            phone_no=request.POST['phone_no'],
+        )
+        # Create business team member
+        business_team_member = BusinessTeam.objects.create(
+            user=user,
+            full_name=request.POST['full_name'],
+            office_mail=request.POST['office_mail'],
+            personal_mail=request.POST['personal_mail'],
+            phone_no=request.POST['phone_no'],
+            gender=request.POST['gender'],
+            status=request.POST['status']
+        )
+        if request.FILES.get('profile_image'):
+            business_team_member.profile_image = request.FILES['profile_image']
+        business_team_member.save()
+        messages.success(request, 'New Business Team Member Added Successfully.')
+        return redirect('business_team_list')
+    
+    return render(request, 'core/business_team_list.html', {'business_team': BusinessTeam.objects.all()})
+
+@login_required_role(ADMIN)
+def business_team_edit(request, pk):
+    business_team_member = get_object_or_404(BusinessTeam, pk=pk)
+    if request.method == 'POST':
+        business_team_member.full_name = request.POST['full_name']
+        business_team_member.office_mail = request.POST['office_mail']
+        business_team_member.personal_mail = request.POST['personal_mail']
+        business_team_member.phone_no = request.POST['phone_no']
+        business_team_member.gender = request.POST['gender']
+        business_team_member.status = request.POST['status']
+        if request.FILES.get('profile_image'):
+            business_team_member.profile_image = request.FILES['profile_image']
+        business_team_member.user.email = request.POST['office_mail']
+        business_team_member.user.phone_no = request.POST['phone_no']
+        # Update password if provided
+        new_password = request.POST.get('password', '').strip()
+        if new_password:
+            business_team_member.user.set_password(new_password)
+        business_team_member.user.save()
+        business_team_member.save()
+        messages.success(request, 'Business Team Member Updated Successfully')
+        return redirect('business_team_list')
+    
+    return render(request, 'core/business_team_list.html', {'business_team': BusinessTeam.objects.all()})
+
+@login_required_role(ADMIN)
+def business_team_delete(request, pk):
+    business_team_member = get_object_or_404(BusinessTeam, pk=pk)
+    business_team_member.user.delete()  # Delete the associated user too
+    messages.success(request, 'Business Team Member Deleted Successfully')
+    return redirect('business_team_list')
 
 # Batch Management
 @login_required_role(ADMIN)
@@ -513,10 +606,13 @@ def trainee_list(request):
 @login_required_role(ADMIN)
 def trainee_add(request):
     if request.method == 'POST':
+        password = request.POST.get('password', '').strip()
+        if not password:
+            password = request.POST['phone_no']
         # Create user
         user = User.objects.create_user(
             email=request.POST['personal_mail'],
-            password=request.POST['phone_no'],
+            password=password,
             role=User.Role.TRAINEE,
             phone_no=request.POST['phone_no'],
         )
@@ -542,7 +638,7 @@ def trainee_add(request):
             trainee.trainer = Trainer.objects.get(id=request.POST['trainer'])
         trainee.save()
 
-        messages.success(request, 'Trainee added successfully! Initial password is the phone number.')
+        messages.success(request, 'Trainee added successfully!')
         return redirect('trainee_list')
     courses = Course.objects.all()
     batches = Batch.objects.all()
@@ -580,6 +676,10 @@ def trainee_edit(request, pk):
         
         trainee.user.email = request.POST['personal_mail']
         trainee.user.phone_no = request.POST['phone_no']
+        # Update password if provided
+        new_password = request.POST.get('password', '').strip()
+        if new_password:
+            trainee.user.set_password(new_password)
         trainee.user.save()
         trainee.save()
         messages.success(request, 'Trainee updated successfully!')
@@ -611,6 +711,7 @@ def intern_add(request):
     if request.method == 'POST':
         personal_mail = request.POST.get('personal_mail', '').strip()
         phone_no = request.POST.get('phone_no', '').strip()
+        password = request.POST.get('password', '').strip()
         try:
             validate_email(personal_mail)
         except ValidationError:
@@ -622,10 +723,12 @@ def intern_add(request):
         if User.objects.filter(email=personal_mail).exists():
             messages.error(request, 'A user with this email already exists.')
             return render(request, 'core/intern_form.html', {'trainers': trainers, 'intern': None})
+        if not password:
+            password = phone_no
         try:
             user = User.objects.create_user(
                 email=personal_mail,
-                password=phone_no,
+                password=password,
                 role=User.Role.INTERN,
                 phone_no=phone_no,
             )
@@ -664,11 +767,11 @@ def intern_add(request):
                     to=[intern.trainer.office_mail],
                 )
                 email.send(fail_silently=True)
-                messages.success(request, 'Intern added successfully and trainer notified! Initial password is the phone number.')
+                messages.success(request, 'Intern added successfully and trainer notified!')
             except Exception:
-                messages.warning(request, 'Intern added successfully, but trainer notification failed. Initial password is the phone number.')
+                messages.warning(request, 'Intern added successfully, but trainer notification failed.')
         else:
-            messages.success(request, 'Intern added successfully! Initial password is the phone number.')
+            messages.success(request, 'Intern added successfully!')
         
         return redirect('intern_list')
     return render(request, 'core/intern_form.html', {'trainers': trainers, 'intern': None})
@@ -695,6 +798,9 @@ def intern_edit(request, pk):
             intern.trainer = Trainer.objects.get(id=request.POST['trainer'])
         intern.user.email = request.POST['personal_mail']
         intern.user.phone_no = request.POST['phone_no']
+        new_password = request.POST.get('password', '').strip()
+        if new_password:
+            intern.user.set_password(new_password)
         intern.user.save()
         intern.save()
         
@@ -744,6 +850,7 @@ def reports_approvals(request):
     return render(request, 'core/reports_approvals.html')
 
 # Business Monitoring
+@login_required_role(BUSINESS)
 def business_monitoring(request):
     total_enquiries = Enquiry.objects.count()
     eligible_candidates = Eligibility.objects.filter(status='Eligible').count()
@@ -967,20 +1074,8 @@ def calendar_leave(request):
         'month_names': list(cal_module.month_name)[1:],
     })
 
-# Business - Profile
-def business_profile(request):
-    user = request.user
-    if request.method == 'POST':
-        # Update user profile
-        user.email = request.POST.get('office_mail', user.email)
-        user.first_name = request.POST.get('name', user.first_name)
-        user.save()
-        messages.success(request, 'Profile updated successfully!')
-        return redirect('business_profile')
-    return render(request, 'core/business_profile.html', {'user': user})
-
 # Trainer - Profile
-@login_required_role('Trainer')
+@login_required_role(TRAINER)
 def trainer_profile(request):
     trainer = Trainer.objects.filter(user=request.user).first()
     if request.method == 'POST':
@@ -996,20 +1091,23 @@ def trainer_profile(request):
     return render(request, 'core/trainer_profile.html', {'trainer': trainer, 'user': request.user})
 
 # Trainer - Batches
+@login_required_role(TRAINER)
 def trainer_batch_list(request):
     trainer = Trainer.objects.filter(user=request.user).first()
     batches = Batch.objects.filter(trainer=trainer) if trainer else Batch.objects.all()
     return render(request, 'core/trainer_batch_list.html', {'batches': batches})
 
 # Trainer - Trainees
+@login_required_role(TRAINER)
 def trainer_trainee_list(request):
     trainer = Trainer.objects.filter(user=request.user).first()
     trainees = Trainee.objects.filter(trainer=trainer) if trainer else Trainee.objects.all()
     return render(request, 'core/trainer_trainee_list.html', {'trainees': trainees})
 
 # Trainer - Tasks
+@login_required_role(TRAINER)
 def trainer_tasks(request):
-    trainer = Trainer.objects.first()  # Current trainer
+    trainer = Trainer.objects.filter(user=request.user).first()  # Current trainer
     active_tab = request.GET.get('tab', 'tasks')
     
     tasks = []
@@ -1083,6 +1181,7 @@ def trainer_tasks(request):
 
 
 # Trainer - Internship Management (Active Interns List)
+@login_required_role(TRAINER)
 def trainer_internship_management(request):
     trainer = Trainer.objects.filter(user=request.user).first()
     interns = Intern.objects.filter(trainer=trainer) if trainer else Intern.objects.all()
@@ -1090,6 +1189,7 @@ def trainer_internship_management(request):
 
 
 # Trainer - Assign Work Page
+@login_required_role(TRAINER)
 def trainer_assign_work(request):
     intern_id = request.GET.get('intern_id')
     intern = None
@@ -1099,6 +1199,7 @@ def trainer_assign_work(request):
 
 
 # Trainer - Intern Performance Page
+@login_required_role(TRAINER)
 def trainer_intern_performance(request, intern_id):
     intern = get_object_or_404(Intern, id=intern_id)
     return render(request, 'core/trainer_intern_performance.html', {'intern': intern})
@@ -1110,6 +1211,7 @@ from datetime import timedelta
 from django.db.models import Q
 
 
+@login_required_role(TRAINER)
 def trainer_communication(request):
     # Get or create sample messages if none exist
     if Message.objects.count() == 0:
@@ -1207,30 +1309,35 @@ def trainer_communication(request):
     })
 
 # Trainer - Projects
+@login_required_role(TRAINER)
 def trainer_projects(request):
     trainer = Trainer.objects.filter(user=request.user).first()
     projects = Project.objects.filter(trainer=trainer) if trainer else Project.objects.all()
     return render(request, 'core/trainer_projects.html', {'projects': projects})
 
 # Trainer - Daily Reports
+@login_required_role(TRAINER)
 def trainer_daily_reports(request):
     trainer = Trainer.objects.filter(user=request.user).first()
     reports = Report.objects.filter(report_type='Daily', trainer=trainer).order_by('-date') if trainer else Report.objects.filter(report_type='Daily').order_by('-date')
     return render(request, 'core/trainer_daily_reports.html', {'reports': reports})
 
 # Trainer - Weekly Reports
+@login_required_role(TRAINER)
 def trainer_weekly_reports(request):
     trainer = Trainer.objects.filter(user=request.user).first()
     reports = Report.objects.filter(report_type='Weekly', trainer=trainer).order_by('-date') if trainer else Report.objects.filter(report_type='Weekly').order_by('-date')
     return render(request, 'core/trainer_weekly_reports.html', {'reports': reports})
 
 # Trainer - Monthly Reports
+@login_required_role(TRAINER)
 def trainer_monthly_reports(request):
     trainer = Trainer.objects.filter(user=request.user).first()
     reports = Report.objects.filter(report_type='Monthly', trainer=trainer).order_by('-date') if trainer else Report.objects.filter(report_type='Monthly').order_by('-date')
     return render(request, 'core/trainer_monthly_reports.html', {'reports': reports})
 
 # Trainer - Attendance
+@login_required_role(TRAINER)
 def trainer_attendance(request):
     trainer = Trainer.objects.filter(user=request.user).first()
     from core.models import Attendance
@@ -1238,29 +1345,14 @@ def trainer_attendance(request):
     return render(request, 'core/trainer_attendance.html', {'attendance_records': attendance_records, 'trainer': trainer})
 
 # Trainer - Calendar
+@login_required_role(TRAINER)
 def trainer_calendar(request):
     trainer = Trainer.objects.filter(user=request.user).first()
     batches = Batch.objects.filter(trainer=trainer) if trainer else Batch.objects.all()
     return render(request, 'core/trainer_calendar.html', {'batches': batches})
 
-# Trainer - Profile
-def trainer_profile(request):
-    trainer = Trainer.objects.filter(user=request.user).first()
-    if request.method == 'POST' and trainer:
-        trainer.full_name = request.POST.get('full_name', trainer.full_name)
-        trainer.office_mail = request.POST.get('office_mail', trainer.office_mail)
-        trainer.personal_mail = request.POST.get('personal_mail', trainer.personal_mail)
-        trainer.phone_no = request.POST.get('phone_no', trainer.phone_no)
-        if request.FILES.get('profile_image'):
-            trainer.profile_image = request.FILES['profile_image']
-        trainer.save()
-        trainer.user.email = trainer.office_mail
-        trainer.user.save()
-        messages.success(request, 'Profile updated successfully!')
-        return redirect('trainer_profile')
-    return render(request, 'core/trainer_profile.html', {'trainer': trainer})
-
 # Business Team - Enquiry Management
+@login_required_role(BUSINESS)
 def enquiry_management(request):
     # Create sample data if needed
     if Enquiry.objects.count() == 0:
@@ -1336,6 +1428,7 @@ def enquiry_management(request):
     })
 
 # Business Team - Candidate Management
+@login_required_role(BUSINESS)
 def candidate_management(request):
     candidates = Candidate.objects.all()
     
@@ -1352,6 +1445,7 @@ def candidate_management(request):
     return render(request, 'core/candidate_management.html', {'candidates': candidates})
 
 # Business Team - Document Verification
+@login_required_role(BUSINESS)
 def document_verification(request):
     documents = DocumentVerification.objects.all()
     
@@ -1372,6 +1466,7 @@ def document_verification(request):
     
     return render(request, 'core/document_verification.html', {'documents': documents})
 
+@login_required_role(BUSINESS)
 def document_verification_detail(request, candidate_id):
     candidate = get_object_or_404(Candidate, id=candidate_id)
     documents = DocumentVerification.objects.filter(candidate=candidate)
@@ -1401,6 +1496,7 @@ def document_verification_detail(request, candidate_id):
     })
 
 # Business Team - Payment Management
+@login_required_role(BUSINESS)
 def business_payment_management(request):
     import json
     from django.core.serializers.json import DjangoJSONEncoder
@@ -1575,6 +1671,7 @@ def download_invoice(request, payment_id):
     return response
 
 # Business Team - Batch Management
+@login_required_role(BUSINESS)
 def business_batch_management(request):
     search_query = request.GET.get('search', '').strip()
 
@@ -1612,6 +1709,7 @@ def business_batch_management(request):
     })
 
 # Business Team - Interview Scheduling
+@login_required_role(BUSINESS)
 def interview_scheduling(request):
     interviews = InterviewSchedule.objects.all()
     trainers = Trainer.objects.filter(status='Active')
@@ -1650,6 +1748,7 @@ def interview_scheduling(request):
     })
 
 # Business Team - Eligibility Management
+@login_required_role(BUSINESS)
 def eligibility_management(request):
     # Create sample data if needed
     if Eligibility.objects.count() == 0:
@@ -1791,6 +1890,7 @@ def reports_approvals(request):
     })
 
 # Business Team - Reports
+@login_required_role(BUSINESS)
 def business_reports(request):
     def get_report_context(error_message=None, success_message=None):
         view_mode = request.GET.get('view')
@@ -1998,14 +2098,14 @@ def download_document(request, doc_id):
 @login_required_role(ADMIN)
 def backup_data(request):
     from django.core import serializers as dj_serializers
-    from core.models import (User, Trainer, Course, Batch, Trainee, Intern,
+    from core.models import (User, Trainer, Course, Batch, Trainee, Intern, BusinessTeam,
                               Payment, Report, Enquiry, Candidate, Eligibility,
                               DocumentVerification, InterviewSchedule,
-                              SystemSetting, Task, TraineeTask, Project, Message)
+                              SystemSetting, Task, TraineeTask, Project, Message, ContactQuery, Leave)
 
-    all_models = [User, Trainer, Course, Batch, Trainee, Intern, Payment,
+    all_models = [User, Trainer, Course, Batch, Trainee, Intern, BusinessTeam, Payment,
                   Report, Enquiry, Candidate, Eligibility, DocumentVerification,
-                  InterviewSchedule, SystemSetting, Task, TraineeTask, Project, Message]
+                  InterviewSchedule, SystemSetting, Task, TraineeTask, Project, Message, ContactQuery, Leave]
 
     data = {}
     for model in all_models:
@@ -2070,28 +2170,35 @@ def restore_data(request):
 def business_profile(request):
     user = request.user
     # Try to get an associated business user profile data
-    context = {'user': user}
+    business_team_member = BusinessTeam.objects.filter(user=user).first()
+    context = {'user': user, 'business_team_member': business_team_member}
 
     if request.method == 'POST':
+        full_name = request.POST.get('name')
+        office_mail = request.POST.get('office_mail')
+        
+        if full_name:
+            user.first_name = full_name
+            user.save()
+        
+        if office_mail:
+            user.email = office_mail
+            user.save()
+        
+        if business_team_member:
+            if full_name:
+                business_team_member.full_name = full_name
+            if office_mail:
+                business_team_member.office_mail = office_mail
+            business_team_member.save()
+        
         if request.FILES.get('profile_image'):
-            # Save profile image to user's media folder (store on user model via generic path)
-            # We store it on the logged-in user's side — use a simple approach
             profile_image = request.FILES['profile_image']
-            # Save to media/profiles/<user_id>.<ext>
-            import os
-            from django.core.files.storage import default_storage
-            ext = os.path.splitext(profile_image.name)[1]
-            path = f'profiles/user_{user.id}{ext}'
-            saved_path = default_storage.save(path, profile_image)
-            # Store path in session for now (lightweight approach without model change)
-            request.session['profile_image_url'] = saved_path
+            if business_team_member:
+                business_team_member.profile_image = profile_image
+                business_team_member.save()
             messages.success(request, 'Profile photo updated successfully!')
         return redirect('business_profile')
-
-    profile_image_url = request.session.get('profile_image_url')
-    if profile_image_url:
-        from django.conf import settings as django_settings
-        context['profile_image_url'] = f'{django_settings.MEDIA_URL}{profile_image_url}'
 
     return render(request, 'core/business_profile.html', context)
 

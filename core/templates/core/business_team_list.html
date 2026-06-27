@@ -1,6 +1,6 @@
 {% extends 'core/base_admin.html' %}
 
-{% block page_title %}Trainer Management{% endblock %}
+{% block page_title %}Business Team Management{% endblock %}
 
 {% block admin_content %}
 <style>
@@ -234,16 +234,16 @@
     }
 </style>
 
-<p class="page-subtitle">Manage and monitor all trainers</p>
+<p class="page-subtitle">Manage and monitor all business team members</p>
 
 <div class="card">
     <div class="card-header">
-        <h3 style="font-family: 'Poppins', sans-serif; font-size: 16px; margin: 0;">All Trainers</h3>
+        <h3 style="font-family: 'Poppins', sans-serif; font-size: 16px; margin: 0;">All Business Team Members</h3>
         <div class="search-bar">
             <i class="fas fa-search" style="color: var(--icon-color);"></i>
-            <input type="text" placeholder="Search trainer" id="trainerSearchInput">
+            <input type="text" placeholder="Search business team member" id="businessTeamSearchInput">
         </div>
-        <button class="btn-add" onclick="openAddModal()">+ Add Trainer</button>
+        <button class="btn-add" onclick="openAddModal()">+ Add Business Team Member</button>
     </div>
     
     <div class="table-wrapper">
@@ -254,36 +254,34 @@
                     <th>Office Mail</th>
                     <th>Personal Mail</th>
                     <th>Phone</th>
-                    <th>Course</th>
                     <th>Status</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
-                {% for trainer in trainers %}
+                {% for member in business_team %}
                 <tr>
                     <td>
                         <div class="profile-cell">
-                            <img src="{% if trainer.profile_image %}{{ trainer.profile_image.url }}{% else %}https://ui-avatars.com/api/?name={{ trainer.full_name|urlencode }}&background=FFA726&color=fff{% endif %}" alt="{{ trainer.full_name }}" class="profile-img">
-                            <span>{{ trainer.full_name }}</span>
+                            <img src="{% if member.profile_image %}{{ member.profile_image.url }}{% else %}https://ui-avatars.com/api/?name={{ member.full_name|urlencode }}&background=FFA726&color=fff{% endif %}" alt="{{ member.full_name }}" class="profile-img">
+                            <span>{{ member.full_name }}</span>
                         </div>
                     </td>
-                    <td>{{ trainer.office_mail }}</td>
-                    <td>{{ trainer.personal_mail }}</td>
-                    <td>{{ trainer.phone_no }}</td>
-                    <td>{{ trainer.course.title|default:'-' }}</td>
+                    <td>{{ member.office_mail }}</td>
+                    <td>{{ member.personal_mail }}</td>
+                    <td>{{ member.phone_no }}</td>
                     <td>
-                        <span class="{% if trainer.status == 'Active' %}status-active{% else %}status-inactive{% endif %}">{{ trainer.status }}</span>
+                        <span class="{% if member.status == 'Active' %}status-active{% else %}status-inactive{% endif %}">{{ member.status }}</span>
                     </td>
                     <td class="actions-cell">
-                        <button class="action-btn view" onclick="openViewModal({{ trainer.id }})"><i class="fas fa-eye"></i></button>
-                        <button class="action-btn edit" onclick="openEditModal({{ trainer.id }})"><i class="fas fa-edit"></i></button>
-                        <a href="{% url 'trainer_delete' trainer.id %}" class="action-btn delete" onclick="return confirm('Are you sure you want to delete this trainer?')"><i class="fas fa-trash"></i></a>
+                        <button class="action-btn view" onclick="openViewModal({{ member.id }})"><i class="fas fa-eye"></i></button>
+                        <button class="action-btn edit" onclick="openEditModal({{ member.id }})"><i class="fas fa-edit"></i></button>
+                        <a href="{% url 'business_team_delete' member.id %}" class="action-btn delete" onclick="return confirm('Are you sure you want to delete this business team member?')"><i class="fas fa-trash"></i></a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 40px; color: var(--icon-color);">No trainers found</td>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--icon-color);">No business team members found</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -291,14 +289,14 @@
     </div>
 </div>
 
-<!-- Add Trainer Modal -->
-<div id="addTrainerModal" class="modal-overlay">
+<!-- Add Business Team Modal -->
+<div id="addBusinessTeamModal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Add New Trainer</h3>
+            <h3>Add New Business Team Member</h3>
             <button class="modal-close" onclick="closeAddModal()">&times;</button>
         </div>
-        <form method="POST" enctype="multipart/form-data" action="{% url 'trainer_add' %}">
+        <form method="POST" enctype="multipart/form-data" action="{% url 'business_team_add' %}">
             {% csrf_token %}
             
             <div class="form-row">
@@ -345,36 +343,30 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Course*</label>
-                    <select name="course" required>
-                        <option value="">Select Course</option>
-                        {% for course in courses %}
-                        <option value="{{ course.id }}">{{ course.title }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
                     <label>Add Profile Image</label>
                     <input type="file" name="profile_image" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <!-- Empty for alignment -->
                 </div>
             </div>
             
             <div class="btn-group">
                 <button type="button" class="btn-cancel" onclick="closeAddModal()">Cancel</button>
-                <button type="submit" class="btn-submit">Create Trainer</button>
+                <button type="submit" class="btn-submit">Create Business Team Member</button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Edit Trainer Modal -->
-<div id="editTrainerModal" class="modal-overlay">
+<!-- Edit Business Team Modal -->
+<div id="editBusinessTeamModal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Edit Trainer</h3>
+            <h3>Edit Business Team Member</h3>
             <button class="modal-close" onclick="closeEditModal()">&times;</button>
         </div>
-        <form id="editTrainerForm" method="POST" enctype="multipart/form-data">
+        <form id="editBusinessTeamForm" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             
             <div class="form-row">
@@ -421,17 +413,11 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Course*</label>
-                    <select name="course" id="edit_course" required>
-                        <option value="">Select Course</option>
-                        {% for course in courses %}
-                        <option value="{{ course.id }}">{{ course.title }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
                     <label>Add Profile Image</label>
                     <input type="file" name="profile_image" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <!-- Empty for alignment -->
                 </div>
             </div>
             
@@ -443,124 +429,111 @@
     </div>
 </div>
 
-<!-- View Trainer Modal -->
-{% for trainer in trainers %}
-<div id="viewTrainerModal-{{ trainer.id }}" class="modal-overlay">
+<!-- View Business Team Modal -->
+{% for member in business_team %}
+<div id="viewBusinessTeamModal-{{ member.id }}" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Trainer Details</h3>
-            <button class="modal-close" onclick="closeViewModal({{ trainer.id }})">&times;</button>
+            <h3>Business Team Member Details</h3>
+            <button class="modal-close" onclick="closeViewModal({{ member.id }})">&times;</button>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 32px;">
             <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; border-right: 1px solid #eee; padding-right: 32px;">
-                <img src="{% if trainer.profile_image %}{{ trainer.profile_image.url }}{% else %}https://ui-avatars.com/api/?name={{ trainer.full_name|urlencode }}&background=FFA726&color=fff&size=240{% endif %}" alt="{{ trainer.full_name }}" style="width: 150px; height: 150px; border-radius: 12px; object-fit: cover;">
-                <span style="background: #FFF3E0; color: var(--secondary); padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 500;">{{ trainer.batches.count|default:"0" }} Batches Assigned</span>
+                <img src="{% if member.profile_image %}{{ member.profile_image.url }}{% else %}https://ui-avatars.com/api/?name={{ member.full_name|urlencode }}&background=FFA726&color=fff&size=240{% endif %}" alt="{{ member.full_name }}" style="width: 150px; height: 150px; border-radius: 12px; object-fit: cover;">
             </div>
             <div style="display: flex; flex-direction: column; gap: 16px;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                     <div>
                         <label style="font-size: 13px; font-weight: 500; color: var(--text-color); display: block; margin-bottom: 4px;">Full Name</label>
-                        <div style="background: #f0f0f0; padding: 10px 14px; border-radius: 6px; font-size: 14px;">{{ trainer.full_name }}</div>
+                        <div style="background: #f0f0f0; padding: 10px 14px; border-radius: 6px; font-size: 14px;">{{ member.full_name }}</div>
                     </div>
                     <div>
                         <label style="font-size: 13px; font-weight: 500; color: var(--text-color); display: block; margin-bottom: 4px;">Office Mail</label>
-                        <div style="background: #f0f0f0; padding: 10px 14px; border-radius: 6px; font-size: 14px;">{{ trainer.office_mail }}</div>
+                        <div style="background: #f0f0f0; padding: 10px 14px; border-radius: 6px; font-size: 14px;">{{ member.office_mail }}</div>
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                     <div>
                         <label style="font-size: 13px; font-weight: 500; color: var(--text-color); display: block; margin-bottom: 4px;">Personal Mail</label>
-                        <div style="background: #f0f0f0; padding: 10px 14px; border-radius: 6px; font-size: 14px;">{{ trainer.personal_mail }}</div>
+                        <div style="background: #f0f0f0; padding: 10px 14px; border-radius: 6px; font-size: 14px;">{{ member.personal_mail }}</div>
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                     <div>
                         <label style="font-size: 13px; font-weight: 500; color: var(--text-color); display: block; margin-bottom: 4px;">Phone No</label>
-                        <div style="background: #f0f0f0; padding: 10px 14px; border-radius: 6px; font-size: 14px;">{{ trainer.phone_no }}</div>
+                        <div style="background: #f0f0f0; padding: 10px 14px; border-radius: 6px; font-size: 14px;">{{ member.phone_no }}</div>
                     </div>
                     <div>
                         <label style="font-size: 13px; font-weight: 500; color: var(--text-color); display: block; margin-bottom: 4px;">Gender</label>
-                        <div style="background: #f0f0f0; padding: 10px 14px; border-radius: 6px; font-size: 14px;">{{ trainer.gender|default:"-" }}</div>
+                        <div style="background: #f0f0f0; padding: 10px 14px; border-radius: 6px; font-size: 14px;">{{ member.gender|default:"-" }}</div>
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                     <div>
                         <label style="font-size: 13px; font-weight: 500; color: var(--text-color); display: block; margin-bottom: 4px;">Status</label>
                         <div style="background: #f0f0f0; padding: 10px 14px; border-radius: 6px; font-size: 14px;">
-                            <span class="{% if trainer.status == 'Active' %}status-active{% else %}status-inactive{% endif %}">{{ trainer.status }}</span>
-                        </div>
-                    </div>
-                    <div>
-                        <label style="font-size: 13px; font-weight: 500; color: var(--text-color); display: block; margin-bottom: 4px;">Active Batches:</label>
-                        <div style="margin-top: 4px; display: flex; flex-direction: column; gap: 4px;">
-                            {% for batch in trainer.batches.all %}
-                            <span style="font-size: 13px; color: var(--text-color);">{{ batch.batch_name }}</span>
-                            {% empty %}
-                            <span style="font-size: 13px; color: var(--text-color);">No batches assigned</span>
-                            {% endfor %}
+                            <span class="{% if member.status == 'Active' %}status-active{% else %}status-inactive{% endif %}">{{ member.status }}</span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="btn-group">
-            <button class="btn-cancel" onclick="closeViewModal({{ trainer.id }})">Back</button>
-            <a href="{% url 'trainer_delete' trainer.id %}" class="btn-submit" onclick="return confirm('Are you sure you want to delete this trainer?')" style="text-decoration: none; background: var(--secondary);">Delete Trainer</a>
+            <button class="btn-cancel" onclick="closeViewModal({{ member.id }})">Back</button>
+            <a href="{% url 'business_team_delete' member.id %}" class="btn-submit" onclick="return confirm('Are you sure you want to delete this business team member?')" style="text-decoration: none; background: var(--secondary);">Delete Business Team Member</a>
         </div>
     </div>
 </div>
 {% endfor %}
 
 <script>
-    const trainers = [
-        {% for trainer in trainers %}
+    const businessTeamMembers = [
+        {% for member in business_team %}
         {
-            id: {{ trainer.id }},
-            full_name: "{{ trainer.full_name }}",
-            office_mail: "{{ trainer.office_mail }}",
-            personal_mail: "{{ trainer.personal_mail }}",
-            phone_no: "{{ trainer.phone_no }}",
-            gender: "{{ trainer.gender }}",
-            status: "{{ trainer.status }}",
-            course_id: {% if trainer.course %}{{ trainer.course.id }}{% else %}null{% endif %}
+            id: {{ member.id }},
+            full_name: "{{ member.full_name }}",
+            office_mail: "{{ member.office_mail }}",
+            personal_mail: "{{ member.personal_mail }}",
+            phone_no: "{{ member.phone_no }}",
+            gender: "{{ member.gender }}",
+            status: "{{ member.status }}"
         }{% if not forloop.last %},{% endif %}
         {% endfor %}
     ];
 
     function openAddModal() {
-        document.getElementById('addTrainerModal').classList.add('active');
+        document.getElementById('addBusinessTeamModal').classList.add('active');
     }
 
     function closeAddModal() {
-        document.getElementById('addTrainerModal').classList.remove('active');
+        document.getElementById('addBusinessTeamModal').classList.remove('active');
     }
 
-    function openEditModal(trainerId) {
-        const trainer = trainers.find(t => t.id === trainerId);
-        if (trainer) {
-            document.getElementById('edit_full_name').value = trainer.full_name;
-            document.getElementById('edit_office_mail').value = trainer.office_mail;
-            document.getElementById('edit_personal_mail').value = trainer.personal_mail;
-            document.getElementById('edit_phone_no').value = trainer.phone_no;
-            document.getElementById('edit_gender').value = trainer.gender;
-            document.getElementById('edit_status').value = trainer.status;
-            document.getElementById('edit_course').value = trainer.course_id || '';
+    function openEditModal(memberId) {
+        const member = businessTeamMembers.find(m => m.id === memberId);
+        if (member) {
+            document.getElementById('edit_full_name').value = member.full_name;
+            document.getElementById('edit_office_mail').value = member.office_mail;
+            document.getElementById('edit_personal_mail').value = member.personal_mail;
+            document.getElementById('edit_phone_no').value = member.phone_no;
+            document.getElementById('edit_gender').value = member.gender;
+            document.getElementById('edit_status').value = member.status;
             
-            document.getElementById('editTrainerForm').action = `/admin/trainers/${trainerId}/edit/`;
-            document.getElementById('editTrainerModal').classList.add('active');
+            document.getElementById('editBusinessTeamForm').action = `/admin/business-team/${memberId}/edit/`;
+            document.getElementById('editBusinessTeamModal').classList.add('active');
         }
     }
 
     function closeEditModal() {
-        document.getElementById('editTrainerModal').classList.remove('active');
+        document.getElementById('editBusinessTeamModal').classList.remove('active');
     }
 
-    function openViewModal(trainerId) {
-        document.getElementById('viewTrainerModal-' + trainerId).classList.add('active');
+    function openViewModal(memberId) {
+        document.getElementById('viewBusinessTeamModal-' + memberId).classList.add('active');
     }
 
-    function closeViewModal(trainerId) {
-        document.getElementById('viewTrainerModal-' + trainerId).classList.remove('active');
+    function closeViewModal(memberId) {
+        document.getElementById('viewBusinessTeamModal-' + memberId).classList.remove('active');
     }
 
     // Close modals on outside click
@@ -573,7 +546,7 @@
     });
 
     // Client-side search filter logic
-    const searchInput = document.getElementById('trainerSearchInput');
+    const searchInput = document.getElementById('businessTeamSearchInput');
     if (searchInput) {
         searchInput.addEventListener('keyup', function(e) {
             const query = e.target.value.toLowerCase();

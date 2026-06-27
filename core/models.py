@@ -143,6 +143,19 @@ class Intern(models.Model):
     def __str__(self):
         return self.full_name
 
+class BusinessTeam(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=100)
+    office_mail = models.EmailField()
+    personal_mail = models.EmailField()
+    phone_no = models.CharField(max_length=15)
+    gender = models.CharField(max_length=10, choices=[('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')])
+    status = models.CharField(max_length=20, choices=[('Active', 'Active'), ('Inactive', 'Inactive')], default='Active')
+    profile_image = models.ImageField(upload_to='business_team/', null=True, blank=True)
+
+    def __str__(self):
+        return self.full_name
+
 
 class Message(models.Model):
     class NotificationType(models.TextChoices):

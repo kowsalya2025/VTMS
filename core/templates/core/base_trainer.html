@@ -341,9 +341,9 @@
                         </div>
                     </div>
                 </div>
-                <a href="#" class="user-profile" style="text-decoration: none;">
-                    <img src="https://ui-avatars.com/api/?name=Trainer&background=FFA726&color=fff" alt="Trainer">
-                    <span>Trainer</span>
+                <a href="{% url 'trainer_profile' %}" class="user-profile" style="text-decoration: none;">
+                    <img src="{% if trainer and trainer.profile_image %}{{ trainer.profile_image.url }}{% else %}https://ui-avatars.com/api/?name={{ trainer.full_name|default:user.first_name|default:'Trainer' }}&background=FFA726&color=fff{% endif %}" alt="{{ trainer.full_name|default:user.first_name|default:'Trainer' }}">
+                    <span>{{ trainer.full_name|default:user.first_name|default:'Trainer' }}</span>
                 </a>
             </div>
         </header>
