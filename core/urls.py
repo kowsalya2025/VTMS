@@ -89,4 +89,7 @@ urlpatterns = [
     path('download/document/<int:doc_id>/', views.download_document, name='download_document'),
     path('admin/backup/', views.backup_data, name='backup_data'),
     path('admin/restore/', views.restore_data, name='restore_data'),
+    
+    # Public Enquiry & Registration Form
+    path('enquiry-form/', views.public_enquiry_form, name='public_enquiry_form'),
 ]

@@ -1,0 +1,228 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    body {
+        background-color: #f8fafc;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        font-family: 'Inter', sans-serif;
+    }
+    .form-wrapper {
+        width: 100%;
+        max-width: 900px;
+        padding: 20px;
+    }
+    .form-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 40px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        border: 1px solid #f1f5f9;
+    }
+    .form-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 26px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 32px;
+    }
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+    }
+    @media (max-width: 768px) {
+        .grid-container {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        .form-card {
+            padding: 24px;
+        }
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .form-group.full-width {
+        grid-column: span 2;
+    }
+    @media (max-width: 768px) {
+        .form-group.full-width {
+            grid-column: span 1;
+        }
+    }
+    .form-group label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #475569;
+        margin: 0;
+    }
+    .form-group input, 
+    .form-group select, 
+    .form-group textarea {
+        background-color: #f1f5f9;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        padding: 14px 16px;
+        font-size: 15px;
+        font-family: 'Inter', sans-serif;
+        color: #1e293b;
+        margin-bottom: 0;
+        transition: all 0.2s ease-in-out;
+    }
+    .form-group input::placeholder, 
+    .form-group textarea::placeholder {
+        color: #94a3b8;
+    }
+    .form-group input:focus, 
+    .form-group select:focus, 
+    .form-group textarea:focus {
+        background-color: #ffffff;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        outline: none;
+    }
+    .form-group textarea {
+        resize: vertical;
+        min-height: 120px;
+    }
+    .button-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 32px;
+    }
+    .btn-submit {
+        background-color: #6366f1;
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 600;
+        padding: 14px 28px;
+        border-radius: 10px;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s ease;
+    }
+    .btn-submit:hover {
+        background-color: #4f46e5;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    }
+    .btn-submit:active {
+        transform: translateY(0);
+    }
+    .messages-container {
+        margin-bottom: 24px;
+    }
+    .alert {
+        padding: 14px 20px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 12px;
+    }
+    .alert-success {
+        background-color: #f0fdf4;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+    }
+    .alert-error {
+        background-color: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+    }
+</style>
+
+<div class="form-wrapper">
+    <div class="form-card">
+        <h2 class="form-title">Enquiry Details</h2>
+        
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <form method="POST">
+            {% csrf_token %}
+            <div class="grid-container">
+                <!-- Full Name -->
+                <div class="form-group">
+                    <label for="full_name">Full Name *</label>
+                    <input type="text" id="full_name" name="full_name" placeholder="Enter Full Name" required>
+                </div>
+                
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" placeholder="Enter Email" required>
+                </div>
+                
+                <!-- Phone No -->
+                <div class="form-group">
+                    <label for="phone">Phone No *</label>
+                    <input type="tel" id="phone" name="phone" placeholder="Enter Phone Number" required>
+                </div>
+                
+                <!-- Course -->
+                <div class="form-group">
+                    <label for="course">Course *</label>
+                    <select id="course" name="course" required>
+                        <option value="" disabled selected>Select Course</option>
+                        {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Gender -->
+                <div class="form-group">
+                    <label for="gender">Gender *</label>
+                    <select id="gender" name="gender" required>
+                        <option value="" disabled selected>---------</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <!-- Age -->
+                <div class="form-group">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" name="age" placeholder="Enter Age" min="1" max="120">
+                </div>
+                
+                <!-- Qualification -->
+                <div class="form-group">
+                    <label for="qualification">Qualification</label>
+                    <input type="text" id="qualification" name="qualification" placeholder="Enter Qualification">
+                </div>
+                
+                <!-- Empty placeholder for alignment -->
+                <div class="form-group" style="visibility: hidden; height: 0;"></div>
+                
+                <!-- Address -->
+                <div class="form-group full-width">
+                    <label for="address">Address</label>
+                    <textarea id="address" name="address" placeholder="Enter Address"></textarea>
+                </div>
+            </div>
+            
+            <div class="button-container">
+                <button type="submit" class="btn-submit">Submit Enquiry</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

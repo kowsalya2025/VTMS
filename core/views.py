@@ -2377,3 +2377,74 @@ def mark_message_read(request, message_id):
         return redirect('trainer_dashboard')
     else:
         return redirect('business_dashboard')
+
+# Public enquiry and registration form
+def public_enquiry_form(request):
+    if request.method == 'POST':
+        full_name = request.POST.get('full_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        course_id = request.POST.get('course', '').strip()
+        gender = request.POST.get('gender', '').strip()
+        age = request.POST.get('age', '').strip()
+        qualification = request.POST.get('qualification', '').strip()
+        address = request.POST.get('address', '').strip()
+
+        if not (full_name and email and phone and course_id and gender):
+            messages.error(request, 'Please fill in all required fields.')
+            return redirect('public_enquiry_form')
+
+        # Check if email is already used by a User
+        if User.objects.filter(email=email).exists():
+            messages.error(request, 'This email address is already registered.')
+            return redirect('public_enquiry_form')
+
+        try:
+            course = Course.objects.get(id=course_id)
+        except Course.DoesNotExist:
+            messages.error(request, 'Invalid course selected.')
+            return redirect('public_enquiry_form')
+
+        try:
+            # 1. Create Enquiry
+            Enquiry.objects.create(
+                full_name=full_name,
+                email=email,
+                phone=phone,
+                course_interested=course,
+                gender=gender,
+                age=int(age) if age.isdigit() else None,
+                qualification=qualification,
+                address=address,
+                status='New'
+            )
+
+            # 2. Create User for Trainee
+            user = User.objects.create_user(
+                email=email,
+                password=phone,
+                role=User.Role.TRAINEE,
+                phone_no=phone
+            )
+
+            # 3. Create Trainee
+            Trainee.objects.create(
+                user=user,
+                full_name=full_name,
+                personal_mail=email,
+                phone_no=phone,
+                gender=gender,
+                address=address,
+                course=course,
+                status='Active',
+                progress=0
+            )
+
+            messages.success(request, 'Your enquiry details have been submitted successfully and registered under Trainee Management!')
+            return redirect('public_enquiry_form')
+        except Exception as e:
+            messages.error(request, f'An error occurred: {str(e)}')
+            return redirect('public_enquiry_form')
+
+    courses = Course.objects.filter(status='Active')
+    return render(request, 'core/public_enquiry_form.html', {'courses': courses})
