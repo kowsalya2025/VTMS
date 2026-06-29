@@ -291,7 +291,7 @@
             
             <li><a href="{% url 'document_verification' %}" class="{% if request.resolver_match.url_name == 'document_verification' %}active{% endif %}"><i class="far fa-file-lines"></i> Document Verification</a></li>
             <li><a href="{% url 'business_payment_management' %}" class="{% if request.resolver_match.url_name == 'business_payment_management' %}active{% endif %}"><i class="far fa-credit-card"></i> Payment Management</a></li>
-            <li><a href="{% url 'communication' %}" class="{% if request.resolver_match.url_name == 'communication' %}active{% endif %}"><i class="far fa-comment-alt"></i> Communication</a></li>
+            <li><a href="{% url 'business_communication' %}" class="{% if request.resolver_match.url_name == 'business_communication' %}active{% endif %}"><i class="far fa-comment-alt"></i> Communication</a></li>
             <li><a href="{% url 'candidate_management' %}" class="{% if request.resolver_match.url_name == 'candidate_management' %}active{% endif %}"><i class="fas fa-users"></i> Candidate Management</a></li>
             <li><a href="{% url 'business_batch_management' %}" class="{% if request.resolver_match.url_name == 'business_batch_management' %}active{% endif %}"><i class="far fa-rectangle-list"></i> Batch Management</a></li>
             <li><a href="{% url 'business_reports' %}" class="{% if request.resolver_match.url_name == 'business_reports' %}active{% endif %}"><i class="fas fa-chart-line"></i> Report</a></li>
@@ -359,6 +359,15 @@
 
         <!-- Content Area -->
         <div class="content-area">
+            {% if messages %}
+            <div class="message-list" style="margin-bottom:20px;">
+                {% for message in messages %}
+                <div class="message-item {{ message.tags }}" style="padding:12px 16px; border-radius:8px; margin-bottom:8px; font-size:14px; font-family:var(--font-inter); {% if message.tags == 'success' %}background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9;{% elif message.tags == 'error' %}background:#ffefef; color:#d20909; border:1px solid #ffd0d0;{% elif message.tags == 'info' %}background:#e3f2fd; color:#1565c0; border:1px solid #bbdefb;{% else %}background:#fff8e1; color:#f57c00; border:1px solid #ffe0b2;{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
             <div class="page-header">
                 <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
                 {% if page_subtitle or self.page_subtitle %}

@@ -8,7 +8,7 @@ from django.db import DatabaseError, IntegrityError
 from django.db.models import Q
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from .models import User, Trainer, Course, Batch, Trainee, Intern, BusinessTeam, Payment, Report, Enquiry, Candidate, Eligibility, DocumentVerification, InterviewSchedule, SystemSetting, Task, TraineeTask, Project, Message, ContactQuery, Leave
+from .models import User, Trainer, Course, Batch, Trainee, Intern, BusinessTeam, Payment, Report, Enquiry, Candidate, Eligibility, DocumentVerification, InterviewSchedule, SystemSetting, Task, TraineeTask, Project, Message, ContactQuery, Leave, Attendance
 from django.utils import timezone
 from datetime import timedelta, datetime, date
 import calendar as cal_module
@@ -44,6 +44,11 @@ TRAINER = User.Role.TRAINER
 BUSINESS = User.Role.BUSINESS_TEAM
 
 def login_view(request):
+    # Clear any existing messages to avoid showing old ones on login page
+    storage = messages.get_messages(request)
+    for _ in storage:
+        pass  # Consume all messages
+    
     if request.user.is_authenticated:
         # Already logged in — send to correct dashboard
         if request.user.role == User.Role.ADMIN:
@@ -740,7 +745,10 @@ def intern_add(request):
                 gender=request.POST['gender'],
                 role=request.POST['role'],
                 internship_period=request.POST['internship_period'],
-                status=request.POST['status']
+                status=request.POST['status'],
+                join_date=request.POST.get('join_date') or None,
+                overall_status=request.POST.get('overall_status', 'Good Performance'),
+                trainer_remarks=request.POST.get('trainer_remarks', '')
             )
             if request.POST.get('trainer'):
                 intern.trainer = Trainer.objects.get(id=request.POST['trainer'])
@@ -794,6 +802,9 @@ def intern_edit(request, pk):
         intern.role = request.POST['role']
         intern.internship_period = request.POST['internship_period']
         intern.status = request.POST['status']
+        intern.join_date = request.POST.get('join_date') or None
+        intern.overall_status = request.POST.get('overall_status', 'Good Performance')
+        intern.trainer_remarks = request.POST.get('trainer_remarks', '')
         if request.POST.get('trainer'):
             intern.trainer = Trainer.objects.get(id=request.POST['trainer'])
         intern.user.email = request.POST['personal_mail']
@@ -843,7 +854,39 @@ def intern_delete(request, pk):
 # Admin - Intern Performance
 def intern_performance(request, pk):
     intern = get_object_or_404(Intern, pk=pk)
-    return render(request, 'core/intern_performance.html', {'intern': intern})
+    
+    # Get Attendance data
+    attendance_records = Attendance.objects.filter(intern=intern)
+    total_days = attendance_records.count()
+    present_days = attendance_records.filter(status='Present').count()
+    absent_days = total_days - present_days
+    attendance_percent = 0
+    attendance_circle_offset = 408.4
+    if total_days > 0:
+        attendance_percent = int((present_days / total_days) * 100)
+        attendance_circle_offset = 408.4 * (1 - (attendance_percent / 100))
+    
+    # Get Project data
+    projects = Project.objects.filter(intern=intern)
+    total_projects = projects.count()
+    completed_projects = projects.filter(status='Completed').count()
+    pending_projects = total_projects - completed_projects
+    completion_percent = 0
+    if total_projects > 0:
+        completion_percent = int((completed_projects / total_projects) * 100)
+    
+    return render(request, 'core/intern_performance.html', {
+        'intern': intern,
+        'total_days': total_days,
+        'present_days': present_days,
+        'absent_days': absent_days,
+        'attendance_percent': attendance_percent,
+        'attendance_circle_offset': attendance_circle_offset,
+        'total_projects': total_projects,
+        'completed_projects': completed_projects,
+        'pending_projects': pending_projects,
+        'completion_percent': completion_percent,
+    })
 
 # Reports & Approvals
 def reports_approvals(request):
@@ -904,7 +947,7 @@ def payment_revenue(request):
     })
 
 # Communication
-@login_required_role(ADMIN)
+@login_required_role(ADMIN, TRAINER, BUSINESS)
 def communication(request):
     search_query = request.GET.get('q', '')
     active_filter = request.GET.get('filter', 'all')
@@ -916,22 +959,35 @@ def communication(request):
             msg.is_read = not msg.is_read
             msg.save()
         elif action == 'send':
-            recipient_id = request.POST.get('recipient')
-            subject = request.POST.get('subject', '').strip()
-            body = request.POST.get('body', '').strip()
-            if recipient_id and subject and body:
-                recipient = get_object_or_404(User, id=recipient_id)
-                Message.objects.create(
-                    sender=request.user,
-                    recipient=recipient,
-                    subject=subject,
-                    preview=body[:200],
-                    is_read=False,
-                    avatar_initial=subject[0].upper() if subject else 'M',
-                )
-                messages.success(request, 'Message sent successfully!')
-            else:
-                messages.error(request, 'Please fill in recipient, subject, and message.')
+                recipient_id = request.POST.get('recipient')
+                subject = request.POST.get('subject', '').strip()
+                body = request.POST.get('body', '').strip()
+                if recipient_id and subject and body:
+                    recipient = get_object_or_404(User, id=recipient_id)
+                    # Send email using configured SMTP
+                    from_email = settings.DEFAULT_FROM_EMAIL
+                    try:
+                        email_msg = EmailMessage(
+                            subject=subject,
+                            body=body,
+                            from_email=from_email,
+                            to=[recipient.email],
+                        )
+                        email_msg.send(fail_silently=False)
+                        messages.success(request, 'Email sent successfully!')
+                    except Exception as e:
+                        messages.error(request, f'Failed to send email: {str(e)}')
+                    # Record the communication in the internal Message model
+                    Message.objects.create(
+                        sender=request.user,
+                        recipient=recipient,
+                        subject=subject,
+                        preview=body[:200],
+                        is_read=False,
+                        avatar_initial=subject[0].upper() if subject else 'M',
+                    )
+                else:
+                    messages.error(request, 'Please fill in recipient, subject, and message.')
         return redirect('communication')
 
     msgs = Message.objects.all().select_related('sender', 'recipient').order_by('-created_at')
@@ -951,8 +1007,84 @@ def communication(request):
         'users': users,
     })
 
+
+# Business Communication
+@login_required_role(ADMIN, BUSINESS)
+def business_communication(request):
+    active_tab = request.GET.get('tab', 'email')  # Default to email tab
+    
+    if request.method == 'POST':
+        # Get active tab from form hidden field
+        active_tab = request.POST.get('active_tab', 'email')
+        
+        if active_tab == 'email':
+            # Email submission
+                        # Determine recipient: either a predefined user or a custom address
+            to_option = request.POST.get('to')
+            if to_option == 'custom':
+                # User entered a custom email address
+                to_email = request.POST.get('to_custom', '').strip()
+            else:
+                # Use the selected predefined email option (trim whitespace)
+                to_email = to_option.strip() if to_option else ''
+            # Fallback to default from address if empty (should not happen for valid forms)
+            if not to_email:
+                to_email = settings.DEFAULT_FROM_EMAIL
+            # Strip whitespace and ensure a value exists
+            if not to_email:
+                messages.error(request, 'Please provide a valid recipient email.')
+                return redirect(f'{reverse("business_communication")}?tab=email')
+            # Optional: validate email format
+            try:
+                validate_email(to_email)
+            except ValidationError:
+                messages.error(request, 'Invalid email address format.')
+                return redirect(f'{reverse("business_communication")}?tab=email')
+            subject = request.POST.get('subject')
+            body = request.POST.get('body')
+            # Use logged-in user's email as "From" address
+            from_email = settings.DEFAULT_FROM_EMAIL
+            
+            try:
+                from django.core.mail import EmailMessage
+                email = EmailMessage(
+                    subject=subject,
+                    body=body,
+                    from_email=from_email,
+                    to=[to_email],
+                )
+                
+                # Handle attachments
+                if request.FILES:
+                    for file in request.FILES.getlist('attachments'):
+                        email.attach(file.name, file.read(), file.content_type)
+                
+                email.send(fail_silently=False)
+                messages.success(request, 'Email sent successfully!')
+            except Exception as e:
+                messages.error(request, f'Failed to send email: {str(e)}')
+        
+        elif active_tab == 'whatsapp':
+            # WhatsApp submission (placeholder - you'll need an actual WhatsApp API)
+            phone = request.POST.get('phone') or request.POST.get('phone_custom')
+            message = request.POST.get('message')
+            messages.info(request, 'WhatsApp feature requires API integration. Message saved for now.')
+        
+        # Redirect with the active tab
+        return redirect(f'{reverse("business_communication")}?tab={active_tab}')
+    
+    # Get data
+    trainees = Trainee.objects.all()
+    interns = Intern.objects.all()
+    return render(request, 'core/business_communication.html', {
+        'active_tab': active_tab,
+        'user': request.user,
+        'trainees': trainees,
+        'interns': interns,
+    })
+
 # Settings
-def settings(request):
+def system_settings(request):
     # Get or create the first SystemSetting
     setting, created = SystemSetting.objects.get_or_create(id=1)
     
@@ -1206,106 +1338,59 @@ def trainer_intern_performance(request, intern_id):
 
 
 # Trainer - Communication Page
-from django.utils import timezone
-from datetime import timedelta
-from django.db.models import Q
-
-
 @login_required_role(TRAINER)
 def trainer_communication(request):
-    # Get or create sample messages if none exist
-    if Message.objects.count() == 0:
-        # Get a default user or create one for sender
-        trainer_user = User.objects.filter(role='Trainer').first()
-        if not trainer_user:
-            trainer_user = User.objects.create_superuser(email="trainer@test.com", password="password123")
+    active_tab = request.GET.get('tab', 'email')  # Default to email tab
+    
+    if request.method == 'POST':
+        # Get active tab from form hidden field
+        active_tab = request.POST.get('active_tab', 'email')
         
-        # Create sample messages
-        sample_messages = [
-            {
-                "subject": "Task Doubt",
-                "preview": "Hi mam, I have doubt on today task...",
-                "avatar_initial": "P",
-                "avatar_color": "#9E69FF",
-                "created_at": timezone.now(),
-                "is_read": False
-            },
-            {
-                "subject": "Weekly Report Approved by business team",
-                "preview": "Hi mam, please find the report of batch 8 students weekly report",
-                "avatar_initial": "B",
-                "avatar_color": "#36B37E",
-                "created_at": timezone.now() - timedelta(days=1),
-                "is_read": True
-            },
-            {
-                "subject": "Task Doubt",
-                "preview": "Hi mam, I have doubt on today task...",
-                "avatar_initial": "R",
-                "avatar_color": "#FFAB00",
-                "created_at": timezone.now() - timedelta(days=2),
-                "is_read": True
-            },
-            {
-                "subject": "Daily Task (22/03/2026)",
-                "preview": "Trainee Name: Amire....",
-                "avatar_initial": "A",
-                "avatar_color": "#22C55E",
-                "created_at": timezone.now() - timedelta(days=3),
-                "is_read": True
-            },
-            {
-                "subject": "Daily Task (21/03/2026)",
-                "preview": "Trainee Name: Praveen....",
-                "avatar_initial": "P",
-                "avatar_color": "#9E69FF",
-                "created_at": timezone.now() - timedelta(days=4),
-                "is_read": True
-            }
-        ]
-        for msg in sample_messages:
-            Message.objects.create(
-                sender=trainer_user,
-                subject=msg["subject"],
-                preview=msg["preview"],
-                avatar_initial=msg["avatar_initial"],
-                avatar_color=msg["avatar_color"],
-                created_at=msg["created_at"],
-                is_read=msg["is_read"]
-            )
-    
-    # Handle POST requests
-    active_filter = request.GET.get('filter', 'all')
-    search_query = request.GET.get('q', '')
-
-    if request.method == "POST":
-        action = request.POST.get('action')
+        if active_tab == 'email':
+            # Email submission
+            to_email = request.POST.get('to') or request.POST.get('to_custom')
+            subject = request.POST.get('subject')
+            body = request.POST.get('body')
+            # Use logged-in user's email as "From" address
+            from_email = request.user.email
+            
+            try:
+                from django.core.mail import EmailMessage
+                email = EmailMessage(
+                    subject=subject,
+                    body=body,
+                    from_email=from_email,
+                    to=[to_email],
+                )
+                
+                # Handle attachments
+                if request.FILES:
+                    for file in request.FILES.getlist('attachments'):
+                        email.attach(file.name, file.read(), file.content_type)
+                
+                email.send(fail_silently=False)
+                messages.success(request, 'Email sent successfully!')
+            except Exception as e:
+                messages.error(request, f'Failed to send email: {str(e)}')
         
-        if action == "toggle_read":
-            msg_id = request.POST.get('msg_id')
-            message = get_object_or_404(Message, id=msg_id)
-            message.is_read = not message.is_read
-            message.save()
+        elif active_tab == 'whatsapp':
+            # WhatsApp submission (placeholder - you'll need an actual WhatsApp API)
+            phone = request.POST.get('phone') or request.POST.get('phone_custom')
+            message = request.POST.get('message')
+            messages.info(request, 'WhatsApp feature requires API integration. Message saved for now.')
+        
+        # Redirect with the active tab
+        return redirect(f'{reverse("trainer_communication")}?tab={active_tab}')
     
-    # Filter messages
-    messages_query = Message.objects.all()
-    if search_query:
-        messages_query = messages_query.filter(
-            Q(subject__icontains=search_query) | Q(preview__icontains=search_query)
-        )
-    if active_filter == 'unread':
-        messages_query = messages_query.filter(is_read=False)
-    messages = messages_query.order_by("-created_at")
+    # Get data
+    trainees = Trainee.objects.all()
+    interns = Intern.objects.all()
     
-    today = timezone.now().date()
-    yesterday = today - timedelta(days=1)
-
     return render(request, 'core/trainer_communication.html', {
-        'messages': messages,
-        'today': today,
-        'yesterday': yesterday,
-        'active_filter': active_filter,
-        'search_query': search_query
+        'active_tab': active_tab,
+        'user': request.user,
+        'trainees': trainees,
+        'interns': interns
     })
 
 # Trainer - Projects
@@ -1625,13 +1710,16 @@ def send_payment_email(request):
         subject = request.POST.get('subject', 'Payment Request')
         message = request.POST.get('message')
         
+        # Get system settings
+        setting, _ = SystemSetting.objects.get_or_create(id=1)
+        from_email = setting.smtp_email or getattr(settings, 'DEFAULT_FROM_EMAIL', 'webmaster@localhost')
+        
         try:
             from django.core.mail import send_mail
-            from django.conf import settings
             send_mail(
                 subject,
                 message,
-                settings.DEFAULT_FROM_EMAIL,
+                from_email,
                 [to_email],
                 fail_silently=False,
             )
@@ -1642,6 +1730,7 @@ def send_payment_email(request):
     return redirect('business_payment_management')
 
 # Download Invoice
+@login_required_role(ADMIN, BUSINESS)
 def download_invoice(request, payment_id):
     from django.http import HttpResponse
     from django.template.loader import get_template
@@ -1960,37 +2049,7 @@ from django.http import HttpResponse, FileResponse
 from django.utils.text import slugify
 
 
-# ── 1. Download invoice as CSV for a payment ────────────────────────────────
-@login_required_role(ADMIN, BUSINESS)
-def download_invoice(request, payment_id):
-    payment = get_object_or_404(Payment, id=payment_id)
-    person = payment.trainee or payment.intern
-    name = person.full_name if person else 'Unknown'
-    course = ''
-    if payment.trainee and payment.trainee.course:
-        course = payment.trainee.course.title
-    elif payment.intern:
-        course = payment.intern.role
 
-    response = HttpResponse(content_type='text/csv')
-    safe_name = slugify(name)
-    response['Content-Disposition'] = f'attachment; filename="{safe_name}-invoice.csv"'
-
-    writer = csv.writer(response)
-    writer.writerow(['Invoice'])
-    writer.writerow([])
-    writer.writerow(['Name', name])
-    writer.writerow(['Course', course])
-    writer.writerow(['Total Amount', f'Rs.{payment.course_amount}'])
-    writer.writerow(['Amount Paid', f'Rs.{payment.paid}'])
-    writer.writerow(['Pending', f'Rs.{payment.pending}'])
-    writer.writerow(['Status', payment.status])
-    writer.writerow(['Payment Date', payment.date.strftime('%d/%m/%Y')])
-    writer.writerow(['Plan', payment.plan or '-'])
-    writer.writerow(['Payment Method', payment.payment_method or '-'])
-    if payment.due_date:
-        writer.writerow(['Due Date', payment.due_date.strftime('%d/%m/%Y')])
-    return response
 
 
 # ── 2. Download all payments as CSV (export) ─────────────────────────────────

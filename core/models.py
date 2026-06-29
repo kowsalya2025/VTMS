@@ -137,8 +137,11 @@ class Intern(models.Model):
     gender = models.CharField(max_length=10, choices=[('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')])
     role = models.CharField(max_length=50) # e.g. Junior Developer
     internship_period = models.CharField(max_length=20) # e.g. 1 Month, 2 Month
+    join_date = models.DateField(null=True, blank=True)
     trainer = models.ForeignKey(Trainer, on_delete=models.SET_NULL, null=True)
     status = models.CharField(max_length=20, choices=[('Active', 'Active'), ('Completed', 'Completed')], default='Active')
+    trainer_remarks = models.TextField(blank=True, null=True)
+    overall_status = models.CharField(max_length=50, default='Good Performance')
 
     def __str__(self):
         return self.full_name

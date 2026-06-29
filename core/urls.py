@@ -47,7 +47,7 @@ urlpatterns = [
     path('admin/business/', views.business_monitoring, name='business_monitoring'),
     path('admin/payments/', views.payment_revenue, name='payment_revenue'),
     path('admin/communication/', views.communication, name='communication'),
-    path('admin/settings/', views.settings, name='settings'),
+    path('admin/settings/', views.system_settings, name='settings'),
     path('admin/invoice/', views.invoice, name='invoice'),
     path('admin/calendar/', views.calendar_leave, name='calendar_leave'),
     
@@ -77,6 +77,7 @@ urlpatterns = [
     path('business/batches/', views.business_batch_management, name='business_batch_management'),
     path('business/reports/', views.business_reports, name='business_reports'),
     path('business/interview-scheduling/', views.interview_scheduling, name='interview_scheduling'),
+    path('business/communication/', views.business_communication, name='business_communication'),
     path('business/profile/', views.business_profile, name='business_profile'),
 
     # Upload / Download

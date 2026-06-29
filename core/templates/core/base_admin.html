@@ -302,7 +302,7 @@
             <!-- <li><a href="{% url 'invoice' %}" class="{% if request.resolver_match.url_name == 'invoice' %}active{% endif %}"><i class="fas fa-file-invoice"></i> Invoice</a></li> -->
             <li><a href="{% url 'communication' %}" class="{% if request.resolver_match.url_name == 'communication' %}active{% endif %}"><i class="fas fa-comments"></i> Communication</a></li>
             <li><a href="{% url 'calendar_leave' %}" class="{% if request.resolver_match.url_name == 'calendar_leave' %}active{% endif %}"><i class="fas fa-calendar-alt"></i> Calendar & Leave</a></li>
-            <li><a href="{% url 'settings' %}" class="{% if request.resolver_match.url_name == 'settings' %}active{% endif %}"><i class="fas fa-cog"></i> Setting</a></li>
+            <li><a href="{% url 'settings' %}" class="{% if request.resolver_match.url_name == 'settings' %}active{% endif %}"><i class="fas fa-cog"></i> Settings</a></li>
         </ul>
         <div class="logout-btn">
             <form action="{% url 'logout' %}" method="post">
@@ -371,6 +371,15 @@
 
         <!-- Content Area -->
         <div class="content-area">
+            {% if messages %}
+            <div class="message-list" style="margin-bottom:20px;">
+                {% for message in messages %}
+                <div class="message-item {{ message.tags }}" style="padding:12px 16px; border-radius:8px; margin-bottom:8px; font-size:14px; font-family:var(--font-inter); {% if message.tags == 'success' %}background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9;{% elif message.tags == 'error' %}background:#ffefef; color:#d20909; border:1px solid #ffd0d0;{% elif message.tags == 'info' %}background:#e3f2fd; color:#1565c0; border:1px solid #bbdefb;{% else %}background:#fff8e1; color:#f57c00; border:1px solid #ffe0b2;{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
             <div class="page-header">
                 <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
                 {% if page_subtitle or self.page_subtitle %}

@@ -160,6 +160,12 @@
                 <input type="text" name="internship_period" value="{{ intern.internship_period|default:'' }}" required placeholder="e.g. 1 Month">
             </div>
             <div class="form-group">
+                <label>Join Date</label>
+                <input type="date" name="join_date" value="{% if intern and intern.join_date %}{{ intern.join_date|date:'Y-m-d' }}{% endif %}">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
                 <label>Trainer</label>
                 <select name="trainer">
                     <option value="">Select Trainer</option>
@@ -168,6 +174,19 @@
                     {% endfor %}
                 </select>
             </div>
+            <div class="form-group">
+                <label>Overall Status</label>
+                <select name="overall_status">
+                    <option value="Good Performance" {% if not intern or intern.overall_status == 'Good Performance' %}selected{% endif %}>Good Performance</option>
+                    <option value="Excellent Performance" {% if intern and intern.overall_status == 'Excellent Performance' %}selected{% endif %}>Excellent Performance</option>
+                    <option value="Needs Improvement" {% if intern and intern.overall_status == 'Needs Improvement' %}selected{% endif %}>Needs Improvement</option>
+                    <option value="At Risk" {% if intern and intern.overall_status == 'At Risk' %}selected{% endif %}>At Risk</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Trainer Remarks</label>
+            <textarea name="trainer_remarks" rows="4" placeholder="Enter trainer remarks...">{{ intern.trainer_remarks|default:'' }}</textarea>
         </div>
     </div>
     

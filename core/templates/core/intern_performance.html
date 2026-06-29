@@ -221,7 +221,7 @@
         </div>
         <div class="detail-row">
             <label>Join Date</label>
-            <p>01/06/2026</p>
+            <p>{% if intern.join_date %}{{ intern.join_date|date:"d/m/Y" }}{% else %}-{% endif %}</p>
         </div>
     </div>
     
@@ -229,11 +229,11 @@
         <h4>Overall Status</h4>
         <div class="detail-row">
             <label>Status</label>
-            <span class="status-good">Good Performance</span>
+            <span class="status-good">{{ intern.overall_status }}</span>
         </div>
         <div class="detail-row">
             <label>Trainer Remarks</label>
-            <p>Consistent performance and active participation</p>
+            <p>{{ intern.trainer_remarks|default:"-" }}</p>
         </div>
     </div>
     
@@ -245,31 +245,33 @@
                     <circle class="circle-bg" cx="75" cy="75" r="65"/>
                     <circle class="circle-progress" cx="75" cy="75" r="65" 
                             stroke-dasharray="408.4" 
-                            stroke-dashoffset="40.84"/>
+                            stroke-dashoffset="{{ attendance_circle_offset }}"
+                            style="stroke-dashoffset: {{ attendance_circle_offset }}; stroke-dasharray: 408.4; transform: rotate(-90deg); transform-origin: 50% 50%;"
+                    />
                 </svg>
-                <span class="circle-text">90%</span>
+                <span class="circle-text">{{ attendance_percent }}%</span>
             </div>
             <div class="attendance-summary">
                 <div class="attendance-row">
-                    <span class="attendance-label">Period: 30 Days</span>
+                    <span class="attendance-label">Period: {{ total_days }} Days</span>
                 </div>
                 <div class="attendance-row">
                     <span class="attendance-label">Attended:</span>
                     <span class="attendance-value">
                         <span class="attendance-dot dot-present"></span>
-                        <span>27</span>
+                        <span>{{ present_days }}</span>
                     </span>
                 </div>
                 <div class="attendance-row">
                     <span class="attendance-label">Absent:</span>
                     <span class="attendance-value">
                         <span class="attendance-dot dot-absent"></span>
-                        <span>3</span>
+                        <span>{{ absent_days }}</span>
                     </span>
                 </div>
                 <div class="attendance-row">
                     <span class="attendance-label">Attendance Rate:</span>
-                    <span>90%</span>
+                    <span>{{ attendance_percent }}%</span>
                 </div>
             </div>
         </div>
@@ -279,22 +281,22 @@
         <h4>Project</h4>
         <div class="detail-row">
             <label>Total Project Given:</label>
-            <p>5</p>
+            <p>{{ total_projects }}</p>
         </div>
         <div class="detail-row">
             <label>Project Completed:</label>
-            <p>4</p>
+            <p>{{ completed_projects }}</p>
         </div>
         <div class="detail-row">
             <label>Project Pending:</label>
-            <p>1</p>
+            <p>{{ pending_projects }}</p>
         </div>
         <div class="detail-row">
             <label>Completion Rate:</label>
             <div class="progress-bar">
-                <div class="progress-fill" style="width: 80%;"></div>
+                <div class="progress-fill" style="width: {{ completion_percent }}%;"></div>
             </div>
-            <span style="font-size: 12px; color: var(--icon-color); margin-top: 4px;">80%</span>
+            <span style="font-size: 12px; color: var(--icon-color); margin-top: 4px;">{{ completion_percent }}%</span>
         </div>
     </div>
 </div>

@@ -153,7 +153,16 @@ else:
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'# Email configuration
 # For development, use console backend to print emails to console
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# For real email sending
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "kowsalyacse1992@gmail.com"
+EMAIL_HOST_PASSWORD = "rldrhlibitnaqwik"
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # For production, uncomment and configure these:
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
