@@ -110,6 +110,14 @@ class Trainee(models.Model):
     progress = models.IntegerField(default=0) # percentage
     first_installment_paid = models.BooleanField(default=False)
 
+    @property
+    def age(self):
+        if self.date_of_birth:
+            from datetime import date
+            today = date.today()
+            return today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
+        return 23
+
     def __str__(self):
         return self.full_name
 
@@ -336,11 +344,54 @@ class Enquiry(models.Model):
     def __str__(self):
         return self.full_name
 
+@receiver(post_save, sender='core.Enquiry')
+def enquiry_converted_to_candidate(sender, instance, **kwargs):
+    """
+    When an Enquiry status is set to 'Converted', automatically create a
+    Candidate entry and a corresponding Eligibility entry (Pending) so that
+    the converted enquiry appears in the Eligibility Management page.
+    """
+    if instance.status == 'Converted':
+        from .models import Candidate, Eligibility
+        # Avoid creating duplicate candidate for the same enquiry (match by email)
+        candidate, created = Candidate.objects.get_or_create(
+            personal_email=instance.email,
+            defaults={
+                'full_name': instance.full_name,
+                'phone': instance.phone,
+                'course': instance.course_interested,
+                'designation': 'Candidate',
+                'fees': instance.course_interested.fees if instance.course_interested else 0,
+                'payment_status': 'Pending',
+                'status': 'Pending',
+                'age': instance.age,
+            }
+        )
+        # If candidate already existed, update their details from the latest enquiry
+        if not created:
+            candidate.full_name = instance.full_name
+            candidate.phone = instance.phone
+            candidate.course = instance.course_interested
+            if instance.course_interested:
+                candidate.fees = instance.course_interested.fees
+            candidate.age = instance.age
+            candidate.save()
+
+        # Create Eligibility entry if one doesn't already exist for this candidate
+        if not Eligibility.objects.filter(candidate=candidate).exists():
+            Eligibility.objects.create(
+                candidate=candidate,
+                education=instance.qualification or 'Not Specified',
+                status='Pending',
+            )
+
+
 class Candidate(models.Model):
     class Status(models.TextChoices):
         ACTIVE = 'Active', 'Active'
         PENDING = 'Pending', 'Pending'
         INACTIVE = 'Inactive', 'Inactive'
+
     
     full_name = models.CharField(max_length=100)
     phone = models.CharField(max_length=15)

@@ -4,404 +4,298 @@
     <meta charset="UTF-8">
     <title>Invoice</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
+        @page {
+            size: A4 portrait;
+            margin: 20px 20px 20px 20px;
         }
         body {
-            padding: 20px;
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 11px;
+            color: #1e293b;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
         }
-        .invoice-container {
-            max-width: 850px;
-            margin: 0 auto;
-            border-radius: 12px;
+        .invoice-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            background-color: #ffffff;
         }
-        .header {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            padding: 30px 40px;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .text-purple {
+            color: #8b5cf6;
         }
-        .header-left {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        .text-green {
+            color: #10b981;
         }
-        .header-left h1 {
-            font-size: 32px;
-            font-weight: bold;
-        }
-        .header-left p {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        .header-right {
-            background: white;
-            color: #6366f1;
-            padding: 10px 30px;
-            border-radius: 8px;
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .invoice-meta {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            padding: 15px 40px;
-            border-bottom: 1px solid #eee;
-        }
-        .meta-item {
-            text-align: center;
-        }
-        .meta-item .label {
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-        .meta-item .value {
-            font-size: 16px;
-            font-weight: 600;
-            color: #333;
-        }
-        .meta-item .status-paid {
-            color: #16a34a;
-        }
-        .invoice-body {
-            padding: 30px 40px;
-        }
-        .billing-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-        .section-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .section-title .icon {
-            width: 35px;
-            height: 35px;
-            background: #e0e7ff;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .billing-details p {
-            font-size: 15px;
-            color: #555;
-            margin-bottom: 8px;
-        }
-        .course-details {
-            background: #1f2937;
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-        }
-        .course-details .section-title {
-            color: white;
-            opacity: 0.8;
-            font-size: 14px;
-        }
-        .course-details h3 {
-            font-size: 22px;
-            margin-bottom: 20px;
-        }
-        .course-details .row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        .course-details .row:last-child {
-            border-bottom: none;
-        }
-        .course-details .row .label {
-            color: #d1d5db;
-            font-size: 14px;
-        }
-        .course-details .row .value {
-            color: white;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        .invoice-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 25px;
-        }
-        .invoice-table th {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            color: white;
-            padding: 12px 15px;
-            text-align: left;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        .invoice-table td {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            font-size: 14px;
-            color: #555;
-        }
-        .invoice-table .sl-no {
-            width: 60px;
-            background: #f3f4f6;
-            text-align: center;
-            font-weight: bold;
-        }
-        .summary-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
-        .notes-section {
-            padding-right: 20px;
-        }
-        .notes-section .section-title {
-            color: #6366f1;
-            margin-bottom: 10px;
-        }
-        .notes-section ul {
-            list-style: none;
-        }
-        .notes-section li {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-            color: #666;
-            font-size: 14px;
-        }
-        .notes-section li::before {
-            content: '—';
-            color: #94a3b8;
-        }
-        .summary-box {
-            padding: 20px;
-        }
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 15px;
-        }
-        .summary-row .label {
-            color: #666;
-        }
-        .summary-row .value {
-            color: #333;
-            font-weight: 500;
-        }
-        .summary-row .value.green {
-            color: #16a34a;
-        }
-        .summary-row .value.red {
-            color: #dc2626;
-        }
-        .total-row {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-top: 10px;
-        }
-        .total-row .label,
-        .total-row .value {
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        .footer {
-            background: #111827;
-            color: white;
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-        }
-        .footer-left {
-            opacity: 0.9;
-        }
-        .footer-right {
-            opacity: 0.7;
-            text-align: right;
+        .text-red {
+            color: #ef4444;
         }
     </style>
 </head>
 <body>
-    <div class="invoice-container">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-left">
-                <h1>VTMS</h1>
-                <p>Shaping Tomorrow's Tech Leaders</p>
-                <p>vtms@technology.in | +91 98765 43210 | 42 Anna Nagar, Chennai - 600 040</p>
-            </div>
-            <div class="header-right">INVOICE</div>
-        </div>
-        
-        <!-- Invoice Meta -->
-        <div class="invoice-meta">
-            <div class="meta-item">
-                <div class="label">Invoice No</div>
-                <div class="value">INV-{{ payment.id|stringformat:"04d" }}</div>
-            </div>
-            <div class="meta-item">
-                <div class="label">Invoice Date</div>
-                <div class="value">{{ payment.date|date:"d M Y" }}</div>
-            </div>
-            <div class="meta-item">
-                <div class="label">Due Date</div>
-                <div class="value">—</div>
-            </div>
-            <div class="meta-item">
-                <div class="label">Status</div>
-                <div class="value status-paid">{{ payment.status }}</div>
-            </div>
-        </div>
-        
-        <!-- Invoice Body -->
-        <div class="invoice-body">
-            <div class="billing-section">
-                <!-- Billed To -->
-                <div>
-                    <div class="section-title">
-                        <span class="icon">
-                            <span style="font-weight: bold;">BT</span>
-                        </span>
-                        BILLED TO
-                    </div>
-                    <div class="billing-details">
-                        {% if payment.trainee %}
-                            <p style="font-size: 26px; font-weight: bold; color: #333; margin-bottom: 12px;">{{ payment.trainee.full_name }}</p>
-                            <p>{{ payment.trainee.personal_mail }}</p>
-                            <p>{{ payment.trainee.phone_no }}</p>
-                            {% if payment.trainee.address %}
-                                <p>{{ payment.trainee.address }}</p>
+    <div class="invoice-card">
+        <!-- Header Table -->
+        <table style="width: 100%; border-collapse: collapse; background-color: #8b5cf6;" cellpadding="0" cellspacing="0">
+            <tr>
+                <td style="padding: 18px 25px; vertical-align: middle;">
+                    <div style="font-size: 24px; font-weight: bold; color: #ffffff; margin: 0; letter-spacing: 0.5px;">VTMS</div>
+                    <div style="font-size: 10px; color: #e0e7ff; margin-top: 3px; font-weight: 500;">Shaping Tomorrow's Tech Leaders</div>
+                    <div style="font-size: 9px; color: #cbd5e1; margin-top: 6px;">vtms@technology.in &nbsp;|&nbsp; +91 98765 43210 &nbsp;|&nbsp; 42 Anna Nagar, Chennai - 600 040</div>
+                </td>
+                <td style="padding: 18px 25px; text-align: right; vertical-align: middle; width: 180px;">
+                    <table style="border-collapse: collapse; background-color: #ffffff; border-radius: 6px; float: right;" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td style="padding: 6px 20px; color: #8b5cf6; font-size: 16px; font-weight: bold; text-align: center; letter-spacing: 0.5px;">INVOICE</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Cyan Accent Line -->
+        <table style="width: 100%; border-collapse: collapse; background-color: #06b6d4;" cellpadding="0" cellspacing="0">
+            <tr>
+                <td style="height: 4px; font-size: 0px; line-height: 4px; padding: 0;">&nbsp;</td>
+            </tr>
+        </table>
+
+        <!-- Invoice Meta Section -->
+        <table style="width: 100%; border-collapse: collapse; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;" cellpadding="0" cellspacing="0">
+            <tr>
+                <td style="width: 25%; padding: 10px 12px; text-align: center; border-right: 1px solid #e2e8f0;">
+                    <div style="font-size: 8px; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 2px;">INVOICE NO</div>
+                    <div style="font-size: 12px; font-weight: bold; color: #1e293b;">INV-{{ payment.id|stringformat:"04d" }}</div>
+                </td>
+                <td style="width: 25%; padding: 10px 12px; text-align: center; border-right: 1px solid #e2e8f0;">
+                    <div style="font-size: 8px; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 2px;">INVOICE DATE</div>
+                    <div style="font-size: 12px; font-weight: bold; color: #1e293b;">{{ payment.date|date:"d M Y" }}</div>
+                </td>
+                <td style="width: 25%; padding: 10px 12px; text-align: center; border-right: 1px solid #e2e8f0;">
+                    <div style="font-size: 8px; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 2px;">DUE DATE</div>
+                    <div style="font-size: 12px; font-weight: bold; color: #1e293b;">—</div>
+                </td>
+                <td style="width: 25%; padding: 10px 12px; text-align: center;">
+                    <div style="font-size: 8px; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 2px;">STATUS</div>
+                    <div style="font-size: 12px; font-weight: bold; {% if payment.status == 'Paid' %}color: #10b981;{% else %}color: #ef4444;{% endif %}">{{ payment.status }}</div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Spacer -->
+        <table style="width: 100%; border-collapse: collapse;" cellpadding="0" cellspacing="0">
+            <tr><td style="height: 12px; font-size: 0px; padding: 0;">&nbsp;</td></tr>
+        </table>
+
+        <!-- Billing and Course Details Section -->
+        <table style="width: 100%; border-collapse: collapse;" cellpadding="0" cellspacing="0">
+            <tr>
+                <td style="width: 15px; padding: 0;">&nbsp;</td>
+                <!-- BILLED TO -->
+                <td style="width: 46%; vertical-align: top; padding: 0 10px 0 0;">
+                    <table style="border-collapse: collapse;" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td style="width: 12px; background-color: #8b5cf6; height: 12px; border-radius: 2px; padding: 0;">&nbsp;</td>
+                            <td style="padding-left: 8px; padding-top: 0; padding-bottom: 0; padding-right: 0; color: #8b5cf6; font-weight: bold; font-size: 10px; letter-spacing: 0.5px; line-height: 12px; vertical-align: middle;">BILLED TO</td>
+                        </tr>
+                    </table>
+                    
+                    <div style="margin-top: 6px;">
+                        <div style="font-size: 18px; font-weight: bold; color: #1e293b; margin-bottom: 4px;">
+                            {% if payment.trainee %}
+                                {{ payment.trainee.full_name }}
+                            {% elif payment.intern %}
+                                {{ payment.intern.full_name }}
                             {% endif %}
-                            <p>Male · Age: {{ payment.trainee.date_of_birth|date:"Y"|default:"23" }}</p>
-                        {% elif payment.intern %}
-                            <p style="font-size: 26px; font-weight: bold; color: #333; margin-bottom: 12px;">{{ payment.intern.full_name }}</p>
-                            <p>{{ payment.intern.personal_mail }}</p>
-                            <p>{{ payment.intern.phone_no }}</p>
-                            <p>Male · Age: 23</p>
-                        {% endif %}
+                        </div>
+                        <div style="font-size: 11px; color: #64748b; line-height: 1.45;">
+                            {% if payment.trainee %}
+                                {{ payment.trainee.personal_mail }}<br/>
+                                {{ payment.trainee.phone_no }}<br/>
+                                {% if payment.trainee.address %}
+                                    {{ payment.trainee.address }}<br/>
+                                {% endif %}
+                                Male &middot; Age: {{ payment.trainee.age }}
+                            {% elif payment.intern %}
+                                {{ payment.intern.personal_mail }}<br/>
+                                {{ payment.intern.phone_no }}<br/>
+                                Male &middot; Age: 23
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
+                </td>
                 
-                <!-- Course Details -->
-                <div class="course-details">
-                    <div class="section-title">COURSE DETAILS</div>
-                    <h3>
+                <!-- COURSE DETAILS -->
+                <td style="width: 50%; vertical-align: top; background-color: #1e1b4b; padding: 12px; border-radius: 8px; color: #ffffff;">
+                    <table style="border-collapse: collapse;" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td style="width: 12px; background-color: rgba(255,255,255,0.15); height: 12px; border-radius: 2px; padding: 0;">&nbsp;</td>
+                            <td style="padding-left: 8px; padding-top: 0; padding-bottom: 0; padding-right: 0; color: #cbd5e1; font-weight: bold; font-size: 9px; letter-spacing: 0.5px; line-height: 12px; vertical-align: middle;">COURSE DETAILS</td>
+                        </tr>
+                    </table>
+                    
+                    <div style="font-size: 15px; font-weight: bold; color: #ffffff; margin-top: 6px; margin-bottom: 8px;">
                         {% if payment.trainee and payment.trainee.course %}
                             {{ payment.trainee.course.title }}
                         {% elif payment.intern %}
-                            {{ payment.intern.role|default:"" }}
+                            {{ payment.intern.role }}
                         {% else %}
-                            Course
+                            Course Details
                         {% endif %}
-                    </h3>
-                    <div class="row">
-                        <span class="label">Qualification</span>
-                        <span class="value">BE</span>
                     </div>
-                    <div class="row">
-                        <span class="label">Plan</span>
-                        <span class="value">{{ payment.plan|default:"None" }}</span>
-                    </div>
-                    <div class="row">
-                        <span class="label">Gender</span>
-                        <span class="value">Male</span>
-                    </div>
-                    <div class="row">
-                        <span class="label">Age</span>
-                        <span class="value">23</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Invoice Table -->
-            <table class="invoice-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Description</th>
-                        <th>Plan</th>
-                        <th style="text-align: right;">Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="sl-no">01</td>
-                        <td>
-                            {% if payment.trainee and payment.trainee.course %}
-                                {{ payment.trainee.course.title }}
-                            {% elif payment.intern %}
-                                {{ payment.intern.role|default:"" }}
-                            {% else %}
-                                Course
-                            {% endif %}
-                        </td>
-                        <td>{{ payment.plan|default:"None" }}</td>
-                        <td style="text-align: right;">Rs. {{ payment.course_amount|floatformat:2 }}</td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <!-- Summary -->
-            <div class="summary-section">
-                <div class="notes-section">
-                    <div class="section-title">NOTES</div>
-                    <ul>
-                        <li>Payment has been recorded successfully.</li>
-                        <li>For any queries, please contact our support team.</li>
-                        <li>This is a computer-generated invoice.</li>
-                    </ul>
-                </div>
-                <div class="summary-box">
-                    <div class="summary-row">
-                        <span class="label">Course Fee</span>
-                        <span class="value">Rs. {{ payment.course_amount|floatformat:2 }}</span>
-                    </div>
-                    <div class="summary-row">
-                        <span class="label">Amount Paid</span>
-                        <span class="value green">Rs. {{ payment.paid|floatformat:2 }}</span>
-                    </div>
-                    <div class="summary-row">
-                        <span class="label">Pending</span>
-                        <span class="value red">Rs. {{ payment.pending|floatformat:2 }}</span>
-                    </div>
-                    <div class="summary-row total-row">
-                        <span class="label">TOTAL PAID</span>
-                        <span class="value">Rs. {{ payment.paid|floatformat:2 }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Footer -->
-        <div class="footer">
-            <div class="footer-left">
-                VTMS | vtms@technology.in | +91 98765 43210
-            </div>
-            <div class="footer-right">
-                Thank you for choosing us! · Computer-generated invoice.
-            </div>
-        </div>
+                    
+                    <table style="width: 100%; border-collapse: collapse; font-size: 10px; color: #cbd5e1;" cellpadding="0" cellspacing="0">
+                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.15);">
+                            <td style="padding: 4px 0;">Qualification</td>
+                            <td style="padding: 4px 0; text-align: right; font-weight: bold; color: #ffffff;">BE</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.15);">
+                            <td style="padding: 4px 0;">Plan</td>
+                            <td style="padding: 4px 0; text-align: right; font-weight: bold; color: #ffffff;">{{ payment.plan|default:"None" }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.15);">
+                            <td style="padding: 4px 0;">Gender</td>
+                            <td style="padding: 4px 0; text-align: right; font-weight: bold; color: #ffffff;">
+                                {% if payment.trainee %}
+                                    {{ payment.trainee.gender|default:"Male" }}
+                                {% elif payment.intern %}
+                                    {{ payment.intern.gender|default:"Male" }}
+                                {% else %}
+                                    Male
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px 0;">Age</td>
+                            <td style="padding: 4px 0; text-align: right; font-weight: bold; color: #ffffff;">
+                                {% if payment.trainee %}
+                                    {{ payment.trainee.age }}
+                                {% elif payment.intern %}
+                                    23
+                                {% else %}
+                                    23
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="width: 15px; padding: 0;">&nbsp;</td>
+            </tr>
+        </table>
+
+        <!-- Spacer -->
+        <table style="width: 100%; border-collapse: collapse;" cellpadding="0" cellspacing="0">
+            <tr><td style="height: 15px; font-size: 0px; padding: 0;">&nbsp;</td></tr>
+        </table>
+
+        <!-- Invoice Table Section -->
+        <table style="width: 100%; border-collapse: collapse;" cellpadding="0" cellspacing="0">
+            <tr>
+                <td style="width: 15px; padding: 0;">&nbsp;</td>
+                <td style="padding: 0;">
+                    <table style="width: 100%; border-collapse: collapse;" cellpadding="0" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th style="width: 10%; background-color: #8b5cf6; color: #ffffff; font-size: 10px; font-weight: bold; text-align: center; padding: 8px; border-top-left-radius: 4px; border-bottom-left-radius: 4px;">#</th>
+                                <th style="width: 50%; background-color: #8b5cf6; color: #ffffff; font-size: 10px; font-weight: bold; text-align: left; padding: 8px;">DESCRIPTION</th>
+                                <th style="width: 20%; background-color: #8b5cf6; color: #ffffff; font-size: 10px; font-weight: bold; text-align: left; padding: 8px;">PLAN</th>
+                                <th style="width: 20%; background-color: #8b5cf6; color: #ffffff; font-size: 10px; font-weight: bold; text-align: right; padding: 8px; border-top-right-radius: 4px; border-bottom-right-radius: 4px;">AMOUNT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="background-color: #f1f5f9; color: #8b5cf6; text-align: center; font-weight: bold; padding: 10px 8px; font-size: 11px; border-bottom: 1px solid #e2e8f0;">01</td>
+                                <td style="padding: 10px 8px; color: #1e293b; font-size: 11px; border-bottom: 1px solid #e2e8f0;">
+                                    {% if payment.trainee and payment.trainee.course %}
+                                        {{ payment.trainee.course.title }}
+                                    {% elif payment.intern %}
+                                        {{ payment.intern.role }}
+                                    {% else %}
+                                        Course
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 10px 8px; color: #64748b; font-size: 11px; border-bottom: 1px solid #e2e8f0;">{{ payment.plan|default:"None" }}</td>
+                                <td style="padding: 10px 8px; color: #1e293b; font-size: 11px; text-align: right; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Rs. {{ payment.course_amount|floatformat:2 }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </td>
+                <td style="width: 15px; padding: 0;">&nbsp;</td>
+            </tr>
+        </table>
+
+        <!-- Spacer -->
+        <table style="width: 100%; border-collapse: collapse;" cellpadding="0" cellspacing="0">
+            <tr><td style="height: 15px; font-size: 0px; padding: 0;">&nbsp;</td></tr>
+        </table>
+
+        <!-- Notes and Summary Section -->
+        <table style="width: 100%; border-collapse: collapse;" cellpadding="0" cellspacing="0">
+            <tr>
+                <td style="width: 15px; padding: 0;">&nbsp;</td>
+                <!-- Notes -->
+                <td style="width: 50%; vertical-align: top; padding-right: 15px;">
+                    <div style="color: #8b5cf6; font-weight: bold; font-size: 10px; letter-spacing: 0.5px; margin-bottom: 6px;">NOTES</div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 10px; color: #64748b;" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td style="width: 15px; vertical-align: top; color: #8b5cf6; font-weight: bold; font-size: 11px; line-height: 1.3; padding: 0 0 4px 0;">&rarr;</td>
+                            <td style="padding: 0 0 4px 0; line-height: 1.35; vertical-align: top;">Payment has been recorded successfully.</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 15px; vertical-align: top; color: #8b5cf6; font-weight: bold; font-size: 11px; line-height: 1.3; padding: 0 0 4px 0;">&rarr;</td>
+                            <td style="padding: 0 0 4px 0; line-height: 1.35; vertical-align: top;">For any queries, please contact our support team.</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 15px; vertical-align: top; color: #8b5cf6; font-weight: bold; font-size: 11px; line-height: 1.3; padding: 0;">&rarr;</td>
+                            <td style="padding: 0; line-height: 1.35; vertical-align: top;">This is a computer-generated invoice.</td>
+                        </tr>
+                    </table>
+                </td>
+                <!-- Summary -->
+                <td style="width: 46%; vertical-align: top; padding: 0;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px; color: #334155; margin-bottom: 8px;" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td style="padding: 3px 0; color: #64748b;">Course Fee</td>
+                            <td style="padding: 3px 0; text-align: right; font-weight: bold; color: #1e293b;">Rs. {{ payment.course_amount|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 3px 0; color: #64748b;">Amount Paid</td>
+                            <td style="padding: 3px 0; text-align: right; font-weight: bold; color: #10b981;">Rs. {{ payment.paid|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 3px 0; color: #64748b;">Pending</td>
+                            <td style="padding: 3px 0; text-align: right; font-weight: bold; color: #ef4444;">Rs. {{ payment.pending|floatformat:2 }}</td>
+                        </tr>
+                    </table>
+
+                    <!-- TOTAL PAID Box (Rounded block) -->
+                    <table style="width: 100%; border-collapse: collapse; background-color: #8b5cf6; border-radius: 6px;" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td style="padding: 8px 12px; color: #ffffff; font-weight: bold; font-size: 11px; vertical-align: middle;">TOTAL PAID</td>
+                            <td style="padding: 8px 12px; color: #ffffff; font-weight: bold; font-size: 11px; text-align: right; vertical-align: middle;">Rs. {{ payment.paid|floatformat:2 }}</td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="width: 15px; padding: 0;">&nbsp;</td>
+            </tr>
+        </table>
+
+        <!-- Spacer to push footer down but keep on single page -->
+        <table style="width: 100%; border-collapse: collapse;" cellpadding="0" cellspacing="0">
+            <tr><td style="height: 25px; font-size: 0px; padding: 0;">&nbsp;</td></tr>
+        </table>
+
+        <!-- Footer Section -->
+        <table style="width: 100%; border-collapse: collapse; background-color: #0f172a;" cellpadding="0" cellspacing="0">
+            <tr>
+                <td style="padding: 12px 25px; font-size: 9px; color: #94a3b8; vertical-align: middle;">
+                    VTMS &nbsp;|&nbsp; vtms@technology.in &nbsp;|&nbsp; +91 98765 43210
+                </td>
+                <td style="padding: 12px 25px; font-size: 9px; color: #64748b; text-align: right; vertical-align: middle;">
+                    Thank you for choosing us! &middot; Computer-generated invoice.
+                </td>
+            </tr>
+        </table>
     </div>
 </body>
 </html>

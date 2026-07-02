@@ -1474,20 +1474,15 @@ def enquiry_management(request):
     # Handle view
     view_mode = request.GET.get('view', 'list')
     selected_enquiry = None
-    if view_mode == 'detail' and 'enquiry_id' in request.GET:
+    if view_mode in ('detail', 'edit') and 'enquiry_id' in request.GET:
         selected_enquiry = get_object_or_404(Enquiry, id=request.GET.get('enquiry_id'))
-    
+
     if request.method == 'POST':
         action = request.POST.get('action')
         enquiry_id = request.POST.get('enquiry_id')
         enquiry = get_object_or_404(Enquiry, id=enquiry_id)
-        
-        if action == 'update_status':
-            new_status = request.POST.get('status')
-            enquiry.status = new_status
-            enquiry.save()
-            messages.success(request, 'Enquiry status updated successfully!')
-        elif action == 'update_enquiry':
+
+        if action == 'update_enquiry':
             # Update enquiry details
             enquiry.full_name = request.POST.get('full_name', enquiry.full_name)
             enquiry.email = request.POST.get('email', enquiry.email)
@@ -1495,19 +1490,23 @@ def enquiry_management(request):
             enquiry.age = request.POST.get('age', enquiry.age)
             enquiry.gender = request.POST.get('gender', enquiry.gender)
             enquiry.qualification = request.POST.get('qualification', enquiry.qualification)
-            enquiry.address = request.POST.get('address', enquiry.address)
+            enquiry.address = request.POST.get('address', '')
             enquiry.status = request.POST.get('status', enquiry.status)
-            
+
             course_id = request.POST.get('course')
             if course_id:
-                enquiry.course_interested = Course.objects.get(id=course_id)
-            
+                try:
+                    enquiry.course_interested = Course.objects.get(id=course_id)
+                except Course.DoesNotExist:
+                    pass
+
             enquiry.save()
             messages.success(request, 'Enquiry updated successfully!')
-    
+            return redirect('enquiry_management')
+
     return render(request, 'core/enquiry_management.html', {
-        'enquiries': enquiries, 
-        'view_mode': view_mode, 
+        'enquiries': enquiries,
+        'view_mode': view_mode,
         'selected_enquiry': selected_enquiry,
         'courses': Course.objects.all()
     })
